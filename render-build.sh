@@ -5,6 +5,9 @@ set -o errexit
 echo "==> Installing frontend dependencies..."
 npm --prefix frontend install
 
+echo "==> Granting executable permissions to build binaries..."
+chmod -R +x frontend/node_modules/.bin || true
+
 echo "==> Building Vite React app..."
 npm --prefix frontend run build
 
