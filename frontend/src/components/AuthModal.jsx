@@ -24,9 +24,22 @@ export default function AuthModal({
       return;
     }
 
-    if (activeTab === 'register' && !formData.name.trim()) {
-      setErrorMsg('Please enter your full name');
-      return;
+    if (activeTab === 'register') {
+      if (!formData.name.trim()) {
+        setErrorMsg('Please enter your full name');
+        return;
+      }
+      // Enforce Unique Email Check
+      const existingUser = localStorage.getItem('spendwise_user');
+      if (existingUser) {
+        try {
+          const parsed = JSON.parse(existingUser);
+          if (parsed && parsed.email && parsed.email.toLowerCase() === formData.email.toLowerCase()) {
+            setErrorMsg('An account with this email address already exists. Please sign in instead.');
+            return;
+          }
+        } catch (e) {}
+      }
     }
 
     setErrorMsg('');
