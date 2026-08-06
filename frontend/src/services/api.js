@@ -21,6 +21,39 @@ const setLocalData = (key, value) => {
 };
 
 export const apiService = {
+  // User Authentication REST API Integration
+  async registerUser(name, email, password) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, email, password })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Backend register call failed', err);
+    }
+    return null;
+  },
+
+  async loginUser(email, password) {
+    try {
+      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('Backend login call failed', err);
+    }
+    return null;
+  },
+
   // Fetch transactions scoped per user ID
   async getTransactions(filters = {}, userId = 101) {
     try {

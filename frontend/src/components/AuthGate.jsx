@@ -11,7 +11,7 @@ export default function AuthGate({ onLoginSuccess }) {
   });
   const [errorMsg, setErrorMsg] = useState('');
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMsg('Please enter valid email and password');
@@ -19,7 +19,22 @@ export default function AuthGate({ onLoginSuccess }) {
     }
 
     if (activeTab === 'login') {
-      // 1. Strict Credential Matching against stored users
+      // 1. Try Backend REST API login
+      const backendUser = await apiService.loginUser(formData.email, formData.password);
+      if (backendUser && backendUser.id) {
+        setErrorMsg('');
+        onLoginSuccess({
+          id: backendUser.id,
+          name: backendUser.name,
+          email: backendUser.email,
+          role: backendUser.role || 'PRO_MEMBER',
+          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          token: backendUser.token
+        });
+        return;
+      }
+
+      // Local fallback checking
       const storedUserRaw = localStorage.getItem('spendwise_user');
       let knownUsers = [
         {
@@ -42,14 +57,12 @@ export default function AuthGate({ onLoginSuccess }) {
         } catch (e) {}
       }
 
-      // Check if email exists
       const matchedUser = knownUsers.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
       if (!matchedUser) {
         setErrorMsg('No registered account found with this email address. Please Register first.');
         return;
       }
 
-      // Check password matching if stored
       if (matchedUser.password && matchedUser.password !== formData.password) {
         setErrorMsg('Incorrect password for this account. Please try again.');
         return;
@@ -65,7 +78,23 @@ export default function AuthGate({ onLoginSuccess }) {
         setErrorMsg('Please enter your full name');
         return;
       }
-      // Enforce Unique Email Check
+
+      // 1. Send registration to Spring Boot Backend API (Persists to PostgreSQL)
+      const backendUser = await apiService.registerUser(formData.name, formData.email, formData.password);
+      if (backendUser && backendUser.id) {
+        setErrorMsg('');
+        onLoginSuccess({
+          id: backendUser.id,
+          name: backendUser.name,
+          email: backendUser.email,
+          role: backendUser.role || 'PRO_MEMBER',
+          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          token: backendUser.token
+        });
+        return;
+      }
+
+      // Local Fallback Enforce Unique Email Check
       const existingUser = localStorage.getItem('spendwise_user');
       if (existingUser) {
         try {
@@ -76,21 +105,20 @@ export default function AuthGate({ onLoginSuccess }) {
           }
         } catch (e) {}
       }
+
+      const userObj = {
+        id: Date.now(),
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'PRO_MEMBER',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+        createdAt: 'Aug 2026'
+      };
+
+      setErrorMsg('');
+      onLoginSuccess(userObj);
     }
-
-    setErrorMsg('');
-
-    const userObj = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: 'PRO_MEMBER',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-      createdAt: 'Aug 2026'
-    };
-
-    onLoginSuccess(userObj);
   };
 
   const handleQuickDemoLogin = () => {

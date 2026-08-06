@@ -17,7 +17,7 @@ export default function AuthModal({
 
   if (!isOpen) return null;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMsg('Please enter valid email and password');
@@ -25,6 +25,21 @@ export default function AuthModal({
     }
 
     if (activeTab === 'login') {
+      const backendUser = await apiService.loginUser(formData.email, formData.password);
+      if (backendUser && backendUser.id) {
+        setErrorMsg('');
+        onLoginSuccess({
+          id: backendUser.id,
+          name: backendUser.name,
+          email: backendUser.email,
+          role: backendUser.role || 'PRO_MEMBER',
+          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          token: backendUser.token
+        });
+        onClose();
+        return;
+      }
+
       const storedUserRaw = localStorage.getItem('spendwise_user');
       let knownUsers = [
         {
@@ -69,6 +84,22 @@ export default function AuthModal({
         setErrorMsg('Please enter your full name');
         return;
       }
+
+      const backendUser = await apiService.registerUser(formData.name, formData.email, formData.password);
+      if (backendUser && backendUser.id) {
+        setErrorMsg('');
+        onLoginSuccess({
+          id: backendUser.id,
+          name: backendUser.name,
+          email: backendUser.email,
+          role: backendUser.role || 'PRO_MEMBER',
+          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          token: backendUser.token
+        });
+        onClose();
+        return;
+      }
+
       const existingUser = localStorage.getItem('spendwise_user');
       if (existingUser) {
         try {
@@ -79,22 +110,21 @@ export default function AuthModal({
           }
         } catch (e) {}
       }
+
+      const userObj = {
+        id: Date.now(),
+        name: formData.name,
+        email: formData.email,
+        password: formData.password,
+        role: 'PRO_MEMBER',
+        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+        createdAt: 'Aug 2026'
+      };
+
+      setErrorMsg('');
+      onLoginSuccess(userObj);
+      onClose();
     }
-
-    setErrorMsg('');
-
-    const userObj = {
-      id: Date.now(),
-      name: formData.name,
-      email: formData.email,
-      password: formData.password,
-      role: 'PRO_MEMBER',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-      createdAt: 'Aug 2026'
-    };
-
-    onLoginSuccess(userObj);
-    onClose();
   };
 
   // Quick 1-click Demo Login
