@@ -3,6 +3,19 @@ import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
 
+const fetchWithRetry = async (url, options = {}, retries = 2, delayMs = 1500) => {
+  for (let i = 0; i <= retries; i++) {
+    try {
+      const res = await fetch(url, options);
+      if (res.ok) return res;
+    } catch (err) {
+      if (i === retries) throw err;
+      await new Promise(resolve => setTimeout(resolve, delayMs));
+    }
+  }
+  throw new Error('API fetch failed after retries');
+};
+
 const getLocalData = (key, fallback) => {
   try {
     const item = localStorage.getItem(key);
@@ -24,7 +37,7 @@ export const apiService = {
   // User Authentication REST API Integration
   async registerUser(name, email, password) {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/register`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/auth/register`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
@@ -33,14 +46,14 @@ export const apiService = {
         return await res.json();
       }
     } catch (err) {
-      console.warn('Backend register call failed', err);
+      console.warn('Backend register call failed, using local registration', err);
     }
     return null;
   },
 
   async loginUser(email, password) {
     try {
-      const res = await fetch(`${API_BASE_URL}/auth/login`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/auth/login`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
@@ -63,7 +76,7 @@ export const apiService = {
       if (filters.search) query.append('search', filters.search);
       query.append('userId', userId);
 
-      const res = await fetch(`${API_BASE_URL}/transactions?${query.toString()}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/transactions?${query.toString()}`, {
         headers: { 'X-User-Id': String(userId) }
       });
       if (res.ok) {
@@ -105,7 +118,7 @@ export const apiService = {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions?userId=${userId}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/transactions?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +157,7 @@ export const apiService = {
     };
 
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -167,7 +180,7 @@ export const apiService = {
 
   async deleteTransaction(id, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'DELETE',
         headers: { 'X-User-Id': String(userId) }
       });
@@ -185,7 +198,7 @@ export const apiService = {
   // Get Budgets Scoped per User ID
   async getBudgets(userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/budgets/progress?userId=${userId}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/budgets/progress?userId=${userId}`, {
         headers: { 'X-User-Id': String(userId) }
       });
       if (res.ok) {
@@ -229,7 +242,7 @@ export const apiService = {
 
   async updateBudget(category, monthlyLimit, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/budgets?userId=${userId}`, {
+      const res = await fetchWithRetry(`${API_BASE_URL}/budgets?userId=${userId}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
