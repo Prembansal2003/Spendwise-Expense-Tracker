@@ -28,7 +28,7 @@ services:
   - type: web
     name: spendwise-app
     env: static
-    buildCommand: ./render-build.sh
+    buildCommand: bash render-build.sh
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
