@@ -14,6 +14,8 @@ import java.time.LocalDate;
 @Data
 public class TransactionRequest {
 
+    private Long userId = 1L;
+
     @NotBlank(message = "Title is required")
     private String title;
 

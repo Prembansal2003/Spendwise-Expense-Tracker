@@ -30,12 +30,13 @@ public class TransactionService {
 
     public Transaction createTransaction(TransactionRequest request) {
         Transaction transaction = new Transaction();
+        transaction.setUserId(request.getUserId() != null ? request.getUserId() : 1L);
         transaction.setTitle(request.getTitle());
         transaction.setAmount(request.getAmount());
         transaction.setType(request.getType());
         transaction.setCategory(request.getCategory());
         transaction.setTransactionDate(request.getTransactionDate() != null ? request.getTransactionDate() : LocalDate.now());
-        transaction.setPaymentMethod(request.getPaymentMethod());
+        transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
         transaction.setNotes(request.getNotes());
         return transactionRepository.save(transaction);
     }
@@ -44,12 +45,15 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
 
+        if (request.getUserId() != null) {
+            transaction.setUserId(request.getUserId());
+        }
         transaction.setTitle(request.getTitle());
         transaction.setAmount(request.getAmount());
         transaction.setType(request.getType());
         transaction.setCategory(request.getCategory());
         transaction.setTransactionDate(request.getTransactionDate());
-        transaction.setPaymentMethod(request.getPaymentMethod());
+        transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
         transaction.setNotes(request.getNotes());
         return transactionRepository.save(transaction);
     }
