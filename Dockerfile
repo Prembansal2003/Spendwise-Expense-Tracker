@@ -16,6 +16,8 @@ WORKDIR /app
 # Copy exact Spring Boot executable JAR
 COPY --from=build /app/target/expense-tracker-backend-1.0.0.jar app.jar
 
+ENV SPRING_PROFILES_ACTIVE=prod
+
 EXPOSE 8080
 
 ENTRYPOINT ["java", "-jar", "app.jar"]
