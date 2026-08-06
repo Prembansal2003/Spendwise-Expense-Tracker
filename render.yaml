@@ -13,14 +13,6 @@ services:
         fromDatabase:
           name: spendwise-db
           property: connectionString
-      - key: SPRING_DATASOURCE_USERNAME
-        fromDatabase:
-          name: spendwise-db
-          property: user
-      - key: SPRING_DATASOURCE_PASSWORD
-        fromDatabase:
-          name: spendwise-db
-          property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
 
@@ -38,6 +30,4 @@ services:
 databases:
   # 3. PostgreSQL Database
   - name: spendwise-db
-    databaseName: spendwisedb
-    user: spendwise_user
     plan: free
