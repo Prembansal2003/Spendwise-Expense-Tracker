@@ -1,10 +1,10 @@
-# Multi-stage Dockerfile for SpendWise Java Backend (Backend Context)
+# Multi-stage Dockerfile for SpendWise Java Backend (Root Context)
 FROM maven:3.9.6-eclipse-temurin-17 AS build
 WORKDIR /app
 
-# Copy pom.xml and src
-COPY pom.xml ./
-COPY src ./src
+# Copy backend pom.xml and src
+COPY backend/pom.xml ./
+COPY backend/src ./src
 
 # Build production JAR
 RUN mvn clean package -DskipTests
