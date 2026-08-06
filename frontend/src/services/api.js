@@ -1,6 +1,8 @@
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 
-const API_BASE_URL = '/api/v1';
+// Connect to deployed Render Java Spring Boot API if local proxy is not active
+const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
 
 const getLocalData = (key, fallback) => {
   try {
@@ -36,7 +38,9 @@ export const apiService = {
         const data = await res.json();
         return { data, isBackend: true };
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn('Backend API unreachable, using LocalStorage fallback');
+    }
 
     // Local Storage Scoped Fallback per user
     const storageKey = `spendwise_transactions_${userId}`;
@@ -69,7 +73,9 @@ export const apiService = {
       if (res.ok) {
         return await res.json();
       }
-    } catch (err) {}
+    } catch (err) {
+      console.warn('Backend API create error', err);
+    }
 
     // Local Storage Scoped Fallback
     const storageKey = `spendwise_transactions_${userId}`;
