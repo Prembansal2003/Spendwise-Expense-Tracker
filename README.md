@@ -2,6 +2,7 @@
 
 [![Java](https://img.shields.io/badge/Java-17-orange.svg)](https://www.oracle.com/java/)
 [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.2.3-green.svg)](https://spring.io/projects/spring-boot)
+[![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5-purple.svg)](https://vitejs.dev/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue.svg)](https://www.postgresql.org/)
@@ -57,19 +58,20 @@ SpendWise is a production-grade, human-engineered **Java Full Stack Financial In
                │    Java 17 Spring Boot 3 Backend API (Port 8080)       │
                │    - Controllers: Transaction, Analytics, Budget, Auth │
                │    - Services: TransactionService, BudgetService, Auth  │
-               │    - JPA Repositories & PasswordEncoderUtil            │
+               │    - Multi-stage Dockerfile Packaging                  │
                └───────────────────────────┬────────────────────────────┘
                                            │ JDBC Persistence
                                            ▼
                ┌────────────────────────────────────────────────────────┐
                │    Database Tier (H2 Local / PostgreSQL Cloud)         │
                │    - Transactions, Budgets, Users Tables               │
-               └────────────────────────────────────────────────────────┘
+               └───────────────────────────┬────────────────────────────┘
 ```
 
 | Layer | Technology |
 | :--- | :--- |
 | **Backend Framework** | Java 17, Spring Boot 3.2.3, Spring Data JPA, Spring Web |
+| **Packaging & Docker**| Multi-stage `Dockerfile` (`maven:3.9.6` & `eclipse-temurin:17-alpine`) |
 | **Database** | H2 Database (Dev) / PostgreSQL (Production Cloud) |
 | **Security** | SHA-256 / BCrypt Password Hashing (`PasswordEncoderUtil`) |
 | **Frontend Framework**| React 18, Vite 5, JavaScript (ES6+) |
@@ -142,17 +144,24 @@ Open your browser and navigate to:
 
 ---
 
-## ☁️ Cloud Deployment (Render.com)
+## ☁️ Cloud Deployment Guide (Render.com)
 
-1. Push code to GitHub:
+1. Push code to GitHub repository:
    ```bash
    git add .
-   git commit -m "SpendWise Ready for Cloud Deployment"
+   git commit -m "SpendWise Cloud Ready"
    git push origin main
    ```
-2. Provision a **PostgreSQL Database** on Render.com.
-3. Deploy **Java Backend** as a Render Web Service (`mvn clean package -DskipTests`, set `SPRING_DATASOURCE_URL` env vars).
-4. Deploy **React Frontend** as a Render Static Site (`npm run build`, publish dir `dist`).
+2. Provision a **PostgreSQL Database** on Render.com (`spendwise-db`).
+3. Deploy **Java Backend** Web Service on Render:
+   - Root Directory: `backend`
+   - Environment / Runtime: Select **Docker** 👈 *(Uses `backend/Dockerfile`)*
+   - Environment Variables: Set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`.
+4. Deploy **React Frontend** Static Site on Render:
+   - Root Directory: `frontend`
+   - Build Command: `npm run build`
+   - Publish Directory: `dist`
+   - Environment Variable: `VITE_API_BASE_URL` = `https://spendwise-backend-api.onrender.com/api/v1`
 
 ---
 
