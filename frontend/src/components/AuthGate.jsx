@@ -318,6 +318,16 @@ export default function AuthGate({ onLoginSuccess }) {
             </button>
           </form>
 
+          <div style={{ textAlign: 'center', marginTop: '1rem' }}>
+            <button
+              type="button"
+              style={{ background: 'none', border: 'none', color: 'var(--text-muted)', fontSize: '0.75rem', cursor: 'pointer', textDecoration: 'underline' }}
+              onClick={() => { localStorage.clear(); window.location.reload(); }}
+            >
+              🔄 Clear Browser Session & Reload
+            </button>
+          </div>
+
         </div>
 
       </div>
