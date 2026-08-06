@@ -1,7 +1,13 @@
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
+
+// Ensure API_BASE_URL always ends with /api/v1
+let _baseUrl = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
+if (!_baseUrl.endsWith('/api/v1')) {
+  _baseUrl = _baseUrl.replace(/\/+$/, '') + '/api/v1';
+}
+const API_BASE_URL = _baseUrl;
 
 console.log('[SpendWise API] Base URL:', API_BASE_URL);
 
