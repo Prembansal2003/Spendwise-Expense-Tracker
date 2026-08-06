@@ -1,6 +1,5 @@
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 
-// Connect to deployed Render Java Spring Boot API if local proxy is not active
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
 
@@ -38,9 +37,7 @@ export const apiService = {
         const data = await res.json();
         return { data, isBackend: true };
       }
-    } catch (err) {
-      console.warn('Backend API unreachable, using LocalStorage fallback');
-    }
+    } catch (err) {}
 
     // Local Storage Scoped Fallback per user
     const storageKey = `spendwise_transactions_${userId}`;
@@ -61,6 +58,19 @@ export const apiService = {
   },
 
   async createTransaction(transaction, userId = 101) {
+    const txDate = transaction.date || transaction.transactionDate || new Date().toISOString().split('T')[0];
+    const payload = {
+      title: transaction.title,
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      category: transaction.category,
+      transactionDate: txDate,
+      date: txDate,
+      paymentMethod: transaction.paymentMethod || 'Credit Card',
+      notes: transaction.notes || '',
+      userId
+    };
+
     try {
       const res = await fetch(`${API_BASE_URL}/transactions?userId=${userId}`, {
         method: 'POST',
@@ -68,14 +78,12 @@ export const apiService = {
           'Content-Type': 'application/json',
           'X-User-Id': String(userId)
         },
-        body: JSON.stringify({ ...transaction, userId })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         return await res.json();
       }
-    } catch (err) {
-      console.warn('Backend API create error', err);
-    }
+    } catch (err) {}
 
     // Local Storage Scoped Fallback
     const storageKey = `spendwise_transactions_${userId}`;
@@ -89,6 +97,19 @@ export const apiService = {
   },
 
   async updateTransaction(id, transaction, userId = 101) {
+    const txDate = transaction.date || transaction.transactionDate || new Date().toISOString().split('T')[0];
+    const payload = {
+      title: transaction.title,
+      amount: Number(transaction.amount),
+      type: transaction.type,
+      category: transaction.category,
+      transactionDate: txDate,
+      date: txDate,
+      paymentMethod: transaction.paymentMethod || 'Credit Card',
+      notes: transaction.notes || '',
+      userId
+    };
+
     try {
       const res = await fetch(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'PUT',
@@ -96,7 +117,7 @@ export const apiService = {
           'Content-Type': 'application/json',
           'X-User-Id': String(userId)
         },
-        body: JSON.stringify({ ...transaction, userId })
+        body: JSON.stringify(payload)
       });
       if (res.ok) {
         return await res.json();
