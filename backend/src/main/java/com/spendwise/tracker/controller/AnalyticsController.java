@@ -11,7 +11,6 @@ import java.util.Map;
 @RestController
 @RequestMapping("/api/v1/analytics")
 @RequiredArgsConstructor
-@CrossOrigin(origins = "*")
 public class AnalyticsController {
 
     private final TransactionService transactionService;
