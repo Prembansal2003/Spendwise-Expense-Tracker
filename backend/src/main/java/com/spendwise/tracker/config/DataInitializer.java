@@ -7,6 +7,7 @@ import com.spendwise.tracker.repository.UserRepository;
 import com.spendwise.tracker.util.PasswordEncoderUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
 import java.math.BigDecimal;
@@ -17,12 +18,21 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DataInitializer implements CommandLineRunner {
 
+    private final JdbcTemplate jdbcTemplate;
     private final UserRepository userRepository;
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
 
     @Override
     public void run(String... args) throws Exception {
+        // 0. Ensure user_id column exists on pre-existing PostgreSQL tables
+        try {
+            jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
+        } catch (Exception e) {
+            System.err.println("Schema alter check: " + e.getMessage());
+        }
+
         // 1. Seed Initial User if empty
         if (userRepository.count() == 0) {
             User demoUser = new User();
