@@ -7,6 +7,18 @@ services:
     dockerfilePath: Dockerfile
     plan: free
     envVars:
+      - key: SPRING_DATASOURCE_URL
+        fromDatabase:
+          name: spendwise-db
+          property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: spendwise-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: spendwise-db
+          property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
 
