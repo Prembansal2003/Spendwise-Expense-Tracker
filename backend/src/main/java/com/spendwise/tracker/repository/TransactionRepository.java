@@ -21,8 +21,8 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
 
     List<Transaction> findByCategoryOrderByTransactionDateDesc(Category category);
 
+    // Main search query WITHOUT userId — used internally
     @Query("SELECT t FROM Transaction t WHERE " +
-           "(:userId IS NULL OR t.userId = :userId) AND " +
            "(:type IS NULL OR t.type = :type) AND " +
            "(:category IS NULL OR t.category = :category) AND " +
            "(:search IS NULL OR LOWER(t.title) LIKE LOWER(CONCAT('%', :search, '%')) OR LOWER(t.notes) LIKE LOWER(CONCAT('%', :search, '%'))) AND " +
@@ -34,9 +34,11 @@ public interface TransactionRepository extends JpaRepository<Transaction, Long> 
             @Param("category") Category category,
             @Param("search") String search,
             @Param("startDate") LocalDate startDate,
-            @Param("endDate") LocalDate endDate,
-            @Param("userId") Long userId
+            @Param("endDate") LocalDate endDate
     );
+
+    // Fetch all transactions for a specific user
+    List<Transaction> findByUserIdOrderByTransactionDateDescCreatedAtDesc(Long userId);
 
     @Query("SELECT SUM(t.amount) FROM Transaction t WHERE t.type = :type")
     BigDecimal sumAmountByType(@Param("type") TransactionType type);

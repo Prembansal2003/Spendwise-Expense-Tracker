@@ -13,6 +13,7 @@ import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -21,7 +22,37 @@ public class TransactionService {
     private final TransactionRepository transactionRepository;
 
     public List<Transaction> getAllTransactions(TransactionType type, Category category, String search, LocalDate startDate, LocalDate endDate, Long userId) {
-        return transactionRepository.searchTransactions(type, category, search, startDate, endDate, userId);
+        List<Transaction> transactions;
+
+        // Fetch by userId first if provided, else fetch all
+        if (userId != null) {
+            transactions = transactionRepository.findByUserIdOrderByTransactionDateDescCreatedAtDesc(userId);
+        } else {
+            transactions = transactionRepository.findAllByOrderByTransactionDateDescCreatedAtDesc();
+        }
+
+        // Apply additional filters in Java
+        if (type != null) {
+            transactions = transactions.stream().filter(t -> type.equals(t.getType())).collect(Collectors.toList());
+        }
+        if (category != null) {
+            transactions = transactions.stream().filter(t -> category.equals(t.getCategory())).collect(Collectors.toList());
+        }
+        if (search != null && !search.isBlank()) {
+            String q = search.toLowerCase();
+            transactions = transactions.stream()
+                    .filter(t -> (t.getTitle() != null && t.getTitle().toLowerCase().contains(q)) ||
+                                 (t.getNotes() != null && t.getNotes().toLowerCase().contains(q)))
+                    .collect(Collectors.toList());
+        }
+        if (startDate != null) {
+            transactions = transactions.stream().filter(t -> !t.getTransactionDate().isBefore(startDate)).collect(Collectors.toList());
+        }
+        if (endDate != null) {
+            transactions = transactions.stream().filter(t -> !t.getTransactionDate().isAfter(endDate)).collect(Collectors.toList());
+        }
+
+        return transactions;
     }
 
     public Optional<Transaction> getTransactionById(Long id) {
@@ -45,9 +76,7 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
 
-        if (request.getUserId() != null) {
-            transaction.setUserId(request.getUserId());
-        }
+        if (request.getUserId() != null) transaction.setUserId(request.getUserId());
         transaction.setTitle(request.getTitle());
         transaction.setAmount(request.getAmount());
         transaction.setType(request.getType());
@@ -66,27 +95,19 @@ public class TransactionService {
     }
 
     public SummaryResponse getSummary() {
-        BigDecimal totalIncome = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.INCOME))
-                .orElse(BigDecimal.ZERO);
-        BigDecimal totalExpenses = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.EXPENSE))
-                .orElse(BigDecimal.ZERO);
+        BigDecimal totalIncome = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.INCOME)).orElse(BigDecimal.ZERO);
+        BigDecimal totalExpenses = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.EXPENSE)).orElse(BigDecimal.ZERO);
         BigDecimal totalBalance = totalIncome.subtract(totalExpenses);
 
         Double savingsRate = 0.0;
         if (totalIncome.compareTo(BigDecimal.ZERO) > 0) {
-            BigDecimal savings = totalIncome.subtract(totalExpenses);
-            savingsRate = savings.divide(totalIncome, 4, RoundingMode.HALF_UP)
+            savingsRate = totalIncome.subtract(totalExpenses)
+                    .divide(totalIncome, 4, RoundingMode.HALF_UP)
                     .multiply(BigDecimal.valueOf(100)).doubleValue();
         }
 
         List<Object[]> categoryTotals = transactionRepository.getCategoryExpenseTotals();
-        String topCategory = "N/A";
-        if (!categoryTotals.isEmpty()) {
-            Category cat = (Category) categoryTotals.get(0)[0];
-            topCategory = cat.getDisplayName();
-        }
-
-        long count = transactionRepository.count();
+        String topCategory = categoryTotals.isEmpty() ? "N/A" : ((Category) categoryTotals.get(0)[0]).getDisplayName();
 
         return SummaryResponse.builder()
                 .totalBalance(totalBalance)
@@ -94,31 +115,26 @@ public class TransactionService {
                 .totalExpenses(totalExpenses)
                 .savingsRatePercentage(savingsRate)
                 .topSpendingCategory(topCategory)
-                .transactionCount(count)
+                .transactionCount(transactionRepository.count())
                 .build();
     }
 
     public Map<String, Object> getCategoryBreakdown() {
         List<Object[]> categoryTotals = transactionRepository.getCategoryExpenseTotals();
+        BigDecimal totalExpense = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.EXPENSE)).orElse(BigDecimal.ONE);
+        if (totalExpense.compareTo(BigDecimal.ZERO) == 0) totalExpense = BigDecimal.ONE;
+
         List<Map<String, Object>> breakdown = new ArrayList<>();
-        BigDecimal totalExpense = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.EXPENSE))
-                .orElse(BigDecimal.ONE);
-
-        if (totalExpense.compareTo(BigDecimal.ZERO) == 0) {
-            totalExpense = BigDecimal.ONE;
-        }
-
         for (Object[] row : categoryTotals) {
-            Category category = (Category) row[0];
+            Category cat = (Category) row[0];
             BigDecimal amount = (BigDecimal) row[1];
-            double percentage = amount.divide(totalExpense, 4, RoundingMode.HALF_UP).doubleValue() * 100;
-
+            double pct = amount.divide(totalExpense, 4, RoundingMode.HALF_UP).doubleValue() * 100;
             Map<String, Object> item = new HashMap<>();
-            item.put("category", category.name());
-            item.put("displayName", category.getDisplayName());
-            item.put("icon", category.getIcon());
+            item.put("category", cat.name());
+            item.put("displayName", cat.getDisplayName());
+            item.put("icon", cat.getIcon());
             item.put("amount", amount);
-            item.put("percentage", Math.round(percentage * 10.0) / 10.0);
+            item.put("percentage", Math.round(pct * 10.0) / 10.0);
             breakdown.add(item);
         }
 
