@@ -18,6 +18,48 @@ export default function AuthGate({ onLoginSuccess }) {
       return;
     }
 
+    if (activeTab === 'login') {
+      // 1. Strict Credential Matching against stored users
+      const storedUserRaw = localStorage.getItem('spendwise_user');
+      let knownUsers = [
+        {
+          id: 101,
+          name: 'Alex Morgan',
+          email: 'alex.morgan@spendwise.io',
+          password: 'password123',
+          role: 'PRO_MEMBER',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          createdAt: 'Aug 2026'
+        }
+      ];
+
+      if (storedUserRaw) {
+        try {
+          const parsed = JSON.parse(storedUserRaw);
+          if (parsed && parsed.email && !knownUsers.some(u => u.email.toLowerCase() === parsed.email.toLowerCase())) {
+            knownUsers.push(parsed);
+          }
+        } catch (e) {}
+      }
+
+      // Check if email exists
+      const matchedUser = knownUsers.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
+      if (!matchedUser) {
+        setErrorMsg('No registered account found with this email address. Please Register first.');
+        return;
+      }
+
+      // Check password matching if stored
+      if (matchedUser.password && matchedUser.password !== formData.password) {
+        setErrorMsg('Incorrect password for this account. Please try again.');
+        return;
+      }
+
+      setErrorMsg('');
+      onLoginSuccess(matchedUser);
+      return;
+    }
+
     if (activeTab === 'register') {
       if (!formData.name.trim()) {
         setErrorMsg('Please enter your full name');
@@ -40,8 +82,9 @@ export default function AuthGate({ onLoginSuccess }) {
 
     const userObj = {
       id: Date.now(),
-      name: activeTab === 'register' ? formData.name : (formData.email.split('@')[0] || 'SpendWise Member'),
+      name: formData.name,
       email: formData.email,
+      password: formData.password,
       role: 'PRO_MEMBER',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       createdAt: 'Aug 2026'
