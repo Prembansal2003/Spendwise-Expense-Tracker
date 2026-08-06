@@ -28,9 +28,16 @@ public class TransactionController {
             @RequestParam(required = false) Category category,
             @RequestParam(required = false) String search,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Long userId
     ) {
         List<Transaction> transactions = transactionService.getAllTransactions(type, category, search, startDate, endDate);
+        // Filter by userId if provided
+        if (userId != null) {
+            transactions = transactions.stream()
+                    .filter(t -> userId.equals(t.getUserId()))
+                    .toList();
+        }
         return ResponseEntity.ok(transactions);
     }
 
