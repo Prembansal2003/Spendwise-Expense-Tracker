@@ -8,6 +8,9 @@ const fetchWithRetry = async (url, options = {}, retries = 2, delayMs = 1500) =>
     try {
       const res = await fetch(url, options);
       if (res.ok) return res;
+      if (res.status === 400 || res.status === 409 || res.status === 401) {
+        return res; // Don't retry validation client errors
+      }
     } catch (err) {
       if (i === retries) throw err;
       await new Promise(resolve => setTimeout(resolve, delayMs));
@@ -42,11 +45,14 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ name, email, password })
       });
+      const data = await res.json();
       if (res.ok) {
-        return await res.json();
+        return data;
+      } else {
+        return { error: data.message || data.error || 'Registration failed' };
       }
     } catch (err) {
-      console.warn('Backend register call failed, using local registration', err);
+      console.warn('Backend register call failed', err);
     }
     return null;
   },
@@ -58,8 +64,11 @@ export const apiService = {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password })
       });
+      const data = await res.json();
       if (res.ok) {
-        return await res.json();
+        return data;
+      } else {
+        return { error: data.message || data.error || 'Login failed' };
       }
     } catch (err) {
       console.warn('Backend login call failed', err);
