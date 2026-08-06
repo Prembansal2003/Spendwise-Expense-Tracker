@@ -13,6 +13,14 @@ services:
         fromDatabase:
           name: spendwise-db
           property: connectionString
+      - key: SPRING_DATASOURCE_USERNAME
+        fromDatabase:
+          name: spendwise-db
+          property: user
+      - key: SPRING_DATASOURCE_PASSWORD
+        fromDatabase:
+          name: spendwise-db
+          property: password
       - key: SPRING_JPA_HIBERNATE_DDL_AUTO
         value: update
 
@@ -20,8 +28,7 @@ services:
   - type: web
     name: spendwise-app
     env: static
-    rootDir: frontend
-    buildCommand: npm run build
+    buildCommand: ./render-build.sh
     staticPublishPath: dist
     envVars:
       - key: VITE_API_BASE_URL
@@ -30,4 +37,6 @@ services:
 databases:
   # 3. PostgreSQL Database
   - name: spendwise-db
+    databaseName: spendwisedb
+    user: spendwise_user
     plan: free
