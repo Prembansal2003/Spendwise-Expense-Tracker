@@ -20,8 +20,8 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
 
-    public List<Transaction> getAllTransactions(TransactionType type, Category category, String search, LocalDate startDate, LocalDate endDate) {
-        return transactionRepository.searchTransactions(type, category, search, startDate, endDate);
+    public List<Transaction> getAllTransactions(TransactionType type, Category category, String search, LocalDate startDate, LocalDate endDate, Long userId) {
+        return transactionRepository.searchTransactions(type, category, search, startDate, endDate, userId);
     }
 
     public Optional<Transaction> getTransactionById(Long id) {
