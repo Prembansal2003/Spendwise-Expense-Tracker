@@ -13,8 +13,8 @@ RUN mvn clean package -DskipTests
 FROM eclipse-temurin:17-jre-alpine
 WORKDIR /app
 
-# Copy compiled JAR
-COPY --from=build /app/target/*.jar app.jar
+# Copy exact Spring Boot executable JAR
+COPY --from=build /app/target/expense-tracker-backend-1.0.0.jar app.jar
 
 EXPOSE 8080
 

@@ -1,0 +1,29 @@
+# Render Blueprint Infrastructure Configuration
+services:
+  # 1. Backend Java Spring Boot Web Service
+  - type: web
+    name: spendwise-backend-api
+    env: docker
+    dockerfilePath: Dockerfile
+    plan: free
+    envVars:
+      - key: SPRING_JPA_HIBERNATE_DDL_AUTO
+        value: update
+
+  # 2. Frontend React Static Site
+  - type: web
+    name: spendwise-app
+    env: static
+    rootDir: frontend
+    buildCommand: npm run build
+    staticPublishPath: dist
+    envVars:
+      - key: VITE_API_BASE_URL
+        value: https://spendwise-backend-api.onrender.com/api/v1
+
+databases:
+  # 3. PostgreSQL Database
+  - name: spendwise-db
+    databaseName: spendwisedb
+    user: spendwise_user
+    plan: free
