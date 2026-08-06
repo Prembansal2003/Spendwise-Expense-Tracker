@@ -1,9 +1,9 @@
 import React, { useState } from 'react';
-import { Wallet, ShieldCheck, Sparkles, TrendingUp, PieChart, Lock, Mail, User, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Loader2 } from 'lucide-react';
+import { Wallet, ShieldCheck, Sparkles, TrendingUp, PieChart, Lock, Mail, User, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Loader2, AlertTriangle } from 'lucide-react';
 import { apiService } from '../services/api';
 
 export default function AuthGate({ onLoginSuccess }) {
-  const [activeTab, setActiveTab] = useState('register'); // Default to register for new accounts
+  const [activeTab, setActiveTab] = useState('register');
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
@@ -12,10 +12,12 @@ export default function AuthGate({ onLoginSuccess }) {
     password: ''
   });
   const [errorMsg, setErrorMsg] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
 
   const handleSubmit = async (e) => {
     if (e && e.preventDefault) e.preventDefault();
     setErrorMsg('');
+    setDebugInfo('');
 
     if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMsg('Please enter valid email and password');
@@ -31,9 +33,12 @@ export default function AuthGate({ onLoginSuccess }) {
 
     try {
       if (activeTab === 'login') {
-        // 1. Try Backend REST API login
+        setDebugInfo('Connecting to backend server...');
+
         const backendUser = await apiService.loginUser(formData.email, formData.password);
+        
         if (backendUser && backendUser.id) {
+          setDebugInfo('✅ Login successful! Loading workspace...');
           setIsLoading(false);
           onLoginSuccess({
             id: backendUser.id,
@@ -46,51 +51,27 @@ export default function AuthGate({ onLoginSuccess }) {
           return;
         }
 
-        // Local fallback checking
-        const storedUserRaw = localStorage.getItem('spendwise_user');
-        let knownUsers = [
-          {
-            id: 101,
-            name: 'Alex Morgan',
-            email: 'alex.morgan@spendwise.io',
-            password: 'password123',
-            role: 'PRO_MEMBER',
-            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-            createdAt: 'Aug 2026'
-          }
-        ];
-
-        if (storedUserRaw) {
-          try {
-            const parsed = JSON.parse(storedUserRaw);
-            if (parsed && parsed.email && !knownUsers.some(u => u.email.toLowerCase() === parsed.email.toLowerCase())) {
-              knownUsers.push(parsed);
-            }
-          } catch (err) {}
-        }
-
-        const matchedUser = knownUsers.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
-        if (!matchedUser) {
+        if (backendUser && backendUser.error) {
           setIsLoading(false);
-          setErrorMsg('No registered account found with this email address. Please Register first.');
+          setErrorMsg(backendUser.error);
+          setDebugInfo('');
           return;
         }
 
-        if (matchedUser.password && matchedUser.password !== formData.password) {
-          setIsLoading(false);
-          setErrorMsg('Incorrect password for this account. Please try again.');
-          return;
-        }
-
+        // Backend returned null - server unreachable
         setIsLoading(false);
-        onLoginSuccess(matchedUser);
+        setErrorMsg('Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.');
+        setDebugInfo('⚠️ Backend server is waking up (Render free tier cold start). Please retry.');
         return;
       }
 
       if (activeTab === 'register') {
-        // 1. Send registration to Spring Boot Backend API (Persists to PostgreSQL)
+        setDebugInfo('Creating account on backend server...');
+
         const backendUser = await apiService.registerUser(formData.name, formData.email, formData.password);
+        
         if (backendUser && backendUser.id) {
+          setDebugInfo('✅ Account created in database! Loading workspace...');
           setIsLoading(false);
           onLoginSuccess({
             id: backendUser.id,
@@ -101,29 +82,25 @@ export default function AuthGate({ onLoginSuccess }) {
             token: backendUser.token
           });
           return;
-        } else if (backendUser && backendUser.error) {
+        }
+
+        if (backendUser && backendUser.error) {
           setIsLoading(false);
           setErrorMsg(backendUser.error);
+          setDebugInfo('');
           return;
         }
 
-        // Local Fallback Creation
-        const userObj = {
-          id: Date.now(),
-          name: formData.name,
-          email: formData.email,
-          password: formData.password,
-          role: 'PRO_MEMBER',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-          createdAt: 'Aug 2026'
-        };
-
+        // Backend returned null — DO NOT create local fallback user
         setIsLoading(false);
-        onLoginSuccess(userObj);
+        setErrorMsg('Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.');
+        setDebugInfo('⚠️ Backend server is waking up (Render free tier cold start). Please retry.');
+        return;
       }
     } catch (err) {
       setIsLoading(false);
-      setErrorMsg('Error processing request. Please try again.');
+      setErrorMsg('Network error: ' + (err.message || 'Please check your connection'));
+      setDebugInfo('❌ Error: ' + (err.message || 'Unknown'));
     }
   };
 
@@ -233,7 +210,7 @@ export default function AuthGate({ onLoginSuccess }) {
               type="button"
               className={`btn btn-sm ${activeTab === 'login' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ border: 'none' }}
-              onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
+              onClick={() => { setActiveTab('login'); setErrorMsg(''); setDebugInfo(''); }}
             >
               <LogIn size={14} /> Sign In
             </button>
@@ -241,7 +218,7 @@ export default function AuthGate({ onLoginSuccess }) {
               type="button"
               className={`btn btn-sm ${activeTab === 'register' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ border: 'none' }}
-              onClick={() => { setActiveTab('register'); setErrorMsg(''); }}
+              onClick={() => { setActiveTab('register'); setErrorMsg(''); setDebugInfo(''); }}
             >
               <UserPlus size={14} /> Register
             </button>
@@ -250,13 +227,32 @@ export default function AuthGate({ onLoginSuccess }) {
           {errorMsg && (
             <div style={{
               padding: '0.625rem 0.875rem',
-              backgroundColor: 'var(--danger-bg)',
-              color: 'var(--danger)',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              color: '#ef4444',
               fontSize: '0.8125rem',
               borderRadius: 'var(--radius-md)',
-              marginBottom: '1rem'
+              marginBottom: '1rem',
+              border: '1px solid rgba(239, 68, 68, 0.3)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem'
             }}>
-              {errorMsg}
+              <AlertTriangle size={16} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {debugInfo && (
+            <div style={{
+              padding: '0.5rem 0.75rem',
+              backgroundColor: 'rgba(99, 102, 241, 0.1)',
+              color: 'var(--primary)',
+              fontSize: '0.75rem',
+              borderRadius: 'var(--radius-md)',
+              marginBottom: '0.75rem',
+              border: '1px solid rgba(99, 102, 241, 0.3)'
+            }}>
+              {debugInfo}
             </div>
           )}
 
@@ -322,16 +318,15 @@ export default function AuthGate({ onLoginSuccess }) {
             </div>
 
             <button
-              type="button"
+              type="submit"
               className="btn btn-primary"
               disabled={isLoading}
               style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
-              onClick={handleSubmit}
             >
               {isLoading ? (
                 <>
-                  <Loader2 size={16} className="animate-spin" />
-                  <span>Connecting to Workspace...</span>
+                  <Loader2 size={16} style={{ animation: 'spin 1s linear infinite' }} />
+                  <span>Connecting to server...</span>
                 </>
               ) : (
                 <span>{activeTab === 'login' ? 'Sign In to Workspace' : 'Create Account'}</span>
@@ -352,6 +347,13 @@ export default function AuthGate({ onLoginSuccess }) {
         </div>
 
       </div>
+
+      <style>{`
+        @keyframes spin {
+          from { transform: rotate(0deg); }
+          to { transform: rotate(360deg); }
+        }
+      `}</style>
     </div>
   );
 }
