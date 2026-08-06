@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
-import { Wallet, ShieldCheck, Sparkles, TrendingUp, PieChart, Lock, Mail, User, Eye, EyeOff, LogIn, UserPlus, ArrowRight } from 'lucide-react';
+import { Wallet, ShieldCheck, Sparkles, TrendingUp, PieChart, Lock, Mail, User, Eye, EyeOff, LogIn, UserPlus, ArrowRight, Loader2 } from 'lucide-react';
+import { apiService } from '../services/api';
 
 export default function AuthGate({ onLoginSuccess }) {
-  const [activeTab, setActiveTab] = useState('login'); // 'login' or 'register'
+  const [activeTab, setActiveTab] = useState('register'); // Default to register for new accounts
   const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -12,112 +14,116 @@ export default function AuthGate({ onLoginSuccess }) {
   const [errorMsg, setErrorMsg] = useState('');
 
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    if (e && e.preventDefault) e.preventDefault();
+    setErrorMsg('');
+
     if (!formData.email.trim() || !formData.password.trim()) {
       setErrorMsg('Please enter valid email and password');
       return;
     }
 
-    if (activeTab === 'login') {
-      // 1. Try Backend REST API login
-      const backendUser = await apiService.loginUser(formData.email, formData.password);
-      if (backendUser && backendUser.id) {
-        setErrorMsg('');
-        onLoginSuccess({
-          id: backendUser.id,
-          name: backendUser.name,
-          email: backendUser.email,
-          role: backendUser.role || 'PRO_MEMBER',
-          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-          token: backendUser.token
-        });
-        return;
-      }
-
-      // Local fallback checking
-      const storedUserRaw = localStorage.getItem('spendwise_user');
-      let knownUsers = [
-        {
-          id: 101,
-          name: 'Alex Morgan',
-          email: 'alex.morgan@spendwise.io',
-          password: 'password123',
-          role: 'PRO_MEMBER',
-          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-          createdAt: 'Aug 2026'
-        }
-      ];
-
-      if (storedUserRaw) {
-        try {
-          const parsed = JSON.parse(storedUserRaw);
-          if (parsed && parsed.email && !knownUsers.some(u => u.email.toLowerCase() === parsed.email.toLowerCase())) {
-            knownUsers.push(parsed);
-          }
-        } catch (e) {}
-      }
-
-      const matchedUser = knownUsers.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
-      if (!matchedUser) {
-        setErrorMsg('No registered account found with this email address. Please Register first.');
-        return;
-      }
-
-      if (matchedUser.password && matchedUser.password !== formData.password) {
-        setErrorMsg('Incorrect password for this account. Please try again.');
-        return;
-      }
-
-      setErrorMsg('');
-      onLoginSuccess(matchedUser);
+    if (activeTab === 'register' && !formData.name.trim()) {
+      setErrorMsg('Please enter your full name');
       return;
     }
 
-    if (activeTab === 'register') {
-      if (!formData.name.trim()) {
-        setErrorMsg('Please enter your full name');
-        return;
-      }
+    setIsLoading(true);
 
-      // 1. Send registration to Spring Boot Backend API (Persists to PostgreSQL)
-      const backendUser = await apiService.registerUser(formData.name, formData.email, formData.password);
-      if (backendUser && backendUser.id) {
-        setErrorMsg('');
-        onLoginSuccess({
-          id: backendUser.id,
-          name: backendUser.name,
-          email: backendUser.email,
-          role: backendUser.role || 'PRO_MEMBER',
-          avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-          token: backendUser.token
-        });
-        return;
-      }
+    try {
+      if (activeTab === 'login') {
+        // 1. Try Backend REST API login
+        const backendUser = await apiService.loginUser(formData.email, formData.password);
+        if (backendUser && backendUser.id) {
+          setIsLoading(false);
+          onLoginSuccess({
+            id: backendUser.id,
+            name: backendUser.name,
+            email: backendUser.email,
+            role: backendUser.role || 'PRO_MEMBER',
+            avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+            token: backendUser.token
+          });
+          return;
+        }
 
-      // Local Fallback Enforce Unique Email Check
-      const existingUser = localStorage.getItem('spendwise_user');
-      if (existingUser) {
-        try {
-          const parsed = JSON.parse(existingUser);
-          if (parsed && parsed.email && parsed.email.toLowerCase() === formData.email.toLowerCase()) {
-            setErrorMsg('An account with this email address already exists. Please sign in instead.');
-            return;
+        // Local fallback checking
+        const storedUserRaw = localStorage.getItem('spendwise_user');
+        let knownUsers = [
+          {
+            id: 101,
+            name: 'Alex Morgan',
+            email: 'alex.morgan@spendwise.io',
+            password: 'password123',
+            role: 'PRO_MEMBER',
+            avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+            createdAt: 'Aug 2026'
           }
-        } catch (e) {}
+        ];
+
+        if (storedUserRaw) {
+          try {
+            const parsed = JSON.parse(storedUserRaw);
+            if (parsed && parsed.email && !knownUsers.some(u => u.email.toLowerCase() === parsed.email.toLowerCase())) {
+              knownUsers.push(parsed);
+            }
+          } catch (err) {}
+        }
+
+        const matchedUser = knownUsers.find(u => u.email.toLowerCase() === formData.email.toLowerCase());
+        if (!matchedUser) {
+          setIsLoading(false);
+          setErrorMsg('No registered account found with this email address. Please Register first.');
+          return;
+        }
+
+        if (matchedUser.password && matchedUser.password !== formData.password) {
+          setIsLoading(false);
+          setErrorMsg('Incorrect password for this account. Please try again.');
+          return;
+        }
+
+        setIsLoading(false);
+        onLoginSuccess(matchedUser);
+        return;
       }
 
-      const userObj = {
-        id: Date.now(),
-        name: formData.name,
-        email: formData.email,
-        password: formData.password,
-        role: 'PRO_MEMBER',
-        avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
-        createdAt: 'Aug 2026'
-      };
+      if (activeTab === 'register') {
+        // 1. Send registration to Spring Boot Backend API (Persists to PostgreSQL)
+        const backendUser = await apiService.registerUser(formData.name, formData.email, formData.password);
+        if (backendUser && backendUser.id) {
+          setIsLoading(false);
+          onLoginSuccess({
+            id: backendUser.id,
+            name: backendUser.name,
+            email: backendUser.email,
+            role: backendUser.role || 'PRO_MEMBER',
+            avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+            token: backendUser.token
+          });
+          return;
+        } else if (backendUser && backendUser.error) {
+          setIsLoading(false);
+          setErrorMsg(backendUser.error);
+          return;
+        }
 
-      setErrorMsg('');
-      onLoginSuccess(userObj);
+        // Local Fallback Creation
+        const userObj = {
+          id: Date.now(),
+          name: formData.name,
+          email: formData.email,
+          password: formData.password,
+          role: 'PRO_MEMBER',
+          avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+          createdAt: 'Aug 2026'
+        };
+
+        setIsLoading(false);
+        onLoginSuccess(userObj);
+      }
+    } catch (err) {
+      setIsLoading(false);
+      setErrorMsg('Error processing request. Please try again.');
     }
   };
 
@@ -137,7 +143,7 @@ export default function AuthGate({ onLoginSuccess }) {
     <div style={{ minHeight: '85vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 items-center" style={{ width: '100%', maxWidth: '1100px' }}>
         
-        {/* Left Side: Hero Info & Value Proposition */}
+        {/* Left Side: Hero Info */}
         <div>
           <div className="flex items-center gap-2" style={{ marginBottom: '1rem' }}>
             <div style={{
@@ -224,6 +230,7 @@ export default function AuthGate({ onLoginSuccess }) {
             marginBottom: '1.25rem'
           }}>
             <button
+              type="button"
               className={`btn btn-sm ${activeTab === 'login' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ border: 'none' }}
               onClick={() => { setActiveTab('login'); setErrorMsg(''); }}
@@ -231,6 +238,7 @@ export default function AuthGate({ onLoginSuccess }) {
               <LogIn size={14} /> Sign In
             </button>
             <button
+              type="button"
               className={`btn btn-sm ${activeTab === 'register' ? 'btn-primary' : 'btn-secondary'}`}
               style={{ border: 'none' }}
               onClick={() => { setActiveTab('register'); setErrorMsg(''); }}
@@ -313,8 +321,21 @@ export default function AuthGate({ onLoginSuccess }) {
               </div>
             </div>
 
-            <button type="submit" className="btn btn-primary" style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem' }}>
-              {activeTab === 'login' ? 'Sign In to Workspace' : 'Create Account'}
+            <button
+              type="button"
+              className="btn btn-primary"
+              disabled={isLoading}
+              style={{ width: '100%', marginTop: '0.5rem', padding: '0.75rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+              onClick={handleSubmit}
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 size={16} className="animate-spin" />
+                  <span>Connecting to Workspace...</span>
+                </>
+              ) : (
+                <span>{activeTab === 'login' ? 'Sign In to Workspace' : 'Create Account'}</span>
+              )}
             </button>
           </form>
 
