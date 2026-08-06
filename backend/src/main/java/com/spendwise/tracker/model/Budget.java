@@ -11,7 +11,7 @@ import java.math.BigDecimal;
 
 @Entity
 @Table(name = "budgets", uniqueConstraints = {
-    @UniqueConstraint(columnNames = {"category", "month", "year"})
+    @UniqueConstraint(columnNames = {"user_id", "category", "month", "year"})
 })
 @Data
 @NoArgsConstructor
@@ -21,6 +21,9 @@ public class Budget {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
+
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L;
 
     @NotNull(message = "Category is required")
     @Enumerated(EnumType.STRING)

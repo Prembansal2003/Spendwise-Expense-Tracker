@@ -9,6 +9,7 @@ import ExportModal from './components/ExportModal';
 import AuthModal from './components/AuthModal';
 import ProfileModal from './components/ProfileModal';
 import AiAssistantModal from './components/AiAssistantModal';
+import AuthGate from './components/AuthGate';
 import { apiService } from './services/api';
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
 
@@ -57,19 +58,20 @@ export default function App() {
     }
   }, [darkMode]);
 
-  // Load Transactions & Budgets
+  // Load Transactions & Budgets scoped by User ID
   const loadData = async () => {
-    const txRes = await apiService.getTransactions();
+    if (!user) return;
+    const txRes = await apiService.getTransactions({}, user.id);
     setTransactions(txRes.data);
     setIsBackend(txRes.isBackend);
 
-    const bRes = await apiService.getBudgets();
+    const bRes = await apiService.getBudgets(user.id);
     setBudgets(bRes);
   };
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [user?.id]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
@@ -79,22 +81,25 @@ export default function App() {
   const handleLoginSuccess = (userObj) => {
     setUser(userObj);
     localStorage.setItem('spendwise_user', JSON.stringify(userObj));
-    showToast(`👋 Welcome back, ${userObj.name}!`);
+    showToast(`👋 Welcome, ${userObj.name}! Workspace loaded.`);
   };
 
   const handleLogout = () => {
     setUser(null);
     localStorage.removeItem('spendwise_user');
-    showToast('👋 You have been logged out');
+    setTransactions([]);
+    setBudgets([]);
+    showToast('🔒 Signed out of SpendWise account');
   };
 
   // Add / Edit Transaction
   const handleSaveTransaction = async (data) => {
+    if (!user) return;
     if (editingTransaction) {
-      await apiService.updateTransaction(editingTransaction.id, data);
+      await apiService.updateTransaction(editingTransaction.id, data, user.id);
       showToast('✅ Transaction updated successfully');
     } else {
-      await apiService.createTransaction(data);
+      await apiService.createTransaction(data, user.id);
       showToast('🎉 New transaction recorded!');
     }
     setEditingTransaction(null);
@@ -103,8 +108,9 @@ export default function App() {
 
   // Delete Transaction
   const handleDeleteTransaction = async (id) => {
+    if (!user) return;
     if (window.confirm('Delete this transaction record?')) {
-      await apiService.deleteTransaction(id);
+      await apiService.deleteTransaction(id, user.id);
       showToast('🗑️ Transaction deleted');
       loadData();
     }
@@ -116,17 +122,30 @@ export default function App() {
   };
 
   const handleUpdateBudget = async (category, monthlyLimit) => {
-    await apiService.updateBudget(category, monthlyLimit);
+    if (!user) return;
+    await apiService.updateBudget(category, monthlyLimit, user.id);
     showToast(`🎯 Budget cap for ${category} updated`);
     loadData();
   };
 
   const handleResetData = () => {
-    localStorage.setItem('spendwise_transactions', JSON.stringify(INITIAL_TRANSACTIONS));
-    localStorage.setItem('spendwise_budgets', JSON.stringify(INITIAL_BUDGETS));
+    if (!user) return;
+    const storageKey = `spendwise_transactions_${user.id}`;
+    const budgetKey = `spendwise_budgets_${user.id}`;
+    localStorage.setItem(storageKey, JSON.stringify(INITIAL_TRANSACTIONS));
+    localStorage.setItem(budgetKey, JSON.stringify(INITIAL_BUDGETS));
     loadData();
     showToast('🔄 Demo dataset reloaded!');
   };
+
+  // Enforce Auth Gate for Signed-Out Visitors
+  if (!user) {
+    return (
+      <div className="app-container">
+        <AuthGate onLoginSuccess={handleLoginSuccess} />
+      </div>
+    );
+  }
 
   return (
     <div className="app-container">

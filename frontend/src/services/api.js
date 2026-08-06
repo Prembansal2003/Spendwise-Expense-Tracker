@@ -2,7 +2,6 @@ import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 
 const API_BASE_URL = '/api/v1';
 
-// Helper to check local storage
 const getLocalData = (key, fallback) => {
   try {
     const item = localStorage.getItem(key);
@@ -21,25 +20,29 @@ const setLocalData = (key, value) => {
 };
 
 export const apiService = {
-  // Fetch transactions from Java REST API or LocalStorage fallback
-  async getTransactions(filters = {}) {
+  // Fetch transactions scoped per user ID
+  async getTransactions(filters = {}, userId = 101) {
     try {
       const query = new URLSearchParams();
       if (filters.type) query.append('type', filters.type);
       if (filters.category) query.append('category', filters.category);
       if (filters.search) query.append('search', filters.search);
+      query.append('userId', userId);
 
-      const res = await fetch(`${API_BASE_URL}/transactions?${query.toString()}`);
+      const res = await fetch(`${API_BASE_URL}/transactions?${query.toString()}`, {
+        headers: { 'X-User-Id': String(userId) }
+      });
       if (res.ok) {
         const data = await res.json();
         return { data, isBackend: true };
       }
-    } catch (err) {
-      // Backend not running, use client fallback
-    }
+    } catch (err) {}
 
-    // Local fallback
-    let list = getLocalData('spendwise_transactions', INITIAL_TRANSACTIONS);
+    // Local Storage Scoped Fallback per user
+    const storageKey = `spendwise_transactions_${userId}`;
+    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
+    let list = getLocalData(storageKey, defaultData);
+
     if (filters.type) {
       list = list.filter(t => t.type === filters.type);
     }
@@ -53,72 +56,91 @@ export const apiService = {
     return { data: list, isBackend: false };
   },
 
-  async createTransaction(transaction) {
+  async createTransaction(transaction, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions`, {
+      const res = await fetch(`${API_BASE_URL}/transactions?userId=${userId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transaction)
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': String(userId)
+        },
+        body: JSON.stringify({ ...transaction, userId })
       });
       if (res.ok) {
         return await res.json();
       }
     } catch (err) {}
 
-    // Fallback
-    const list = getLocalData('spendwise_transactions', INITIAL_TRANSACTIONS);
-    const newTx = { ...transaction, id: Date.now() };
+    // Local Storage Scoped Fallback
+    const storageKey = `spendwise_transactions_${userId}`;
+    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
+    const list = getLocalData(storageKey, defaultData);
+
+    const newTx = { ...transaction, id: Date.now(), userId };
     const updated = [newTx, ...list];
-    setLocalData('spendwise_transactions', updated);
+    setLocalData(storageKey, updated);
     return newTx;
   },
 
-  async updateTransaction(id, transaction) {
+  async updateTransaction(id, transaction, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions/${id}`, {
+      const res = await fetch(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(transaction)
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': String(userId)
+        },
+        body: JSON.stringify({ ...transaction, userId })
       });
       if (res.ok) {
         return await res.json();
       }
     } catch (err) {}
 
-    // Fallback
-    const list = getLocalData('spendwise_transactions', INITIAL_TRANSACTIONS);
-    const updated = list.map(t => (t.id === id ? { ...transaction, id } : t));
-    setLocalData('spendwise_transactions', updated);
-    return { ...transaction, id };
+    const storageKey = `spendwise_transactions_${userId}`;
+    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
+    const list = getLocalData(storageKey, defaultData);
+    const updated = list.map(t => (t.id === id ? { ...transaction, id, userId } : t));
+    setLocalData(storageKey, updated);
+    return { ...transaction, id, userId };
   },
 
-  async deleteTransaction(id) {
+  async deleteTransaction(id, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/transactions/${id}`, {
-        method: 'DELETE'
+      const res = await fetch(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
+        method: 'DELETE',
+        headers: { 'X-User-Id': String(userId) }
       });
       if (res.ok) return true;
     } catch (err) {}
 
-    // Fallback
-    const list = getLocalData('spendwise_transactions', INITIAL_TRANSACTIONS);
+    const storageKey = `spendwise_transactions_${userId}`;
+    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
+    const list = getLocalData(storageKey, defaultData);
     const updated = list.filter(t => t.id !== id);
-    setLocalData('spendwise_transactions', updated);
+    setLocalData(storageKey, updated);
     return true;
   },
 
-  // Get Budgets
-  async getBudgets() {
+  // Get Budgets Scoped per User ID
+  async getBudgets(userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/budgets/progress`);
+      const res = await fetch(`${API_BASE_URL}/budgets/progress?userId=${userId}`, {
+        headers: { 'X-User-Id': String(userId) }
+      });
       if (res.ok) {
         return await res.json();
       }
     } catch (err) {}
 
-    // Fallback calculation
-    const budgets = getLocalData('spendwise_budgets', INITIAL_BUDGETS);
-    const transactions = getLocalData('spendwise_transactions', INITIAL_TRANSACTIONS);
+    const budgetKey = `spendwise_budgets_${userId}`;
+    const txKey = `spendwise_transactions_${userId}`;
+
+    const defaultBudgets = INITIAL_BUDGETS;
+    const defaultTx = userId === 101 ? INITIAL_TRANSACTIONS : [];
+
+    const budgets = getLocalData(budgetKey, defaultBudgets);
+    const transactions = getLocalData(txKey, defaultTx);
 
     return budgets.map(b => {
       const actualSpend = transactions
@@ -145,25 +167,28 @@ export const apiService = {
     });
   },
 
-  async updateBudget(category, monthlyLimit) {
+  async updateBudget(category, monthlyLimit, userId = 101) {
     try {
-      const res = await fetch(`${API_BASE_URL}/budgets`, {
+      const res = await fetch(`${API_BASE_URL}/budgets?userId=${userId}`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, monthlyLimit })
+        headers: {
+          'Content-Type': 'application/json',
+          'X-User-Id': String(userId)
+        },
+        body: JSON.stringify({ category, monthlyLimit, userId })
       });
       if (res.ok) return await res.json();
     } catch (err) {}
 
-    // Fallback
-    const budgets = getLocalData('spendwise_budgets', INITIAL_BUDGETS);
+    const budgetKey = `spendwise_budgets_${userId}`;
+    const budgets = getLocalData(budgetKey, INITIAL_BUDGETS);
     const existingIdx = budgets.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
       budgets[existingIdx].monthlyLimit = Number(monthlyLimit);
     } else {
       budgets.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit) });
     }
-    setLocalData('spendwise_budgets', budgets);
+    setLocalData(budgetKey, budgets);
     return true;
   }
 };

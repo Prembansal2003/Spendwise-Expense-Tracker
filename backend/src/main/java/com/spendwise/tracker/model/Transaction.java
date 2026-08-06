@@ -23,6 +23,9 @@ public class Transaction {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId = 1L;
+
     @NotBlank(message = "Transaction title is required")
     @Column(nullable = false)
     private String title;
