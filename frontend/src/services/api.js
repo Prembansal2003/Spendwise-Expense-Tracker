@@ -1,7 +1,7 @@
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
 
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
-const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || BACKEND_CLOUD_URL;
+const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || (window.location.hostname === 'localhost' ? '/api/v1' : BACKEND_CLOUD_URL);
 
 const fetchWithRetry = async (url, options = {}, retries = 2, delayMs = 1500) => {
   for (let i = 0; i <= retries; i++) {
