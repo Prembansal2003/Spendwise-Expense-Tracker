@@ -12,7 +12,6 @@ const API_BASE_URL = _baseUrl;
 console.log('[SpendWise API] Base URL:', API_BASE_URL);
 
 // Auto wake-up ping: fires immediately on app load to warm Render free-tier container
-// so it's ready by the time the user registers or adds a transaction
 const _wakeUp = () => {
   fetch(`${API_BASE_URL}/auth/profile/1`, { method: 'GET', signal: AbortSignal.timeout(90000) })
     .then(() => console.log('[SpendWise API] ✅ Backend is awake and ready'))
@@ -115,8 +114,11 @@ export const apiService = {
 
       const res = await fetchApi(`${API_BASE_URL}/transactions?${query.toString()}`);
       if (res.ok) {
-        const data = await res.json();
+        let data = await res.json();
         console.log(`[SpendWise API] Loaded ${data.length} transactions from BACKEND DB`);
+        if ((!data || data.length === 0) && (userId === 101 || userId === '101')) {
+          data = INITIAL_TRANSACTIONS;
+        }
         return { data, isBackend: true };
       }
       console.warn('[SpendWise API] getTransactions non-OK:', res.status);
@@ -125,8 +127,12 @@ export const apiService = {
     }
 
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
+    const defaultData = (userId === 101 || userId === '101') ? INITIAL_TRANSACTIONS : [];
     let list = getLocalData(storageKey, defaultData);
+    if ((!list || list.length === 0) && (userId === 101 || userId === '101')) {
+      list = INITIAL_TRANSACTIONS;
+      setLocalData(storageKey, INITIAL_TRANSACTIONS);
+    }
     console.log(`[SpendWise API] Loaded ${list.length} transactions from LOCAL STORAGE (fallback)`);
 
     if (filters.type) list = list.filter(t => t.type === filters.type);
@@ -146,38 +152,30 @@ export const apiService = {
       type: transaction.type,
       category: transaction.category,
       transactionDate: txDate,
-      date: txDate,
-      paymentMethod: transaction.paymentMethod || 'Credit Card',
+      paymentMethod: transaction.paymentMethod || 'Bank Transfer',
       notes: transaction.notes || '',
-      currency: transaction.currency || 'USD',
-      userId
+      currency: transaction.currency || 'USD'
     };
 
     try {
-      const res = await fetchApi(`${API_BASE_URL}/transactions`, {
+      const res = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       if (res.ok) {
         const data = await res.json();
-        console.log('[SpendWise API] Transaction SAVED TO DB:', data);
         return data;
       }
-      const errText = await res.text();
-      console.error('[SpendWise API] createTransaction server error:', res.status, errText);
     } catch (err) {
-      console.error('[SpendWise API] createTransaction network error:', err.message);
+      console.warn('[SpendWise API] createTransaction failed, saving to localStorage:', err.message);
     }
 
-    // Local Storage Fallback
-    console.warn('[SpendWise API] createTransaction falling back to localStorage');
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
-    const list = getLocalData(storageKey, defaultData);
-    const newTx = { ...transaction, id: Date.now(), userId };
-    const updated = [newTx, ...list];
-    setLocalData(storageKey, updated);
+    const list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    const newTx = { ...payload, id: Date.now() };
+    list.unshift(newTx);
+    setLocalData(storageKey, list);
     return newTx;
   },
 
@@ -189,55 +187,46 @@ export const apiService = {
       type: transaction.type,
       category: transaction.category,
       transactionDate: txDate,
-      date: txDate,
-      paymentMethod: transaction.paymentMethod || 'Credit Card',
+      paymentMethod: transaction.paymentMethod || 'Bank Transfer',
       notes: transaction.notes || '',
-      userId
+      currency: transaction.currency || 'USD'
     };
 
     try {
-      const res = await fetchApi(`${API_BASE_URL}/transactions/${id}`, {
+      const res = await fetchApi(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
       });
       if (res.ok) {
         const data = await res.json();
-        console.log('[SpendWise API] Transaction UPDATED IN DB:', data);
         return data;
       }
-      const errText = await res.text();
-      console.error('[SpendWise API] updateTransaction server error:', res.status, errText);
     } catch (err) {
-      console.error('[SpendWise API] updateTransaction network error:', err.message);
+      console.warn('[SpendWise API] updateTransaction failed, updating localStorage:', err.message);
     }
 
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
-    const list = getLocalData(storageKey, defaultData);
-    const updated = list.map(t => (t.id === id ? { ...transaction, id, userId } : t));
-    setLocalData(storageKey, updated);
-    return { ...transaction, id, userId };
+    let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    list = list.map(t => t.id === id ? { ...t, ...payload } : t);
+    setLocalData(storageKey, list);
+    return { ...payload, id };
   },
 
   async deleteTransaction(id, userId = 101) {
     try {
-      const res = await fetchApi(`${API_BASE_URL}/transactions/${id}`, {
+      const res = await fetchApi(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'DELETE'
       });
-      if (res.ok) {
-        console.log('[SpendWise API] Transaction DELETED FROM DB:', id);
-        return true;
-      }
+      if (res.ok) return true;
     } catch (err) {
-      console.error('[SpendWise API] deleteTransaction network error:', err.message);
+      console.warn('[SpendWise API] deleteTransaction failed, removing from localStorage:', err.message);
     }
 
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = userId === 101 ? INITIAL_TRANSACTIONS : [];
-    const list = getLocalData(storageKey, defaultData);
-    const updated = list.filter(t => t.id !== id);
-    setLocalData(storageKey, updated);
+    let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    list = list.filter(t => t.id !== id);
+    setLocalData(storageKey, list);
     return true;
   },
 
@@ -246,65 +235,49 @@ export const apiService = {
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets/progress?userId=${userId}`);
       if (res.ok) {
-        const data = await res.json();
-        console.log(`[SpendWise API] Loaded ${data.length} budgets from BACKEND DB`);
+        let data = await res.json();
+        if ((!data || data.length === 0) && (userId === 101 || userId === '101')) {
+          data = INITIAL_BUDGETS;
+        }
         return data;
       }
     } catch (err) {
-      console.warn('[SpendWise API] getBudgets failed, using localStorage fallback:', err.message);
+      console.warn('[SpendWise API] getBudgets failed, using localStorage fallback');
     }
 
-    const budgetKey = `spendwise_budgets_${userId}`;
-    const txKey = `spendwise_transactions_${userId}`;
-    const defaultBudgets = INITIAL_BUDGETS;
-    const defaultTx = userId === 101 ? INITIAL_TRANSACTIONS : [];
-    const budgets = getLocalData(budgetKey, defaultBudgets);
-    const transactions = getLocalData(txKey, defaultTx);
-
-    return budgets.map(b => {
-      const actualSpend = transactions
-        .filter(t => t.type === 'EXPENSE' && t.category === b.category)
-        .reduce((sum, t) => sum + Number(t.amount || 0), 0);
-      const limit = Number(b.monthlyLimit || 0);
-      const remaining = limit - actualSpend;
-      const pct = limit > 0 ? (actualSpend / limit) * 100 : 0;
-      let status = 'NORMAL';
-      if (pct > 100) status = 'EXCEEDED';
-      else if (pct >= 80) status = 'WARNING';
-      return {
-        id: b.id, category: b.category, monthlyLimit: limit,
-        currentSpend: actualSpend, remainingAmount: remaining,
-        percentageUsed: Math.round(pct * 10) / 10, status
-      };
-    });
+    const storageKey = `spendwise_budgets_${userId}`;
+    let list = getLocalData(storageKey, INITIAL_BUDGETS);
+    if ((!list || list.length === 0) && (userId === 101 || userId === '101')) {
+      list = INITIAL_BUDGETS;
+      setLocalData(storageKey, INITIAL_BUDGETS);
+    }
+    return list;
   },
 
   async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD') {
     try {
-      const res = await fetchApi(`${API_BASE_URL}/budgets`, {
+      const res = await fetchApi(`${API_BASE_URL}/budgets?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, monthlyLimit, currency, userId })
+        body: JSON.stringify({ category, monthlyLimit: Number(monthlyLimit), currency })
       });
       if (res.ok) {
         const data = await res.json();
-        console.log('[SpendWise API] Budget SAVED TO DB:', data);
         return data;
       }
     } catch (err) {
-      console.error('[SpendWise API] updateBudget network error:', err.message);
+      console.warn('[SpendWise API] updateBudget failed, updating localStorage');
     }
 
-    const budgetKey = `spendwise_budgets_${userId}`;
-    const budgets = getLocalData(budgetKey, INITIAL_BUDGETS);
-    const existingIdx = budgets.findIndex(b => b.category === category);
+    const storageKey = `spendwise_budgets_${userId}`;
+    let list = getLocalData(storageKey, INITIAL_BUDGETS);
+    const existingIdx = list.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
-      budgets[existingIdx].monthlyLimit = Number(monthlyLimit);
-      budgets[existingIdx].currency = currency;
+      list[existingIdx] = { ...list[existingIdx], monthlyLimit: Number(monthlyLimit), currency };
     } else {
-      budgets.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit), currency });
+      list.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit), currency });
     }
-    setLocalData(budgetKey, budgets);
-    return true;
+    setLocalData(storageKey, list);
+    return list;
   }
 };
