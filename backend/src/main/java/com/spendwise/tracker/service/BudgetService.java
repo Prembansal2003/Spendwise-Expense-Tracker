@@ -47,7 +47,7 @@ public class BudgetService {
         // Compute real-time expenses for current month per category for this user
         LocalDate startOfMonth = now.withDayOfMonth(1);
         LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
-        List<Object[]> categoryExpenses = transactionRepository.getCategoryExpensesByDateRange(startOfMonth, endOfMonth);
+        List<Object[]> categoryExpenses = transactionRepository.getCategoryExpensesByUserIdAndDateRange(targetUserId, startOfMonth, endOfMonth);
 
         Map<Category, BigDecimal> spendMap = categoryExpenses.stream().collect(Collectors.toMap(
                 row -> (Category) row[0],
