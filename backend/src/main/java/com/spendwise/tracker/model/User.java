@@ -35,7 +35,7 @@ public class User {
 
     private String role = "PRO_MEMBER";
 
-    @Column(name = "avatar_url")
+    @Column(name = "avatar_url", columnDefinition = "TEXT")
     private String avatarUrl;
 
     @Column(name = "created_at", updatable = false)

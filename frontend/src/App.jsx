@@ -199,12 +199,16 @@ export default function App() {
   // Sync profile picture & user details with cloud database across all devices
   useEffect(() => {
     if (user?.id) {
+      const avatarKey = `spendwise_avatar_${user.id}`;
+      const savedLocalAvatar = localStorage.getItem(avatarKey);
+      if (savedLocalAvatar && user.avatarUrl !== savedLocalAvatar) {
+        setUser(prev => ({ ...prev, avatarUrl: savedLocalAvatar }));
+      }
+
       apiService.getUserProfile(user.id).then(profile => {
         if (profile && profile.avatarUrl) {
           setUser(prev => {
-            // Keep local custom avatarUrl if profile returned default sample avatar
-            const isLocalCustom = prev?.avatarUrl && !prev.avatarUrl.includes('unsplash.com');
-            const finalAvatar = isLocalCustom ? prev.avatarUrl : profile.avatarUrl;
+            const finalAvatar = savedLocalAvatar || profile.avatarUrl;
             const merged = { ...prev, ...profile, avatarUrl: finalAvatar };
             localStorage.setItem('spendwise_user', JSON.stringify(merged));
             return merged;
@@ -216,6 +220,9 @@ export default function App() {
 
   const handleUpdateAvatar = async (newAvatarUrl) => {
     if (!user) return;
+    const avatarKey = `spendwise_avatar_${user.id}`;
+    localStorage.setItem(avatarKey, newAvatarUrl);
+
     const updatedUser = { ...user, avatarUrl: newAvatarUrl };
     setUser(updatedUser);
     localStorage.setItem('spendwise_user', JSON.stringify(updatedUser));
