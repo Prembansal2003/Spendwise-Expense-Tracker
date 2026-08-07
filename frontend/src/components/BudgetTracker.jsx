@@ -115,7 +115,7 @@ export default function BudgetTracker({
         type: 'EXPENSE',
         category: 'OTHER',
         paymentMethod: 'Bank Transfer',
-        notes: `[GoalID:${newGoal.id}] Initial deposit allocated towards ${newGoalTitle.trim()} savings goal`,
+        notes: `[GoalID:${newGoal.id}][Target:${targetInUSD}] Initial deposit allocated towards ${newGoalTitle.trim()} savings goal`,
         transactionDate: new Date().toISOString().split('T')[0]
       });
     }
@@ -148,7 +148,7 @@ export default function BudgetTracker({
         type: 'EXPENSE',
         category: 'OTHER',
         paymentMethod: 'Bank Transfer',
-        notes: `[GoalID:${goal.id}] Deposit deducted from available cash and allocated to ${goal.title}`,
+        notes: `[GoalID:${goal.id}][Target:${goal.targetAmount || 5000}] Deposit deducted from available cash and allocated to ${goal.title}`,
         transactionDate: new Date().toISOString().split('T')[0]
       });
     }
@@ -156,6 +156,47 @@ export default function BudgetTracker({
     setEditingGoalId(null);
     setEditSavedAddAmount('');
   };
+
+  // Auto-reconstruct Active Savings Goals from existing deposit transactions if missing from state
+  const mergedSavingsGoals = [...savingsGoals];
+
+  transactions.forEach(t => {
+    if (t.type !== 'EXPENSE' || !t.title) return;
+    const titleLower = t.title.toLowerCase();
+    let goalName = '';
+
+    if (titleLower.startsWith('savings deposit:')) {
+      goalName = t.title.replace(/^savings deposit:/i, '').trim();
+    } else if (titleLower.startsWith('savings goal deposit:')) {
+      goalName = t.title.replace(/^savings goal deposit:/i, '').trim();
+    }
+
+    if (goalName) {
+      const cleanGoalName = goalName.toLowerCase().replace(/[^\w\s]/gi, '').trim();
+      const exists = mergedSavingsGoals.some(g => {
+        const cleanGTitle = (g.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
+        return cleanGTitle === cleanGoalName || (cleanGTitle && cleanGoalName.includes(cleanGoalName)) || (cleanGTitle && cleanGTitle.includes(cleanGoalName));
+      });
+
+      if (!exists && cleanGoalName) {
+        let targetAmount = 5000.00;
+        if (t.notes) {
+          const targetMatch = t.notes.match(/\[Target:([\d\.]+)\]/i);
+          if (targetMatch && targetMatch[1]) {
+            targetAmount = Number(targetMatch[1]);
+          }
+        }
+
+        mergedSavingsGoals.push({
+          id: `auto_${cleanGoalName.replace(/\s+/g, '_')}`,
+          title: goalName.charAt(0).toUpperCase() + goalName.slice(1),
+          savedAmount: 0,
+          targetAmount: targetAmount,
+          currency: 'USD'
+        });
+      }
+    }
+  });
 
   // Delete Savings Goal
   const handleDeleteGoal = (goalId) => {
