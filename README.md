@@ -8,39 +8,80 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue.svg)](https://www.postgresql.org/)
 [![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://web.dev/progressive-web-apps/)
 
-SpendWise is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a **React 18 single-page web UI** featuring Linear/Stripe aesthetics, interactive Chart.js analytics, AI-powered financial advisor recommendations, category budget limit alerts, and cloud database persistence.
+**SpendWise** is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a modern **React 18 single-page web UI** featuring glassmorphism aesthetics, live real-time forex currency conversions, interactive Chart.js analytics, monthly & yearly category budget caps, automated cash balance deductions on savings deposits, and multi-device cloud database synchronization.
 
 ---
 
-## 📸 Key Features & Capabilities
+## 📸 Visual Showcase & Application Screenshots
 
-### 1. 📊 Financial Intelligence Dashboard
+### 1. 🎯 Monthly Category Budgets & Live Forex Conversion
+Real-time multi-currency category budget limits stored in original fed currency and converted dynamically across display currencies (`USD`, `EUR`, `GBP`, `INR`, `JPY`, `CAD`, `AUD`) with automated over-budget alerts.
+
+![Monthly Category Budgets](docs/screenshots/01_monthly_category_budgets.png)
+
+---
+
+### 2. 💸 Income & Expense Transaction Workbench
+Sleek modal for recording new income or expense transactions with merchant titles, custom amounts, transaction date selection, category tags, and payment method badges.
+
+![New Transaction Modal](docs/screenshots/02_new_transaction_modal.png)
+
+---
+
+### 3. 🐷 Interactive Active Savings Goals & Automated Deductions
+Define personal savings milestones (Vacation, Laptop, Emergency Fund) with target progress bars, percentage tracking, and **automated cash balance deductions** when adding deposits.
+
+![Active Savings Goals](docs/screenshots/03_active_savings_goals.png)
+
+---
+
+### 4. 📊 12-Month Cashflow Breakdown & Specific Date Filtered Log
+Interactive 12-month bar chart comparing Income vs Outflow, category expense share doughnut chart, and transaction history with **specific date picker filtering**.
+
+![Cashflow Analytics & Transactions](docs/screenshots/04_cashflow_breakdown_and_transactions.png)
+
+---
+
+### 5. 📥 Custom Timeframe Data Export & PDF Statement Generator
+Filter transaction records by custom start/end date ranges (`From Date` – `To Date`) or preset timeframes, then export to **Excel CSV**, **JSON Backup**, or print a formatted **PDF Statement**.
+
+![Custom Timeframe Data Export](docs/screenshots/05_custom_export_modal.png)
+
+---
+
+## ✨ Key Features & Capabilities
+
+### 1. 📊 Financial Intelligence Dashboard & Analytics
 - **KPI Metrics**: Real-time Total Balance, Cash Inflow, Outflow, and Net Savings Rate %.
+- **12-Month Breakdown & Yearly Analysis**: Multi-period bar charts comparing Income vs Outflow per month for any selected year (2020 through 2030 + All Years).
 - **Interactive Visualizations**: Cash flow trend line charts & category spending doughnut breakdowns with percentage legends using **Chart.js**.
-- **Multi-Currency Converter**: Instant currency switching (USD `$`, EUR `€`, GBP `£`, INR `₹`, JPY `¥`, CAD `CA$`, AUD `A$`).
 
-### 2. 💸 Transaction Workbench
-- Multi-category search, filter by transaction type (Income/Expense), date range filtering, and amount/date sorting.
-- Add, edit, duplicate, and delete income or expense items with category icons and payment method badges.
+### 2. 💱 Real-Time Live Forex Exchange Rates & Multi-Currency System
+- Live currency API integration (`open.er-api.com`) fetching real-time exchange rates.
+- Instant conversion between **USD ($)**, **EUR (€)**, **GBP (£)**, **INR (₹)**, **JPY (¥)**, **CAD (CA$)**, and **AUD (A$)**.
+- **Fed-Currency Budget Storage**: Stores budget caps in whichever currency fed by the user and dynamically converts to any header display currency in real time.
 
-### 3. 🎯 Budget & Savings Tracker
-- Set monthly budget caps per category (Food, Housing, Transport, Entertainment, Utilities, Health, Shopping, etc.).
+### 3. 🎯 Monthly & Yearly Category Budgets
+- Set monthly or annual spending caps per category (Food, Housing, Transport, Entertainment, Utilities, Health, Shopping, etc.).
 - Real-time limit progress bars with automated alerts:
   - ⚠️ **Warning Alert**: Triggered at 80%+ category limit.
   - 🚨 **Exceeded Alert**: Triggered when spending passes 100% capacity.
-- Active savings goals tracker (Emergency Fund, Vacation, Work Laptop).
 
-### 4. 🤖 AI Financial Advisor Widget
-- Calculates an automated **Financial Health Score (0–100)** based on savings rate and budget compliance.
-- Interactive AI chat widget providing personalized saving tips and spending anomaly analysis.
+### 4. 🐷 Dynamic Active Savings Goals
+- Create personal target savings goals (Vacation, Emergency Fund, Laptop).
+- **Automated Cash Deduction**: Depositing money into a savings goal automatically creates an outflow transaction, deducting the deposit from your available cash balance.
 
-### 5. 🔔 Notification Center & Profile Security
-- Header notification bell with badge counters for over-budget alerts and savings milestones.
-- User authentication & profile settings with **BCrypt password encryption**.
+### 5. 🔍 Specific Date Filtering & Custom Timeframe Exports
+- **Specific Date Filter**: Filter transaction history by exact calendar date (`YYYY-MM-DD`).
+- **Custom Timeframe Export**: Filter transaction records by custom start/end date ranges and download **CSV**, **JSON**, or printable **PDF Statements**.
 
-### 6. 📱 Progressive Web App (PWA) & Data Export
-- Web App Manifest & Service Worker allowing one-click installation on mobile and desktop home screens.
-- **CSV Data Export** compatible with Excel & Google Sheets, plus JSON database backup.
+### 6. 📸 Profile Picture Upload & Lightbox Preview
+- Upload photo from device, paste web URL, or choose preset avatars.
+- **Fullscreen Lightbox**: Click profile photo anytime to preview in fullscreen backdrop-blur view.
+
+### 7. 🔄 Continuous Real-Time Sync & Persistent Sessions
+- **8-Second Background Polling**: Syncs data continuously across connected devices.
+- **Persistent Sessions**: User remains signed in on refresh until explicitly clicking **Log Out**.
 
 ---
 
@@ -77,6 +118,7 @@ SpendWise is a production-grade, human-engineered **Java Full Stack Financial In
 | **Frontend Framework**| React 18, Vite 5, JavaScript (ES6+) |
 | **UI & Styling** | Custom Obsidian CSS Design System, Lucide Icons |
 | **Data Viz** | Chart.js 4, `react-chartjs-2` |
+| **Forex API** | Open Exchange Rates API (`open.er-api.com`) |
 | **PWA** | Web App Manifest (`manifest.json`), Service Worker (`sw.js`) |
 
 ---
@@ -123,7 +165,7 @@ Open your browser and navigate to:
 ### Transactions API
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/transactions` | Fetch transactions (Supports `type`, `category`, `search` query params) |
+| `GET` | `/api/v1/transactions` | Fetch transactions (Supports `type`, `category`, `search`, `userId` query params) |
 | `POST` | `/api/v1/transactions` | Create a new income or expense transaction |
 | `PUT` | `/api/v1/transactions/{id}` | Update existing transaction record |
 | `DELETE` | `/api/v1/transactions/{id}` | Delete transaction record |
@@ -137,31 +179,19 @@ Open your browser and navigate to:
 ### Budgets & Auth API
 | Method | Endpoint | Description |
 | :--- | :--- | :--- |
-| `GET` | `/api/v1/budgets/progress` | Fetch monthly category budget limits & overflow warning status |
-| `POST` | `/api/v1/budgets` | Set or update monthly category budget cap |
+| `GET` | `/api/v1/budgets/progress` | Fetch monthly/yearly category budget limits & overflow warning status |
+| `POST` | `/api/v1/budgets` | Set or update category budget cap with currency & period |
 | `POST` | `/api/v1/auth/login` | Authenticate user credentials |
 | `POST` | `/api/v1/auth/register` | Register a new user with encrypted password |
+| `GET` | `/api/v1/auth/profile/{id}` | Fetch user profile and avatar URL |
+| `PUT` | `/api/v1/auth/profile/{id}` | Update user profile and custom avatar URL |
 
 ---
 
-## ☁️ Cloud Deployment Guide (Render.com)
+## 👨‍💻 Developer & Contact
 
-1. Push code to GitHub repository:
-   ```bash
-   git add .
-   git commit -m "SpendWise Cloud Ready"
-   git push origin main
-   ```
-2. Provision a **PostgreSQL Database** on Render.com (`spendwise-db`).
-3. Deploy **Java Backend** Web Service on Render:
-   - Root Directory: `backend`
-   - Environment / Runtime: Select **Docker** 👈 *(Uses `backend/Dockerfile`)*
-   - Environment Variables: Set `SPRING_DATASOURCE_URL`, `SPRING_DATASOURCE_USERNAME`, `SPRING_DATASOURCE_PASSWORD`.
-4. Deploy **React Frontend** Static Site on Render:
-   - Root Directory: `frontend`
-   - Build Command: `npm run build`
-   - Publish Directory: `dist`
-   - Environment Variable: `VITE_API_BASE_URL` = `https://spendwise-backend-api.onrender.com/api/v1`
+**SpendWise Expense Tracker** • Designed & Developed by **Prem Agrawal**  
+📧 Contact Email: [bansalprem900@gmail.com](mailto:bansalprem900@gmail.com)
 
 ---
 
