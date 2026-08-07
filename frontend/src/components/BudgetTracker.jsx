@@ -3,9 +3,9 @@ import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar,
 import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
 
 const DEFAULT_SAVINGS_GOALS = [
-  { id: 1, title: '🏖️ Summer Vacation', savedAmount: 1500, targetAmount: 2000, currency: 'USD' },
-  { id: 2, title: '💻 New Work Laptop', savedAmount: 1200, targetAmount: 2400, currency: 'USD' },
-  { id: 3, title: '🛡️ Emergency Fund', savedAmount: 4500, targetAmount: 5000, currency: 'USD' }
+  { id: 1, title: '🏖️ Summer Vacation', savedAmount: 0, targetAmount: 2000, currency: 'USD' },
+  { id: 2, title: '💻 New Work Laptop', savedAmount: 0, targetAmount: 2400, currency: 'USD' },
+  { id: 3, title: '🛡️ Emergency Fund', savedAmount: 0, targetAmount: 5000, currency: 'USD' }
 ];
 
 export default function BudgetTracker({
@@ -556,7 +556,7 @@ export default function BudgetTracker({
                               />
                               <button
                                 className="btn btn-primary btn-sm"
-                                onClick={() => handleDepositSubmit(goal)}
+                                onClick={() => handleAddDeposit(goal)}
                               >
                                 Deposit
                               </button>
