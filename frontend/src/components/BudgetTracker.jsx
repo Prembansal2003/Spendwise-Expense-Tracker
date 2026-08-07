@@ -9,6 +9,7 @@ const DEFAULT_SAVINGS_GOALS = [
 ];
 
 export default function BudgetTracker({
+  userId = 101,
   budgets = [],
   currency,
   onUpdateBudget,
@@ -20,13 +21,17 @@ export default function BudgetTracker({
   const [newLimit, setNewLimit] = useState('');
   const [editPeriod, setEditPeriod] = useState('MONTHLY');
 
-  // Interactive Savings Goals State & Persistence
+  const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+  const storageKey = `spendwise_savings_goals_${userId}`;
+
+  // Interactive Savings Goals State & User-Scoped Persistence
   const [savingsGoals, setSavingsGoals] = useState(() => {
     try {
-      const saved = localStorage.getItem('spendwise_savings_goals');
-      return saved ? JSON.parse(saved) : DEFAULT_SAVINGS_GOALS;
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
     } catch (e) {
-      return DEFAULT_SAVINGS_GOALS;
+      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
     }
   });
 
@@ -40,9 +45,22 @@ export default function BudgetTracker({
 
   useEffect(() => {
     try {
-      localStorage.setItem('spendwise_savings_goals', JSON.stringify(savingsGoals));
+      const saved = localStorage.getItem(storageKey);
+      if (saved) {
+        setSavingsGoals(JSON.parse(saved));
+      } else {
+        setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
+      }
+    } catch (e) {
+      setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
+    }
+  }, [userId, storageKey, isDemoUser]);
+
+  useEffect(() => {
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(savingsGoals));
     } catch (e) {}
-  }, [savingsGoals]);
+  }, [savingsGoals, storageKey]);
 
   // Filter transactions for current month vs current year
   const currentDate = new Date();
@@ -450,100 +468,119 @@ export default function BudgetTracker({
                 onClick={() => setShowAddGoalModal(false)}
               >
                 Cancel
-              </button>
-              <button type="submit" className="btn btn-primary btn-sm">
-                Save Target Goal
-              </button>
-            </div>
-          </form>
-        )}
-
-        {/* Savings Goals Grid */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {savingsGoals.map(goal => {
-            const savedInView = convertCurrency(goal.savedAmount, goal.currency || 'USD', currency);
-            const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
-            const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
-            const isCompleted = savedInView >= targetInView;
-            const isAddingDeposit = editingGoalId === goal.id;
-
-            return (
-              <div
-                key={goal.id}
-                style={{
-                  padding: '1.25rem',
-                  backgroundColor: 'var(--bg-secondary)',
-                  borderRadius: 'var(--radius-md)',
-                  border: `1px solid ${isCompleted ? 'var(--success)' : 'var(--border-color)'}`
-                }}
-              >
-                <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
-                  <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{goal.title}</span>
-                  <div className="flex items-center gap-1">
-                    <span style={{ fontSize: '0.75rem', color: isCompleted ? 'var(--success)' : 'var(--primary)', fontWeight: 700 }}>
-                      {pct.toFixed(0)}%
-                    </span>
-                    <button
-                      className="btn btn-danger btn-icon"
-                      style={{ width: '1.5rem', height: '1.5rem', padding: 0 }}
-                      onClick={() => handleDeleteGoal(goal.id)}
-                      title="Delete Goal"
-                    >
-                      <Trash2 size={11} />
-                    </button>
-                  </div>
-                </div>
-
-                <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                  {formatCurrency(savedInView, currency, currency)} / {formatCurrency(targetInView, currency, currency)}
-                </div>
-
-                {/* Progress Bar */}
-                <div className="progress-bar-bg" style={{ marginBottom: '0.75rem' }}>
-                  <div
-                    className="progress-bar-fill"
-                    style={{
-                      width: `${pct}%`,
-                      backgroundColor: isCompleted ? 'var(--success)' : 'var(--primary)'
-                    }}
-                  />
-                </div>
-
-                {/* Deposit Action */}
-                {isAddingDeposit ? (
-                  <div className="flex gap-1.5 items-center">
-                    <input
-                      type="number"
-                      step="0.01"
-                      className="form-control form-control-sm"
-                      placeholder={`Add ${currency}`}
-                      value={editSavedAddAmount}
-                      onChange={(e) => setEditSavedAddAmount(e.target.value)}
-                    />
-                    <button className="btn btn-primary btn-xs" onClick={() => handleAddDeposit(goal)}>
-                      <Check size={12} />
-                    </button>
-                    <button className="btn btn-secondary btn-xs" onClick={() => setEditingGoalId(null)}>
-                      Cancel
-                    </button>
-                  </div>
-                ) : (
-                  <button
-                    className="btn btn-secondary btn-xs"
-                    style={{ width: '100%', justifyContent: 'center' }}
-                    onClick={() => {
-                      setEditingGoalId(goal.id);
-                      setEditSavedAddAmount('');
-                    }}
-                  >
-                    + Add Deposit
-                  </button>
+</div>
+                  </form>
                 )}
 
-              </div>
-            );
-          })}
-        </div>
+                {/* Savings Goals Grid */}
+                {savingsGoals.length === 0 ? (
+                  <div
+                    style={{
+                      padding: '2rem',
+                      backgroundColor: 'var(--bg-secondary)',
+                      borderRadius: 'var(--radius-md)',
+                      border: '1px dashed var(--border-color)',
+                      textAlign: 'center',
+                      color: 'var(--text-muted)'
+                    }}
+                  >
+                    <p style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>🐷 No active savings goals created yet.</p>
+                    <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.825rem' }}>Click "+ Add New Goal" above to set your first target milestone starting at $0.00!</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    {savingsGoals.map(goal => {
+                      const savedInView = convertCurrency(goal.savedAmount, goal.currency || 'USD', currency);
+                      const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
+                      const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
+                      const isCompleted = savedInView >= targetInView;
+                      const isAddingDeposit = editingGoalId === goal.id;
+
+                      return (
+                        <div
+                          key={goal.id}
+                          style={{
+                            padding: '1.25rem',
+                            backgroundColor: 'var(--bg-secondary)',
+                            borderRadius: 'var(--radius-md)',
+                            border: `1px solid ${isCompleted ? 'var(--success)' : 'var(--border-color)'}`
+                          }}
+                        >
+                          <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{goal.title}</span>
+                            <div className="flex items-center gap-1">
+                              <span style={{ fontSize: '0.75rem', color: isCompleted ? 'var(--success)' : 'var(--primary)', fontWeight: 700 }}>
+                                {pct.toFixed(0)}%
+                              </span>
+                              <button
+                                className="btn btn-danger btn-icon"
+                                style={{ width: '1.5rem', height: '1.5rem', padding: 0 }}
+                                onClick={() => handleDeleteGoal(goal.id)}
+                                title="Delete Goal"
+                              >
+                                <Trash2 size={11} />
+                              </button>
+                            </div>
+                          </div>
+
+                          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+                            {formatCurrency(savedInView, currency, currency)} / {formatCurrency(targetInView, currency, currency)}
+                          </div>
+
+                          {/* Progress Bar */}
+                          <div className="progress-bar-bg" style={{ marginBottom: '0.75rem' }}>
+                            <div
+                              className="progress-bar-fill"
+                              style={{
+                                width: `${pct}%`,
+                                backgroundColor: isCompleted ? 'var(--success)' : 'var(--primary)'
+                              }}
+                            />
+                          </div>
+
+                          {/* Deposit Action */}
+                          {isAddingDeposit ? (
+                            <div className="flex gap-1.5 items-center">
+                              <input
+                                type="number"
+                                step="0.01"
+                                className="form-control form-control-sm"
+                                placeholder={`Add ${currency}`}
+                                value={editSavedAddAmount}
+                                onChange={(e) => setEditSavedAddAmount(e.target.value)}
+                                autoFocus
+                              />
+                              <button
+                                className="btn btn-primary btn-sm"
+                                onClick={() => handleDepositSubmit(goal)}
+                              >
+                                Deposit
+                              </button>
+                              <button
+                                className="btn btn-secondary btn-sm"
+                                onClick={() => setEditingGoalId(null)}
+                              >
+                                Cancel
+                              </button>
+                            </div>
+                          ) : (
+                            <button
+                              className="btn btn-secondary btn-sm flex items-center gap-1"
+                              style={{ width: '100%', justifyContent: 'center' }}
+                              onClick={() => {
+                                setEditingGoalId(goal.id);
+                                setEditSavedAddAmount('');
+                              }}
+                            >
+                              <PlusCircle size={13} />
+                              Deposit Funds
+                            </button>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
       </div>
 
     </div>

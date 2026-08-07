@@ -308,6 +308,7 @@ export default function App() {
 
         {activeTab === 'budgets' && (
           <BudgetTracker
+            userId={user?.id}
             budgets={budgets}
             currency={currency}
             onUpdateBudget={handleUpdateBudget}
