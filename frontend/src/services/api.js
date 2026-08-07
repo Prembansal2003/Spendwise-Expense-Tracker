@@ -208,7 +208,7 @@ export const apiService = {
 
     const storageKey = `spendwise_transactions_${userId}`;
     let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
-    list = list.map(t => t.id === id ? { ...t, ...payload } : t);
+    list = list.map(t => String(t.id) === String(id) ? { ...t, ...payload } : t);
     setLocalData(storageKey, list);
     return { ...payload, id };
   },
@@ -225,7 +225,7 @@ export const apiService = {
 
     const storageKey = `spendwise_transactions_${userId}`;
     let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
-    list = list.filter(t => t.id !== id);
+    list = list.filter(t => String(t.id) !== String(id));
     setLocalData(storageKey, list);
     return true;
   },

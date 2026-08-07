@@ -77,26 +77,11 @@ export default function App() {
   const loadData = async () => {
     if (!user) return;
     const txRes = await apiService.getTransactions({}, user.id);
-    let txList = txRes.data;
-
-    // Check if test items like Ghar, chai, samosa, dosa are present in user 101's list
-    const hasTestItems = Array.isArray(txList) && txList.some(t => {
-      const title = (t.title || '').toLowerCase();
-      return title === 'ghar' || title === 'chai' || title === 'samosa' || title === 'dosa' || title === 'ds';
-    });
-
-    if (hasTestItems && (user.id === 101 || user.id === '101')) {
-      console.log('[SpendWise App] Detected test items, replacing with full 11 category sample dataset...');
-      await apiService.resetSampleData(user.id);
-      const rechecked = await apiService.getTransactions({}, user.id);
-      txList = rechecked.data;
-    }
-
-    setTransactions(txList);
+    setTransactions(txRes.data || []);
     setIsBackend(txRes.isBackend);
 
     const bRes = await apiService.getBudgets(user.id);
-    setBudgets(bRes);
+    setBudgets(bRes || []);
   };
 
   useEffect(() => {
