@@ -143,6 +143,53 @@ export default function App() {
     showToast('🔒 Signed out of SpendWise account');
   };
 
+  // Synchronize Active Savings Goals when deposit transactions are updated or deleted
+  const syncSavingsGoalsWithTransaction = (userId, action, transaction, oldTransaction = null) => {
+    if (!userId || !transaction) return;
+
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const storageKey = `spendwise_savings_goals_${userId}`;
+    let goals = [];
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) goals = JSON.parse(saved);
+    } catch (e) {
+      return;
+    }
+
+    if (!goals || goals.length === 0) return;
+
+    // Match transaction title or notes against savings goal titles
+    const titleLower = (transaction.title || '').toLowerCase();
+    const notesLower = (transaction.notes || '').toLowerCase();
+
+    let matchedIdx = goals.findIndex(g => {
+      const cleanGoalTitle = (g.title || '').toLowerCase().replace(/^[^\w\s]+/, '').trim();
+      return cleanGoalTitle && (titleLower.includes(cleanGoalTitle) || notesLower.includes(cleanGoalTitle));
+    });
+
+    if (matchedIdx === -1) return;
+
+    const matchedGoal = goals[matchedIdx];
+
+    if (action === 'DELETE') {
+      const amountInUSD = convertCurrency(transaction.amount, transaction.currency || 'USD', 'USD');
+      matchedGoal.savedAmount = Math.max(0, (matchedGoal.savedAmount || 0) - amountInUSD);
+      showToast(`🐷 Active Savings Goal "${matchedGoal.title}" updated after transaction deletion!`);
+    } else if (action === 'UPDATE' && oldTransaction) {
+      const oldInUSD = convertCurrency(oldTransaction.amount, oldTransaction.currency || 'USD', 'USD');
+      const newInUSD = convertCurrency(transaction.amount, transaction.currency || 'USD', 'USD');
+      const diff = newInUSD - oldInUSD;
+      matchedGoal.savedAmount = Math.max(0, (matchedGoal.savedAmount || 0) + diff);
+      showToast(`🐷 Active Savings Goal "${matchedGoal.title}" updated after transaction edit!`);
+    }
+
+    goals[matchedIdx] = matchedGoal;
+    try {
+      localStorage.setItem(storageKey, JSON.stringify(goals));
+    } catch (e) {}
+  };
+
   // Add / Edit Transaction
   const handleSaveTransaction = async (data) => {
     if (!user) return;
@@ -155,6 +202,7 @@ export default function App() {
 
     if (editingTransaction) {
       await apiService.updateTransaction(editingTransaction.id, dataToSave, user.id);
+      syncSavingsGoalsWithTransaction(user.id, 'UPDATE', dataToSave, editingTransaction);
       showToast('✅ Transaction updated successfully');
     } else {
       await apiService.createTransaction(dataToSave, user.id);
@@ -167,8 +215,12 @@ export default function App() {
   // Delete Transaction
   const handleDeleteTransaction = async (id) => {
     if (!user) return;
+    const targetTx = transactions.find(t => String(t.id) === String(id));
     if (window.confirm('Delete this transaction record?')) {
       await apiService.deleteTransaction(id, user.id);
+      if (targetTx) {
+        syncSavingsGoalsWithTransaction(user.id, 'DELETE', targetTx);
+      }
       showToast('🗑️ Transaction deleted');
       loadData();
     }
