@@ -72,9 +72,9 @@ public class SavingsGoalService {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         if (targetUserId == null) targetUserId = 1L;
 
-        String searchTitle = txTitle.replace(/^Savings Deposit:/i, "")
-                .replace(/^Savings Goal Deposit:/i, "")
-                .replace(/[^\w\s]/gi, "").trim();
+        String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
+                .replaceAll("(?i)^Savings Goal Deposit:", "")
+                .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
 
         if (searchTitle.isBlank()) return;
 
