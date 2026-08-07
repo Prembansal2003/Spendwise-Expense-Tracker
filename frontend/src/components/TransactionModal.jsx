@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
-import { CATEGORY_META, getCurrencySymbol, convertCurrency } from '../utils/formatters';
+import { CATEGORY_META, getCurrencySymbol, CURRENCIES } from '../utils/formatters';
 
 export default function TransactionModal({
   isOpen,
@@ -12,6 +12,7 @@ export default function TransactionModal({
   const [formData, setFormData] = useState({
     title: '',
     amount: '',
+    currency: currency || 'USD',
     type: 'EXPENSE',
     category: 'FOOD',
     transactionDate: new Date().toISOString().split('T')[0],
@@ -21,17 +22,10 @@ export default function TransactionModal({
 
   useEffect(() => {
     if (editingTransaction) {
-      // Convert stored transaction amount from its stored currency -> active view currency
-      const convertedVal = convertCurrency(
-        editingTransaction.amount,
-        editingTransaction.currency || 'USD',
-        currency
-      );
-      const displayVal = convertedVal ? Number(convertedVal.toFixed(2)) : '';
-
       setFormData({
         title: editingTransaction.title || '',
-        amount: displayVal,
+        amount: editingTransaction.amount != null ? editingTransaction.amount : '',
+        currency: editingTransaction.currency || currency || 'USD',
         type: editingTransaction.type || 'EXPENSE',
         category: editingTransaction.category || 'FOOD',
         transactionDate: editingTransaction.transactionDate || new Date().toISOString().split('T')[0],
@@ -42,6 +36,7 @@ export default function TransactionModal({
       setFormData({
         title: '',
         amount: '',
+        currency: currency || 'USD',
         type: 'EXPENSE',
         category: 'FOOD',
         transactionDate: new Date().toISOString().split('T')[0],
@@ -125,29 +120,41 @@ export default function TransactionModal({
             />
           </div>
 
-          {/* Amount & Date Grid */}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-            <div className="form-group">
-              <label className="form-label">Amount ({getCurrencySymbol(currency)})</label>
-              <div style={{ position: 'relative' }}>
-                <span style={{
-                  position: 'absolute', left: '0.75rem', top: '50%',
-                  transform: 'translateY(-50%)', color: 'var(--text-muted)',
-                  fontWeight: 600, fontSize: '0.95rem', pointerEvents: 'none'
-                }}>
-                  {getCurrencySymbol(currency)}
-                </span>
-                <input
-                  type="number"
-                  step="0.01"
-                  min="0.01"
+          {/* Amount, Currency & Date Grid */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+            <div className="form-group" style={{ gridColumn: 'span 2' }}>
+              <label className="form-label">Fed Amount & Currency</label>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select
                   className="form-control"
-                  style={{ paddingLeft: '2rem' }}
-                  placeholder="0.00"
-                  required
-                  value={formData.amount}
-                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                />
+                  style={{ width: '7rem', flexShrink: 0, fontWeight: 700 }}
+                  value={formData.currency}
+                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                >
+                  {CURRENCIES.map(c => (
+                    <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
+                  ))}
+                </select>
+                <div style={{ position: 'relative', flexGrow: 1 }}>
+                  <span style={{
+                    position: 'absolute', left: '0.75rem', top: '50%',
+                    transform: 'translateY(-50%)', color: 'var(--text-muted)',
+                    fontWeight: 600, fontSize: '0.95rem', pointerEvents: 'none'
+                  }}>
+                    {getCurrencySymbol(formData.currency)}
+                  </span>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0.01"
+                    className="form-control"
+                    style={{ paddingLeft: '2rem' }}
+                    placeholder="0.00"
+                    required
+                    value={formData.amount}
+                    onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                  />
+                </div>
               </div>
             </div>
             <div className="form-group">

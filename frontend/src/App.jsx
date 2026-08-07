@@ -147,19 +147,17 @@ export default function App() {
   const handleSaveTransaction = async (data) => {
     if (!user) return;
 
-    // Convert entered amount in active view currency -> USD base storage currency
-    const usdAmount = convertCurrency(data.amount, currency, 'USD');
-    const dataInUSD = {
+    const dataToSave = {
       ...data,
-      amount: usdAmount,
-      currency: 'USD'
+      amount: Number(data.amount),
+      currency: data.currency || currency || 'USD'
     };
 
     if (editingTransaction) {
-      await apiService.updateTransaction(editingTransaction.id, dataInUSD, user.id);
+      await apiService.updateTransaction(editingTransaction.id, dataToSave, user.id);
       showToast('✅ Transaction updated successfully');
     } else {
-      await apiService.createTransaction(dataInUSD, user.id);
+      await apiService.createTransaction(dataToSave, user.id);
       showToast('🎉 New transaction recorded!');
     }
     setEditingTransaction(null);
@@ -181,10 +179,10 @@ export default function App() {
     setIsAddModalOpen(true);
   };
 
-  const handleUpdateBudget = async (category, monthlyLimit, period = 'MONTHLY') => {
+  const handleUpdateBudget = async (category, monthlyLimit, period = 'MONTHLY', fedCurrency = currency) => {
     if (!user) return;
-    await apiService.updateBudget(category, monthlyLimit, user.id, currency, period);
-    showToast(`🎯 Budget cap for ${category} updated (${period.toLowerCase()})`);
+    await apiService.updateBudget(category, monthlyLimit, user.id, fedCurrency, period);
+    showToast(`🎯 Budget cap for ${category} updated in ${fedCurrency}`);
     loadData();
   };
 

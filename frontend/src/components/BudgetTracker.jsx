@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar, RefreshCw, Trash2, PiggyBank, PlusCircle, Check } from 'lucide-react';
-import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
+import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol, CURRENCIES } from '../utils/formatters';
 
 const DEFAULT_SAVINGS_GOALS = [
   { id: 1, title: '🏖️ Summer Vacation', savedAmount: 0, targetAmount: 2000, currency: 'USD' },
@@ -20,6 +20,7 @@ export default function BudgetTracker({
   const [editingCategory, setEditingCategory] = useState(null);
   const [newLimit, setNewLimit] = useState('');
   const [editPeriod, setEditPeriod] = useState('MONTHLY');
+  const [editCurrency, setEditCurrency] = useState('USD');
 
   const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
   const storageKey = `spendwise_savings_goals_${userId}`;
@@ -71,10 +72,9 @@ export default function BudgetTracker({
   const handleEditClick = (b) => {
     setEditingCategory(b.category);
     setEditPeriod(b.period || 'MONTHLY');
-    // Compute stored limit cap in current active view currency for editing
+    setEditCurrency(b.currency || currency || 'USD');
     const storedLimit = b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit;
-    const displayVal = convertCurrency(storedLimit, b.currency || 'USD', currency);
-    setNewLimit(displayVal ? displayVal.toFixed(2) : '');
+    setNewLimit(storedLimit != null ? storedLimit.toString() : '');
   };
 
   const handleSaveBudget = (cat) => {
@@ -83,8 +83,8 @@ export default function BudgetTracker({
     const fedValue = Number(newLimit);
     const monthlyLimit = editPeriod === 'YEARLY' ? fedValue / 12 : fedValue;
     
-    // Save with the active header currency fed by the user!
-    onUpdateBudget(cat, monthlyLimit, editPeriod);
+    // Save with the fed currency selected by the user!
+    onUpdateBudget(cat, monthlyLimit, editPeriod, editCurrency);
     setEditingCategory(null);
   };
 
@@ -290,7 +290,7 @@ export default function BudgetTracker({
                 {isEditing ? (
                   <div className="flex flex-col gap-2" style={{ marginBottom: '0.75rem' }}>
                     <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                      Setting cap in active currency (<strong>{currency}</strong>):
+                      Select currency & enter budget cap limit:
                     </div>
                     <div className="flex gap-1.5">
                       <select
@@ -302,12 +302,22 @@ export default function BudgetTracker({
                         <option value="MONTHLY">Monthly</option>
                         <option value="YEARLY">Yearly</option>
                       </select>
+                      <select
+                        className="form-control form-control-sm"
+                        style={{ width: 'auto', fontSize: '0.78rem', fontWeight: 700 }}
+                        value={editCurrency}
+                        onChange={(e) => setEditCurrency(e.target.value)}
+                      >
+                        {CURRENCIES.map(c => (
+                          <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
+                        ))}
+                      </select>
                       <div style={{ position: 'relative', flex: 1 }}>
                         <span style={{
                           position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)',
                           color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600
                         }}>
-                          {getCurrencySymbol(currency)}
+                          {getCurrencySymbol(editCurrency)}
                         </span>
                         <input
                           type="number"
@@ -316,7 +326,7 @@ export default function BudgetTracker({
                           style={{ paddingLeft: '1.6rem', fontSize: '0.85rem' }}
                           value={newLimit}
                           onChange={(e) => setNewLimit(e.target.value)}
-                          placeholder={`Cap in ${currency}`}
+                          placeholder={`Cap in ${editCurrency}`}
                         />
                       </div>
                     </div>
@@ -325,7 +335,7 @@ export default function BudgetTracker({
                         Cancel
                       </button>
                       <button className="btn btn-primary btn-xs" onClick={() => handleSaveBudget(b.category)}>
-                        Save Cap ({currency})
+                        Save Cap ({editCurrency})
                       </button>
                     </div>
                   </div>
