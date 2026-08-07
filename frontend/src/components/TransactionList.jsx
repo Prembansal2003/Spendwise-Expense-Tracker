@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowUpDown, Edit2, Trash2, Calendar, CreditCard, Tag, RotateCcw } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Edit2, Trash2, Calendar, CreditCard, Tag, RotateCcw, X, CalendarDays } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, formatDate } from '../utils/formatters';
 
 export default function TransactionList({
@@ -12,12 +12,20 @@ export default function TransactionList({
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
+  const [selectedDate, setSelectedDate] = useState(''); // Specific date filter
   const [sortBy, setSortBy] = useState('date-desc');
 
   // Filter transactions
   let filtered = transactions.filter(t => {
     if (selectedType !== 'ALL' && t.type !== selectedType) return false;
     if (selectedCategory !== 'ALL' && t.category !== selectedCategory) return false;
+    
+    // Specific date filter
+    if (selectedDate) {
+      const txDate = t.transactionDate || '';
+      if (txDate !== selectedDate) return false;
+    }
+
     if (searchTerm.trim() !== '') {
       const q = searchTerm.toLowerCase();
       const matchTitle = t.title.toLowerCase().includes(q);
@@ -52,8 +60,8 @@ export default function TransactionList({
 
         <div className="flex items-center gap-2" style={{ flexWrap: 'wrap' }}>
           {/* Search Box */}
-          <div style={{ position: 'relative', width: '220px' }}>
-            <Search size={16} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
+          <div style={{ position: 'relative', width: '200px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '0.75rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--text-muted)' }} />
             <input
               type="text"
               className="form-control"
@@ -62,6 +70,29 @@ export default function TransactionList({
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
             />
+          </div>
+
+          {/* Specific Date Picker */}
+          <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+            <input
+              type="date"
+              className="form-control"
+              style={{ paddingRight: selectedDate ? '2rem' : '0.5rem', fontSize: '0.8rem' }}
+              value={selectedDate}
+              onChange={(e) => setSelectedDate(e.target.value)}
+              title="Filter transactions by specific date"
+            />
+            {selectedDate && (
+              <button
+                type="button"
+                className="btn btn-secondary btn-icon"
+                style={{ position: 'absolute', right: '0.25rem', width: '1.4rem', height: '1.4rem', padding: 0 }}
+                onClick={() => setSelectedDate('')}
+                title="Clear date filter"
+              >
+                <X size={12} />
+              </button>
+            )}
           </div>
 
           {/* Type Filter */}
@@ -106,11 +137,52 @@ export default function TransactionList({
         </div>
       </div>
 
+      {/* Active Specific Date Filter Pill */}
+      {selectedDate && (
+        <div style={{
+          marginBottom: '1rem',
+          padding: '0.5rem 0.85rem',
+          backgroundColor: 'var(--primary-light)',
+          color: 'var(--primary)',
+          borderRadius: 'var(--radius-md)',
+          fontSize: '0.8125rem',
+          fontWeight: 600,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'between'
+        }}>
+          <span className="flex items-center gap-1.5">
+            <CalendarDays size={15} />
+            Showing transactions for specific date: <strong>{formatDate(selectedDate)}</strong>
+          </span>
+          <button
+            className="btn btn-secondary btn-xs"
+            onClick={() => setSelectedDate('')}
+            style={{ marginLeft: 'auto', gap: '0.25rem' }}
+          >
+            <X size={12} /> Show All Dates
+          </button>
+        </div>
+      )}
+
       {/* Transactions List */}
       {filtered.length === 0 ? (
         <div style={{ padding: '3rem 1rem', textAlign: 'center', color: 'var(--text-muted)' }}>
-          <p style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>No transactions found</p>
-          <p style={{ fontSize: '0.8125rem' }}>Try clearing your search query or filters.</p>
+          <p style={{ fontSize: '1rem', fontWeight: 600, marginBottom: '0.25rem' }}>
+            {selectedDate ? `No transactions recorded on ${formatDate(selectedDate)}` : 'No transactions found'}
+          </p>
+          <p style={{ fontSize: '0.8125rem' }}>
+            {selectedDate ? 'Try selecting a different date or clearing the date filter.' : 'Try clearing your search query or filters.'}
+          </p>
+          {selectedDate && (
+            <button
+              className="btn btn-secondary btn-sm"
+              style={{ marginTop: '0.75rem' }}
+              onClick={() => setSelectedDate('')}
+            >
+              Clear Date Filter
+            </button>
+          )}
         </div>
       ) : (
         <div className="flex flex-col gap-2">
