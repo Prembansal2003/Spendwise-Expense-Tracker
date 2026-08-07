@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
-import { CATEGORY_META, getCurrencySymbol, fromUSD } from '../utils/formatters';
+import { CATEGORY_META, getCurrencySymbol } from '../utils/formatters';
 
 export default function TransactionModal({
   isOpen,
@@ -21,11 +21,11 @@ export default function TransactionModal({
 
   useEffect(() => {
     if (editingTransaction) {
-      // Convert stored USD amount back to display currency for editing
-      const displayAmount = fromUSD(editingTransaction.amount, currency);
       setFormData({
         title: editingTransaction.title || '',
-        amount: displayAmount ? Number(displayAmount.toFixed(2)) : '',
+        // Amount is stored in its original currency — show as-is if currencies match,
+        // else convert from stored to current display currency
+        amount: editingTransaction.amount || '',
         type: editingTransaction.type || 'EXPENSE',
         category: editingTransaction.category || 'FOOD',
         transactionDate: editingTransaction.transactionDate || new Date().toISOString().split('T')[0],

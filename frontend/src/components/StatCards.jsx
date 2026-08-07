@@ -1,15 +1,22 @@
 import React from 'react';
 import { DollarSign, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
-import { formatCurrency } from '../utils/formatters';
+import { formatCurrency, toUSD, fromUSD } from '../utils/formatters';
 
 export default function StatCards({ transactions, currency }) {
+  // Normalize each transaction to USD first, then sum, then convert to display currency
+  // This handles mixed-currency transactions correctly
+  const toDisplayAmount = (t) => {
+    const usd = toUSD(Number(t.amount || 0), t.currency || 'USD');
+    return fromUSD(usd, currency);
+  };
+
   const totalIncome = transactions
     .filter(t => t.type === 'INCOME')
-    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    .reduce((sum, t) => sum + toDisplayAmount(t), 0);
 
   const totalExpense = transactions
     .filter(t => t.type === 'EXPENSE')
-    .reduce((sum, t) => sum + Number(t.amount || 0), 0);
+    .reduce((sum, t) => sum + toDisplayAmount(t), 0);
 
   const balance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
@@ -32,7 +39,7 @@ export default function StatCards({ transactions, currency }) {
           </div>
         </div>
         <div style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
-          {formatCurrency(balance, currency)}
+          {formatCurrency(balance, currency, currency)}
         </div>
         <div className="flex items-center gap-1" style={{ fontSize: '0.75rem', fontWeight: 600, color: balance >= 0 ? 'var(--success)' : 'var(--danger)' }}>
           {balance >= 0 ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
@@ -55,7 +62,7 @@ export default function StatCards({ transactions, currency }) {
           </div>
         </div>
         <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--success)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
-          {formatCurrency(totalIncome, currency)}
+          {formatCurrency(totalIncome, currency, currency)}
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {transactions.filter(t => t.type === 'INCOME').length} credited items
@@ -77,7 +84,7 @@ export default function StatCards({ transactions, currency }) {
           </div>
         </div>
         <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--danger)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
-          {formatCurrency(totalExpense, currency)}
+          {formatCurrency(totalExpense, currency, currency)}
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
           {transactions.filter(t => t.type === 'EXPENSE').length} recorded expenses

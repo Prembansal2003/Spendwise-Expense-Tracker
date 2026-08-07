@@ -149,6 +149,7 @@ export const apiService = {
       date: txDate,
       paymentMethod: transaction.paymentMethod || 'Credit Card',
       notes: transaction.notes || '',
+      currency: transaction.currency || 'USD',
       userId
     };
 

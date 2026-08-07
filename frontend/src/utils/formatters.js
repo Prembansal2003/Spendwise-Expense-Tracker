@@ -49,18 +49,25 @@ export const CATEGORY_META = {
 };
 
 /**
- * Format a USD-base amount for display in the selected currency.
- * Amounts are stored in USD in DB; this converts + formats for display.
+ * Format an amount for display.
+ * - `storedCurrency`: the currency the amount was originally entered/stored in (from transaction.currency)
+ * - `displayCurrency`: the currency the user currently wants to see
+ * If they differ, converts: amount × (displayRate / storedRate)
+ * If storedCurrency is unknown, treats amount as USD base (backward compat).
  */
-export const formatCurrency = (usdAmount, currencyCode = 'USD') => {
-  const currency = getCurrency(currencyCode);
-  const displayAmount = Number(usdAmount || 0) * currency.rate;
+export const formatCurrency = (amount, displayCurrency = 'USD', storedCurrency = null) => {
+  const display = getCurrency(displayCurrency);
+  const stored  = storedCurrency ? getCurrency(storedCurrency) : null;
+
+  // Convert: multiply by display rate, divide by stored rate
+  const conversionFactor = stored ? (display.rate / stored.rate) : display.rate;
+  const displayAmount = Number(amount || 0) * conversionFactor;
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: currency.code,
-    minimumFractionDigits: currencyCode === 'JPY' ? 0 : 2,
-    maximumFractionDigits: currencyCode === 'JPY' ? 0 : 2
+    currency: display.code,
+    minimumFractionDigits: displayCurrency === 'JPY' ? 0 : 2,
+    maximumFractionDigits: displayCurrency === 'JPY' ? 0 : 2
   }).format(displayAmount);
 };
 

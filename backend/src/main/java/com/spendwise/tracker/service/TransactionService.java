@@ -68,6 +68,7 @@ public class TransactionService {
         transaction.setCategory(request.getCategory());
         transaction.setTransactionDate(request.getTransactionDate() != null ? request.getTransactionDate() : LocalDate.now());
         transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
+        transaction.setCurrency(request.getCurrency() != null ? request.getCurrency() : "USD");
         transaction.setNotes(request.getNotes());
         return transactionRepository.save(transaction);
     }
@@ -83,6 +84,7 @@ public class TransactionService {
         transaction.setCategory(request.getCategory());
         transaction.setTransactionDate(request.getTransactionDate());
         transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
+        transaction.setCurrency(request.getCurrency() != null ? request.getCurrency() : "USD");
         transaction.setNotes(request.getNotes());
         return transactionRepository.save(transaction);
     }

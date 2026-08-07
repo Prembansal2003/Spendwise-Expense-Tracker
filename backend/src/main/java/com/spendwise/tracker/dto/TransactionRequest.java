@@ -42,4 +42,5 @@ public class TransactionRequest {
 
     private String paymentMethod;
     private String notes;
+    private String currency = "USD";
 }

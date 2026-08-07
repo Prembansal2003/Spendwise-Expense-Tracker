@@ -32,7 +32,7 @@ public class Transaction {
 
     @NotNull(message = "Amount is required")
     @DecimalMin(value = "0.01", message = "Amount must be greater than 0")
-    @Column(nullable = false, precision = 12, scale = 2)
+    @Column(nullable = false, precision = 19, scale = 6)
     private BigDecimal amount;
 
     @NotNull(message = "Transaction type is required")
@@ -51,6 +51,9 @@ public class Transaction {
 
     @Column(name = "payment_method")
     private String paymentMethod;
+
+    @Column(length = 3)
+    private String currency = "USD";  // ISO 4217 currency code, amounts stored in this currency
 
     @Column(length = 500)
     private String notes;

@@ -179,7 +179,7 @@ export default function TransactionList({
                     fontWeight: 800,
                     color: isIncome ? 'var(--success)' : 'var(--text-primary)'
                   }}>
-                    {isIncome ? '+' : '-'}{formatCurrency(item.amount, currency)}
+                    {isIncome ? '+' : '-'}{formatCurrency(item.amount, currency, item.currency || currency)}
                   </div>
 
                   <div className="flex items-center gap-1">
