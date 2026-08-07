@@ -164,10 +164,15 @@ export default function App() {
   useEffect(() => {
     if (user?.id) {
       apiService.getUserProfile(user.id).then(profile => {
-        if (profile && profile.avatarUrl && profile.avatarUrl !== user.avatarUrl) {
-          const updated = { ...user, ...profile };
-          setUser(updated);
-          localStorage.setItem('spendwise_user', JSON.stringify(updated));
+        if (profile && profile.avatarUrl) {
+          setUser(prev => {
+            // Keep local custom avatarUrl if profile returned default sample avatar
+            const isLocalCustom = prev?.avatarUrl && !prev.avatarUrl.includes('unsplash.com');
+            const finalAvatar = isLocalCustom ? prev.avatarUrl : profile.avatarUrl;
+            const merged = { ...prev, ...profile, avatarUrl: finalAvatar };
+            localStorage.setItem('spendwise_user', JSON.stringify(merged));
+            return merged;
+          });
         }
       });
     }
@@ -180,8 +185,17 @@ export default function App() {
     localStorage.setItem('spendwise_user', JSON.stringify(updatedUser));
     showToast('📸 Profile picture updated successfully!');
 
-    // Persist avatar to cloud database for multi-device sync
-    await apiService.updateUserProfile(user.id, { avatarUrl: newAvatarUrl });
+    // Persist updated photo to backend cloud database
+    try {
+      const res = await apiService.updateUserProfile(user.id, { avatarUrl: newAvatarUrl });
+      if (res && res.avatarUrl) {
+        const synced = { ...updatedUser, avatarUrl: res.avatarUrl };
+        setUser(synced);
+        localStorage.setItem('spendwise_user', JSON.stringify(synced));
+      }
+    } catch (e) {
+      console.warn('[SpendWise] Avatar cloud sync failed:', e.message);
+    }
   };
 
   // Enforce Auth Gate for Signed-Out Visitors
