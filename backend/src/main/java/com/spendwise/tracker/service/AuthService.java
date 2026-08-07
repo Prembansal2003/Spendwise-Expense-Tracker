@@ -47,12 +47,12 @@ public class AuthService {
     }
 
     public AuthResponse getProfile(Long userId) {
-        User user = userRepository.findById(userId)
+        Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
+        User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    newUser.setId(userId);
                     newUser.setName("Prem Agrawal");
-                    newUser.setEmail("agrawalprem00@gmail.com");
+                    newUser.setEmail("agrawalprem" + targetUserId + "@gmail.com");
                     newUser.setPassword(com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123"));
                     newUser.setRole("PRO_MEMBER");
                     newUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
@@ -62,16 +62,16 @@ public class AuthService {
     }
 
     public AuthResponse updateProfile(Long userId, AuthRequest request) {
-        User user = userRepository.findById(userId)
+        Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
+        User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
-                    newUser.setId(userId);
                     newUser.setName("Prem Agrawal");
-                    newUser.setEmail("agrawalprem00@gmail.com");
+                    newUser.setEmail("agrawalprem" + targetUserId + "@gmail.com");
                     newUser.setPassword(com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123"));
                     newUser.setRole("PRO_MEMBER");
                     newUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
-                    return newUser;
+                    return userRepository.save(newUser);
                 });
 
         if (request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank()) {

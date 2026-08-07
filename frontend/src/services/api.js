@@ -104,8 +104,9 @@ export const apiService = {
   },
 
   async getUserProfile(userId = 101) {
+    const targetUserId = (userId === 101 || userId === '101' || userId === 1 || userId === '1') ? 1 : userId;
     try {
-      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${userId}`);
+      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${targetUserId}`);
       if (res.ok) {
         const data = await res.json();
         return data;
@@ -117,8 +118,9 @@ export const apiService = {
   },
 
   async updateUserProfile(userId = 101, payload = {}) {
+    const targetUserId = (userId === 101 || userId === '101' || userId === 1 || userId === '1') ? 1 : userId;
     try {
-      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${userId}`, {
+      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${targetUserId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload)
