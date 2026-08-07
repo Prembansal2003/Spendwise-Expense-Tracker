@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert } from 'lucide-react';
-import { CATEGORY_META, formatCurrency } from '../utils/formatters';
+import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
 
 export default function BudgetTracker({
   budgets,
@@ -12,7 +12,9 @@ export default function BudgetTracker({
 
   const handleEditClick = (b) => {
     setEditingCategory(b.category);
-    setNewLimit(b.monthlyLimit);
+    // Convert current monthlyLimit from its stored currency -> active view currency for editing
+    const displayVal = convertCurrency(b.monthlyLimit, b.currency || 'USD', currency);
+    setNewLimit(displayVal ? displayVal.toFixed(2) : '');
   };
 
   const handleSaveBudget = (cat) => {
@@ -85,13 +87,22 @@ export default function BudgetTracker({
                 {/* Edit input inline */}
                 {isEditing ? (
                   <div className="flex items-center gap-2" style={{ marginBottom: '0.75rem' }}>
-                    <input
-                      type="number"
-                      className="form-control"
-                      style={{ padding: '0.3rem 0.5rem', fontSize: '0.85rem' }}
-                      value={newLimit}
-                      onChange={(e) => setNewLimit(e.target.value)}
-                    />
+                    <div style={{ position: 'relative', width: '100%' }}>
+                      <span style={{
+                        position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)',
+                        color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600
+                      }}>
+                        {getCurrencySymbol(currency)}
+                      </span>
+                      <input
+                        type="number"
+                        step="0.01"
+                        className="form-control"
+                        style={{ padding: '0.3rem 0.5rem 0.3rem 1.6rem', fontSize: '0.85rem' }}
+                        value={newLimit}
+                        onChange={(e) => setNewLimit(e.target.value)}
+                      />
+                    </div>
                     <button className="btn btn-primary btn-sm" onClick={() => handleSaveBudget(b.category)}>
                       Save
                     </button>
@@ -99,10 +110,10 @@ export default function BudgetTracker({
                 ) : (
                   <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(b.currentSpend, currency)}</strong>
+                      Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(b.currentSpend, currency, 'USD')}</strong>
                     </span>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Cap: <strong>{formatCurrency(b.monthlyLimit, currency)}</strong>
+                      Cap: <strong>{formatCurrency(b.monthlyLimit, currency, b.currency || 'USD')}</strong>
                     </span>
                   </div>
                 )}

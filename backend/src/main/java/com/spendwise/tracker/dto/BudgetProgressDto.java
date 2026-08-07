@@ -22,4 +22,5 @@ public class BudgetProgressDto {
     private BigDecimal remainingAmount;
     private Double percentageUsed;
     private String status; // NORMAL, WARNING (>80%), EXCEEDED (>100%)
+    private String currency;
 }

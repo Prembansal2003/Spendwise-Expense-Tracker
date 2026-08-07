@@ -138,7 +138,7 @@ export default function App() {
 
   const handleUpdateBudget = async (category, monthlyLimit) => {
     if (!user) return;
-    await apiService.updateBudget(category, monthlyLimit, user.id);
+    await apiService.updateBudget(category, monthlyLimit, user.id, currency);
     showToast(`🎯 Budget cap for ${category} updated`);
     loadData();
   };

@@ -25,10 +25,12 @@ public class DataInitializer implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // 0. Ensure user_id column exists on pre-existing PostgreSQL tables
+        // 0. Ensure user_id and currency columns exist on pre-existing PostgreSQL tables
         try {
             jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
+            jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'USD'");
             jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'USD'");
         } catch (Exception e) {
             System.err.println("Schema alter check: " + e.getMessage());
         }
@@ -51,13 +53,13 @@ public class DataInitializer implements CommandLineRunner {
             int year = now.getYear();
 
             budgetRepository.saveAll(List.of(
-                    new Budget(null, 1L, Category.FOOD, new BigDecimal("600.00"), new BigDecimal("420.50"), month, year),
-                    new Budget(null, 1L, Category.HOUSING, new BigDecimal("1500.00"), new BigDecimal("1450.00"), month, year),
-                    new Budget(null, 1L, Category.TRANSPORT, new BigDecimal("300.00"), new BigDecimal("185.00"), month, year),
-                    new Budget(null, 1L, Category.ENTERTAINMENT, new BigDecimal("250.00"), new BigDecimal("210.00"), month, year),
-                    new Budget(null, 1L, Category.UTILITIES, new BigDecimal("350.00"), new BigDecimal("280.00"), month, year),
-                    new Budget(null, 1L, Category.SHOPPING, new BigDecimal("400.00"), new BigDecimal("310.00"), month, year),
-                    new Budget(null, 1L, Category.HEALTH, new BigDecimal("200.00"), new BigDecimal("75.00"), month, year)
+                    new Budget(null, 1L, Category.FOOD, new BigDecimal("600.00"), new BigDecimal("420.50"), "USD", month, year),
+                    new Budget(null, 1L, Category.HOUSING, new BigDecimal("1500.00"), new BigDecimal("1450.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.TRANSPORT, new BigDecimal("300.00"), new BigDecimal("185.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.ENTERTAINMENT, new BigDecimal("250.00"), new BigDecimal("210.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.UTILITIES, new BigDecimal("350.00"), new BigDecimal("280.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.SHOPPING, new BigDecimal("400.00"), new BigDecimal("310.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.HEALTH, new BigDecimal("200.00"), new BigDecimal("75.00"), "USD", month, year)
             ));
         }
 

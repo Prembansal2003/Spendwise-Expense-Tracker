@@ -72,13 +72,14 @@ public class BudgetService {
                     .remainingAmount(remaining)
                     .percentageUsed(Math.round(usedPct * 10.0) / 10.0)
                     .status(status)
+                    .currency(b.getCurrency() != null ? b.getCurrency() : "USD")
                     .build());
         }
 
         return progressList;
     }
 
-    public Budget setBudget(Category category, BigDecimal monthlyLimit) {
+    public Budget setBudget(Category category, BigDecimal monthlyLimit, String currency) {
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
@@ -88,10 +89,14 @@ public class BudgetService {
         if (existing.isPresent()) {
             budget = existing.get();
             budget.setMonthlyLimit(monthlyLimit);
+            if (currency != null && !currency.isBlank()) {
+                budget.setCurrency(currency);
+            }
         } else {
             budget = new Budget();
             budget.setCategory(category);
             budget.setMonthlyLimit(monthlyLimit);
+            budget.setCurrency(currency != null ? currency : "USD");
             budget.setMonth(month);
             budget.setYear(year);
         }

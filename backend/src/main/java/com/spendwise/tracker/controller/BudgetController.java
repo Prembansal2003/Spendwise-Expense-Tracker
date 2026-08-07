@@ -26,7 +26,7 @@ public class BudgetController {
 
     @PostMapping
     public ResponseEntity<Budget> setBudget(@RequestBody BudgetRequest request) {
-        Budget budget = budgetService.setBudget(request.getCategory(), request.getMonthlyLimit());
+        Budget budget = budgetService.setBudget(request.getCategory(), request.getMonthlyLimit(), request.getCurrency());
         return ResponseEntity.ok(budget);
     }
 
@@ -34,5 +34,6 @@ public class BudgetController {
     public static class BudgetRequest {
         private Category category;
         private BigDecimal monthlyLimit;
+        private String currency = "USD";
     }
 }

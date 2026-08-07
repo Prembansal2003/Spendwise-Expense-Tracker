@@ -279,12 +279,12 @@ export const apiService = {
     });
   },
 
-  async updateBudget(category, monthlyLimit, userId = 101) {
+  async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD') {
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, monthlyLimit, userId })
+        body: JSON.stringify({ category, monthlyLimit, currency, userId })
       });
       if (res.ok) {
         const data = await res.json();
@@ -300,8 +300,9 @@ export const apiService = {
     const existingIdx = budgets.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
       budgets[existingIdx].monthlyLimit = Number(monthlyLimit);
+      budgets[existingIdx].currency = currency;
     } else {
-      budgets.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit) });
+      budgets.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit), currency });
     }
     setLocalData(budgetKey, budgets);
     return true;

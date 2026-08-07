@@ -32,11 +32,14 @@ public class Budget {
 
     @NotNull(message = "Monthly limit is required")
     @DecimalMin(value = "0.00", message = "Monthly limit cannot be negative")
-    @Column(name = "monthly_limit", nullable = false, precision = 12, scale = 2)
+    @Column(name = "monthly_limit", nullable = false, precision = 19, scale = 6)
     private BigDecimal monthlyLimit;
 
-    @Column(name = "current_spend", precision = 12, scale = 2)
+    @Column(name = "current_spend", precision = 19, scale = 6)
     private BigDecimal currentSpend = BigDecimal.ZERO;
+
+    @Column(length = 3)
+    private String currency = "USD";
 
     @Column(nullable = false)
     private Integer month;
