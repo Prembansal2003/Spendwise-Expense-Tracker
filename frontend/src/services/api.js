@@ -135,16 +135,17 @@ export const apiService = {
 
   // ========== TRANSACTIONS ==========
   async getTransactions(filters = {}, userId = 101) {
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = (userId === 101 || userId === '101') ? INITIAL_TRANSACTIONS : [];
+    const defaultData = isDemoUser ? INITIAL_TRANSACTIONS : [];
     let localList = getLocalData(storageKey, defaultData);
-    if ((!localList || localList.length === 0) && (userId === 101 || userId === '101')) {
-      localList = INITIAL_TRANSACTIONS;
-      setLocalData(storageKey, INITIAL_TRANSACTIONS);
+    if (!isDemoUser && !localStorage.getItem(storageKey)) {
+      localList = [];
+      setLocalData(storageKey, []);
     }
 
     let isBackend = false;
-    let combinedList = [...localList];
+    let combinedList = isDemoUser ? [...localList] : (Array.isArray(localList) ? [...localList] : []);
 
     try {
       const query = new URLSearchParams();
@@ -157,11 +158,18 @@ export const apiService = {
       if (res.ok) {
         const backendData = await res.json();
         isBackend = true;
-        if (Array.isArray(backendData) && backendData.length > 0) {
-          const map = new Map();
-          localList.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
-          backendData.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
-          combinedList = Array.from(map.values());
+        if (Array.isArray(backendData)) {
+          if (backendData.length > 0) {
+            const map = new Map();
+            if (isDemoUser) {
+              localList.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
+            }
+            backendData.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
+            combinedList = Array.from(map.values());
+          } else if (!isDemoUser) {
+            // Fresh new registered account: start empty
+            combinedList = [];
+          }
           setLocalData(storageKey, combinedList);
         }
       }
@@ -194,8 +202,9 @@ export const apiService = {
       currency: transaction.currency || 'USD'
     };
 
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
     const storageKey = `spendwise_transactions_${userId}`;
-    const list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    const list = getLocalData(storageKey, isDemoUser ? INITIAL_TRANSACTIONS : []);
     list.unshift(payload);
     setLocalData(storageKey, list);
 
@@ -233,8 +242,9 @@ export const apiService = {
       currency: transaction.currency || 'USD'
     };
 
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
     const storageKey = `spendwise_transactions_${userId}`;
-    let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    let list = getLocalData(storageKey, isDemoUser ? INITIAL_TRANSACTIONS : []);
     const existingIdx = list.findIndex(t => String(t.id) === String(id));
     let updatedItem = { ...payload, id };
     if (existingIdx >= 0) {
