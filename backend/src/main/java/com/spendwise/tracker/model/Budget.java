@@ -38,7 +38,7 @@ public class Budget {
     @Column(name = "current_spend", precision = 19, scale = 6)
     private BigDecimal currentSpend = BigDecimal.ZERO;
 
-    @Column(length = 3)
+    @Column(length = 20)
     private String currency = "USD";
 
     @Column(nullable = false)

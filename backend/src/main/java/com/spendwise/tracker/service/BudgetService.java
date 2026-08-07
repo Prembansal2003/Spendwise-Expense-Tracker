@@ -3,8 +3,6 @@ package com.spendwise.tracker.service;
 import com.spendwise.tracker.dto.BudgetProgressDto;
 import com.spendwise.tracker.model.Budget;
 import com.spendwise.tracker.model.Category;
-import com.spendwise.tracker.model.Transaction;
-import com.spendwise.tracker.model.TransactionType;
 import com.spendwise.tracker.repository.BudgetRepository;
 import com.spendwise.tracker.repository.TransactionRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,14 +24,27 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
 
-    public List<BudgetProgressDto> getBudgetProgressForCurrentMonth() {
+    public List<BudgetProgressDto> getBudgetProgressForCurrentMonth(Long userId) {
+        Long targetUserId = (userId != null) ? userId : 1L;
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
 
-        List<Budget> budgets = budgetRepository.findByMonthAndYear(month, year);
+        List<Budget> budgets = budgetRepository.findByUserIdAndMonthAndYear(targetUserId, month, year);
+
+        // If no custom budgets exist for this user yet, seed clean default budgets (e.g. $500 cap per category)
+        if (budgets.isEmpty() && !targetUserId.equals(1L) && !targetUserId.equals(101L)) {
+            List<Budget> newBudgets = new ArrayList<>();
+            for (Category cat : Category.values()) {
+                if (cat == Category.SALARY || cat == Category.FREELANCE || cat == Category.INVESTMENT) continue;
+                newBudgets.add(new Budget(null, targetUserId, cat, new BigDecimal("500.00"), BigDecimal.ZERO, "USD", month, year));
+            }
+            budgets = budgetRepository.saveAll(newBudgets);
+        } else if (budgets.isEmpty()) {
+            budgets = budgetRepository.findByMonthAndYear(month, year);
+        }
         
-        // Compute real-time expenses for current month per category
+        // Compute real-time expenses for current month per category for this user
         LocalDate startOfMonth = now.withDayOfMonth(1);
         LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
         List<Object[]> categoryExpenses = transactionRepository.getCategoryExpensesByDateRange(startOfMonth, endOfMonth);
@@ -79,12 +90,13 @@ public class BudgetService {
         return progressList;
     }
 
-    public Budget setBudget(Category category, BigDecimal monthlyLimit, String currency) {
+    public Budget setBudget(Long userId, Category category, BigDecimal monthlyLimit, String currency) {
+        Long targetUserId = (userId != null) ? userId : 1L;
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
 
-        Optional<Budget> existing = budgetRepository.findByCategoryAndMonthAndYear(category, month, year);
+        Optional<Budget> existing = budgetRepository.findByUserIdAndCategoryAndMonthAndYear(targetUserId, category, month, year);
         Budget budget;
         if (existing.isPresent()) {
             budget = existing.get();
@@ -94,6 +106,7 @@ public class BudgetService {
             }
         } else {
             budget = new Budget();
+            budget.setUserId(targetUserId);
             budget.setCategory(category);
             budget.setMonthlyLimit(monthlyLimit);
             budget.setCurrency(currency != null ? currency : "USD");

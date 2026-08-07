@@ -1,4 +1,4 @@
-import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from '../utils/sampleData';
+import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS, CLEAN_DEFAULT_BUDGETS } from '../utils/sampleData';
 
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
 
@@ -325,35 +325,39 @@ export const apiService = {
 
   // ========== BUDGETS ==========
   async getBudgets(userId = 101) {
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const storageKey = `spendwise_budgets_${userId}`;
+    const defaultData = isDemoUser ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
+
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets/progress?userId=${userId}`);
       if (res.ok) {
         let data = await res.json();
-        if ((!data || data.length === 0) && (userId === 101 || userId === '101')) {
+        if (Array.isArray(data) && data.length > 0) {
+          setLocalData(storageKey, data);
+          return data;
+        } else if (isDemoUser) {
           data = INITIAL_BUDGETS;
+          setLocalData(storageKey, data);
+          return data;
         }
-        return data;
       }
     } catch (err) {
       console.warn('[SpendWise API] getBudgets failed, using localStorage fallback');
     }
 
-    const storageKey = `spendwise_budgets_${userId}`;
-    let list = getLocalData(storageKey, INITIAL_BUDGETS);
-    if ((!list || list.length === 0) && (userId === 101 || userId === '101')) {
-      list = INITIAL_BUDGETS;
-      setLocalData(storageKey, INITIAL_BUDGETS);
-    }
+    let list = getLocalData(storageKey, defaultData);
     return list;
   },
 
   async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') {
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
     const yearlyLimit = period === 'YEARLY' ? Number(monthlyLimit) * 12 : Number(monthlyLimit) * 12;
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit })
+        body: JSON.stringify({ userId: Number(userId) || 101, category, monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit })
       });
       if (res.ok) {
         const data = await res.json();
@@ -364,7 +368,8 @@ export const apiService = {
     }
 
     const storageKey = `spendwise_budgets_${userId}`;
-    let list = getLocalData(storageKey, INITIAL_BUDGETS);
+    const defaultData = isDemoUser ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
+    let list = getLocalData(storageKey, defaultData);
     const existingIdx = list.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
       list[existingIdx] = { ...list[existingIdx], monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit };

@@ -121,3 +121,14 @@ export const INITIAL_BUDGETS = [
   { id: 7, category: 'HEALTH', monthlyLimit: 250.00 },
   { id: 8, category: 'OTHER', monthlyLimit: 200.00 }
 ];
+
+export const CLEAN_DEFAULT_BUDGETS = [
+  { id: 1, category: 'FOOD', monthlyLimit: 500.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 2, category: 'HOUSING', monthlyLimit: 1500.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 3, category: 'TRANSPORT', monthlyLimit: 250.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 4, category: 'ENTERTAINMENT', monthlyLimit: 200.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 5, category: 'UTILITIES', monthlyLimit: 300.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 6, category: 'SHOPPING', monthlyLimit: 300.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 7, category: 'HEALTH', monthlyLimit: 200.00, currency: 'USD', period: 'MONTHLY' },
+  { id: 8, category: 'OTHER', monthlyLimit: 150.00, currency: 'USD', period: 'MONTHLY' }
+];
