@@ -28,24 +28,17 @@ Sleek modal for recording new income or expense transactions with merchant title
 
 ---
 
-### 3. 🐷 Interactive Active Savings Goals & Automated Deductions
+### 3. 🐷 Interactive Active Savings Goals & Automated Cash Deductions
 Define personal savings milestones (Vacation, Laptop, Emergency Fund) with target progress bars, percentage tracking, and **automated cash balance deductions** when adding deposits.
 
 ![Active Savings Goals](docs/screenshots/03_active_savings_goals.png)
 
 ---
 
-### 4. 📊 12-Month Cashflow Breakdown & Specific Date Filtered Log
-Interactive 12-month bar chart comparing Income vs Outflow, category expense share doughnut chart, and transaction history with **specific date picker filtering**.
-
-![Cashflow Analytics & Transactions](docs/screenshots/04_cashflow_breakdown_and_transactions.png)
-
----
-
-### 5. 📥 Custom Timeframe Data Export & PDF Statement Generator
+### 4. 📥 Custom Timeframe Data Export & PDF Statement Generator
 Filter transaction records by custom start/end date ranges (`From Date` – `To Date`) or preset timeframes, then export to **Excel CSV**, **JSON Backup**, or print a formatted **PDF Statement**.
 
-![Custom Timeframe Data Export](docs/screenshots/05_custom_export_modal.png)
+![Custom Timeframe Data Export](docs/screenshots/04_custom_timeframe_export.png)
 
 ---
 
