@@ -11,10 +11,7 @@ import org.springframework.stereotype.Service;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDate;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
@@ -25,33 +22,44 @@ public class BudgetService {
     private final TransactionRepository transactionRepository;
 
     public List<BudgetProgressDto> getBudgetProgressForCurrentMonth(Long userId) {
-        Long targetUserId = (userId != null) ? userId : 1L;
+        Long rawUserId = (userId != null) ? userId : 1L;
+        // Normalize 101L to 1L for demo user account consistency
+        Long targetUserId = (rawUserId.equals(101L)) ? 1L : rawUserId;
+
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();
 
-        List<Budget> budgets = budgetRepository.findByUserIdAndMonthAndYear(targetUserId, month, year);
+        // 1. Fetch budgets strictly scoped by targetUserId
+        List<Budget> rawBudgets = budgetRepository.findByUserIdAndMonthAndYear(targetUserId, month, year);
 
-        // If no custom budgets exist for this user yet, seed clean default budgets (e.g. $500 cap per category)
-        if (budgets.isEmpty() && !targetUserId.equals(1L) && !targetUserId.equals(101L)) {
+        // 2. Seed clean default budgets if user has no records yet
+        if (rawBudgets.isEmpty()) {
             List<Budget> newBudgets = new ArrayList<>();
+            BigDecimal defaultCap = targetUserId.equals(1L) ? new BigDecimal("600.00") : new BigDecimal("500.00");
             for (Category cat : Category.values()) {
                 if (cat == Category.SALARY || cat == Category.FREELANCE || cat == Category.INVESTMENT) continue;
-                newBudgets.add(new Budget(null, targetUserId, cat, new BigDecimal("500.00"), BigDecimal.ZERO, "USD", month, year));
+                newBudgets.add(new Budget(null, targetUserId, cat, defaultCap, BigDecimal.ZERO, "USD", month, year));
             }
-            budgets = budgetRepository.saveAll(newBudgets);
-        } else if (budgets.isEmpty()) {
-            budgets = budgetRepository.findByMonthAndYear(month, year);
+            rawBudgets = budgetRepository.saveAll(newBudgets);
         }
-        
-        // Compute real-time expenses for current month per category for this user
+
+        // 3. Deduplicate by Category to ensure EXACTLY 1 card per category
+        Map<Category, Budget> uniqueBudgetMap = new LinkedHashMap<>();
+        for (Budget b : rawBudgets) {
+            uniqueBudgetMap.put(b.getCategory(), b);
+        }
+        List<Budget> budgets = new ArrayList<>(uniqueBudgetMap.values());
+
+        // 4. Compute real-time expenses for current month per category FOR THIS SPECIFIC USER ONLY
         LocalDate startOfMonth = now.withDayOfMonth(1);
         LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
         List<Object[]> categoryExpenses = transactionRepository.getCategoryExpensesByUserIdAndDateRange(targetUserId, startOfMonth, endOfMonth);
 
         Map<Category, BigDecimal> spendMap = categoryExpenses.stream().collect(Collectors.toMap(
                 row -> (Category) row[0],
-                row -> (BigDecimal) row[1]
+                row -> (BigDecimal) row[1],
+                BigDecimal::add
         ));
 
         List<BudgetProgressDto> progressList = new ArrayList<>();
@@ -60,7 +68,7 @@ public class BudgetService {
             BigDecimal actualSpend = spendMap.getOrDefault(b.getCategory(), BigDecimal.ZERO);
             BigDecimal limit = b.getMonthlyLimit();
             BigDecimal remaining = limit.subtract(actualSpend);
-            
+
             double usedPct = 0.0;
             if (limit.compareTo(BigDecimal.ZERO) > 0) {
                 usedPct = actualSpend.divide(limit, 4, RoundingMode.HALF_UP).doubleValue() * 100;
@@ -91,7 +99,9 @@ public class BudgetService {
     }
 
     public Budget setBudget(Long userId, Category category, BigDecimal monthlyLimit, String currency) {
-        Long targetUserId = (userId != null) ? userId : 1L;
+        Long rawUserId = (userId != null) ? userId : 1L;
+        Long targetUserId = (rawUserId.equals(101L)) ? 1L : rawUserId;
+
         LocalDate now = LocalDate.now();
         int month = now.getMonthValue();
         int year = now.getYear();

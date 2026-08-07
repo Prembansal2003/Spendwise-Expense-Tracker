@@ -329,17 +329,26 @@ export const apiService = {
     const storageKey = `spendwise_budgets_${userId}`;
     const defaultData = isDemoUser ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
 
+    const deduplicateBudgets = (rawList) => {
+      if (!Array.isArray(rawList)) return [];
+      const map = new Map();
+      rawList.forEach(b => {
+        if (b && b.category) map.set(b.category, b);
+      });
+      return Array.from(map.values());
+    };
+
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets/progress?userId=${userId}`);
       if (res.ok) {
         let data = await res.json();
         if (Array.isArray(data) && data.length > 0) {
-          setLocalData(storageKey, data);
-          return data;
+          const cleanData = deduplicateBudgets(data);
+          setLocalData(storageKey, cleanData);
+          return cleanData;
         } else if (isDemoUser) {
-          data = INITIAL_BUDGETS;
-          setLocalData(storageKey, data);
-          return data;
+          setLocalData(storageKey, INITIAL_BUDGETS);
+          return INITIAL_BUDGETS;
         }
       }
     } catch (err) {
@@ -347,7 +356,7 @@ export const apiService = {
     }
 
     let list = getLocalData(storageKey, defaultData);
-    return list;
+    return deduplicateBudgets(list);
   },
 
   async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') {
