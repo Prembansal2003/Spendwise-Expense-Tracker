@@ -64,16 +64,16 @@ public class DataInitializer implements CommandLineRunner {
         // 3. Seed Initial Transactions if empty
         if (transactionRepository.count() == 0) {
             transactionRepository.saveAll(List.of(
-                    new Transaction(null, 1L, "Tech Corp Salary", new BigDecimal("5200.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(5), "Bank Transfer", "Monthly salary payment", null),
-                    new Transaction(null, 1L, "Apartment Rent", new BigDecimal("1450.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "August rent", null),
-                    new Transaction(null, 1L, "Organic Groceries", new BigDecimal("165.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "Whole Foods market", null),
-                    new Transaction(null, 1L, "Freelance UI Design", new BigDecimal("850.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(3), "UPI", "Dashboard project completion", null),
-                    new Transaction(null, 1L, "Electric & Water Bill", new BigDecimal("180.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "Monthly utility payment", null),
-                    new Transaction(null, 1L, "Gasoline / Fuel", new BigDecimal("65.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(2), "Credit Card", "Shell station refill", null),
-                    new Transaction(null, 1L, "Cinema & Dinner Out", new BigDecimal("110.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "Weekend movie night", null),
-                    new Transaction(null, 1L, "Weekly Grocery Run", new BigDecimal("155.00"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(1), "Debit Card", "Trader Joes", null),
-                    new Transaction(null, 1L, "Wireless Earbuds", new BigDecimal("140.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(1), "Credit Card", "Tech store purchase", null),
-                    new Transaction(null, 1L, "Gym Membership", new BigDecimal("55.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now(), "Credit Card", "Monthly fitness club fee", null)
+                    new Transaction(null, 1L, "Tech Corp Salary", new BigDecimal("5200.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(5), "Bank Transfer", "Monthly salary payment", "USD", null),
+                    new Transaction(null, 1L, "Apartment Rent", new BigDecimal("1450.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "August rent", "USD", null),
+                    new Transaction(null, 1L, "Organic Groceries", new BigDecimal("165.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "Whole Foods market", "USD", null),
+                    new Transaction(null, 1L, "Freelance UI Design", new BigDecimal("850.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(3), "UPI", "Dashboard project completion", "USD", null),
+                    new Transaction(null, 1L, "Electric & Water Bill", new BigDecimal("180.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "Monthly utility payment", "USD", null),
+                    new Transaction(null, 1L, "Gasoline / Fuel", new BigDecimal("65.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(2), "Credit Card", "Shell station refill", "USD", null),
+                    new Transaction(null, 1L, "Cinema & Dinner Out", new BigDecimal("110.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "Weekend movie night", "USD", null),
+                    new Transaction(null, 1L, "Weekly Grocery Run", new BigDecimal("155.00"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(1), "Debit Card", "Trader Joes", "USD", null),
+                    new Transaction(null, 1L, "Wireless Earbuds", new BigDecimal("140.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(1), "Credit Card", "Tech store purchase", "USD", null),
+                    new Transaction(null, 1L, "Gym Membership", new BigDecimal("55.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now(), "Credit Card", "Monthly fitness club fee", "USD", null)
             ));
         }
     }
