@@ -5,10 +5,10 @@
 [![Docker](https://img.shields.io/badge/Docker-Ready-blue.svg)](https://www.docker.com/)
 [![React](https://img.shields.io/badge/React-18-blue.svg)](https://react.dev/)
 [![Vite](https://img.shields.io/badge/Vite-5-purple.svg)](https://vitejs.dev/)
-[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue.svg)](https://www.postgresql.org/)
+[![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Neon.tech-blue.svg)](https://neon.tech/)
 [![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://web.dev/progressive-web-apps/)
 
-**SpendWise** is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a modern **React 18 single-page web UI** featuring glassmorphism aesthetics, AI financial advisor widget, live real-time forex currency conversions, interactive Chart.js analytics, monthly & yearly category budget caps, automated cash balance deductions on savings deposits, and multi-device cloud database synchronization.
+**SpendWise** is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a modern **React 18 single-page web UI** featuring glassmorphism aesthetics, an AI financial advisor widget, live real-time forex currency conversions, interactive Chart.js analytics, monthly & yearly category budget caps, automated cash balance deductions on savings deposits, multi-user account isolation, and cloud database synchronization with permanent lifetime PostgreSQL hosting.
 
 ---
 
@@ -65,39 +65,43 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
 
 ## ✨ Key Features & Capabilities
 
-### 1. 📊 Financial Intelligence Dashboard & Analytics
-- **KPI Metrics**: Real-time Total Balance, Cash Inflow, Outflow, and Net Savings Rate %.
-- **12-Month Breakdown & Yearly Analysis**: Multi-period bar charts comparing Income vs Outflow per month for any selected year (2020 through 2030 + All Years).
-- **Interactive Visualizations**: Cash flow trend line charts & category spending doughnut breakdowns with percentage legends using **Chart.js**.
+### 1. 👥 Multi-User Account Isolation & Clean State Initializer
+- **Demo Account (`Prem Agrawal`)**: Pre-populated with rich sample data for instant demonstration.
+- **New User Accounts**: Starts with a **100% clean, fresh dashboard** with zero pre-existing sample transactions or balance artifacts.
 
-### 2. 🤖 AI Financial Advisor Widget
-- Automated **Financial Health Score (0–100)** calculation based on live savings rate and budget compliance.
-- Interactive category-based AI advisor with data-driven advice on 50/30/20 budgets, expense spikes, and investment goals.
-
-### 3. 💱 Real-Time Live Forex Exchange Rates & Multi-Currency System
+### 2. 💱 Real-Time Live Forex Exchange Rates & Multi-Currency System
 - Live currency API integration (`open.er-api.com`) fetching real-time exchange rates.
 - Instant conversion between **USD ($)**, **EUR (€)**, **GBP (£)**, **INR (₹)**, **JPY (¥)**, **CAD (CA$)**, and **AUD (A$)**.
 - **Fed-Currency Budget Storage**: Stores budget caps in whichever currency fed by the user and dynamically converts to any header display currency in real time.
 
-### 4. 🎯 Monthly & Yearly Category Budgets
+### 3. 📊 Financial Intelligence Dashboard & Analytics
+- **KPI Metrics**: Real-time Total Balance, Cash Inflow, Outflow, and Net Savings Rate %.
+- **12-Month Breakdown & Yearly Analysis**: Multi-period bar charts comparing Income vs Outflow per month for any selected year (2020 through 2030 + All Years).
+- **Interactive Visualizations**: Cash flow trend line charts & category spending doughnut breakdowns with percentage legends using **Chart.js**.
+
+### 4. 🤖 AI Financial Advisor Widget
+- Automated **Financial Health Score (0–100)** calculation based on live savings rate and budget compliance.
+- Interactive category-based AI advisor with data-driven advice on 50/30/20 budgets, expense spikes, and investment goals.
+
+### 5. 🎯 Monthly & Yearly Category Budgets
 - Set monthly or annual spending caps per category (Food, Housing, Transport, Entertainment, Utilities, Health, Shopping, etc.).
 - Real-time limit progress bars with automated alerts:
   - ⚠️ **Warning Alert**: Triggered at 80%+ category limit.
   - 🚨 **Exceeded Alert**: Triggered when spending passes 100% capacity.
 
-### 5. 🐷 Dynamic Active Savings Goals
+### 6. 🐷 Dynamic Active Savings Goals
 - Create personal target savings goals (Vacation, Emergency Fund, Laptop).
 - **Automated Cash Deduction**: Depositing money into a savings goal automatically creates an outflow transaction, deducting the deposit from your available cash balance.
 
-### 6. 🔍 Specific Date Filtering & Custom Timeframe Exports
+### 7. 🔍 Specific Date Filtering & Custom Timeframe Exports
 - **Specific Date Filter**: Filter transaction history by exact calendar date (`YYYY-MM-DD`).
 - **Custom Timeframe Export**: Filter transaction records by custom start/end date ranges and download **CSV**, **JSON**, or printable **PDF Statements**.
 
-### 7. 📸 Profile Picture Upload & Lightbox Preview
+### 8. 📸 Profile Picture Upload & Lightbox Preview
 - Upload photo from device, paste web URL, or choose preset avatars.
 - **Fullscreen Lightbox**: Click profile photo anytime to preview in fullscreen backdrop-blur view.
 
-### 8. 🔄 Continuous Real-Time Sync & Persistent Sessions
+### 9. 🔄 Continuous Real-Time Sync & Persistent Sessions
 - **8-Second Background Polling**: Syncs data continuously across connected devices.
 - **Persistent Sessions**: User remains signed in on refresh until explicitly clicking **Log Out**.
 
@@ -122,7 +126,7 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
                                            │ JDBC Persistence
                                            ▼
                ┌────────────────────────────────────────────────────────┐
-               │    Database Tier (H2 Local / PostgreSQL Cloud)         │
+               │    Database Tier (Neon.tech Permanent PostgreSQL)      │
                │    - Transactions, Budgets, Users Tables               │
                └───────────────────────────┬────────────────────────────┘
 ```
@@ -131,7 +135,7 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
 | :--- | :--- |
 | **Backend Framework** | Java 17, Spring Boot 3.2.3, Spring Data JPA, Spring Web |
 | **Packaging & Docker**| Multi-stage `Dockerfile` (`maven:3.9.6` & `eclipse-temurin:17-alpine`) |
-| **Database** | H2 Database (Dev) / PostgreSQL (Production Cloud) |
+| **Database** | H2 Database (Dev) / Neon.tech PostgreSQL (Production Permanent Cloud) |
 | **Security** | SHA-256 / BCrypt Password Hashing (`PasswordEncoderUtil`) |
 | **Frontend Framework**| React 18, Vite 5, JavaScript (ES6+) |
 | **UI & Styling** | Custom Obsidian CSS Design System, Lucide Icons |
@@ -175,6 +179,35 @@ npm run dev
 
 Open your browser and navigate to:
 👉 **`http://localhost:5173/`**
+
+---
+
+## ☁️ Permanent Free Cloud Deployment (Render + Neon.tech)
+
+1. Push latest code to GitHub:
+   ```bash
+   git add .
+   git commit -m "SpendWise Production Build"
+   git push origin main
+   ```
+
+2. Create a 100% Permanent Free PostgreSQL Database on [**Neon.tech**](https://neon.tech/):
+   - Project Name: `spendwise-db`
+   - Copy JDBC Connection string details.
+
+3. Deploy **Spring Boot Backend** Web Service on Render:
+   - Root Directory: `backend`
+   - Environment / Runtime: **Docker**
+   - Environment Variables:
+     - `SPRING_DATASOURCE_URL` = `jdbc:postgresql://ep-xyz.us-east-2.aws.neon.tech/neondb?sslmode=require`
+     - `SPRING_DATASOURCE_USERNAME` = `neondb_owner`
+     - `SPRING_DATASOURCE_PASSWORD` = `<your_password>`
+
+4. Deploy **React Frontend** Static Site on Render:
+   - Root Directory: `frontend`
+   - Build Command: `npm run build`
+   - Publish Directory: `dist`
+   - Environment Variable: `VITE_API_BASE_URL` = `https://spendwise-backend-api-rje3.onrender.com/api/v1`
 
 ---
 
