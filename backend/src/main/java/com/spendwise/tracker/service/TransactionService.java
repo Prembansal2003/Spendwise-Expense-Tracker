@@ -96,6 +96,29 @@ public class TransactionService {
         transactionRepository.deleteById(id);
     }
 
+    @org.springframework.transaction.annotation.Transactional
+    public void deleteAllTransactionsByUserId(Long userId) {
+        Long targetUserId = (userId != null) ? userId : 101L;
+        Long queryId = (targetUserId.equals(101L)) ? 1L : targetUserId;
+        transactionRepository.deleteByUserId(queryId);
+        if (targetUserId.equals(101L) || targetUserId.equals(1L)) {
+            List<Transaction> demoTxList = List.of(
+                new Transaction(null, 1L, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.parse("2026-08-01"), "Bank Transfer", "USD", "Monthly tech payroll credit", null),
+                new Transaction(null, 1L, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.parse("2026-08-02"), "UPI", "USD", "iOS app milestone completion", null),
+                new Transaction(null, 1L, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.parse("2026-08-03"), "Bank Transfer", "USD", "Quarterly index fund yield", null),
+                new Transaction(null, 1L, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.parse("2026-08-01"), "Bank Transfer", "USD", "Monthly housing rent payment", null),
+                new Transaction(null, 1L, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.parse("2026-08-02"), "Credit Card", "USD", "Whole Foods market shopping", null),
+                new Transaction(null, 1L, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.parse("2026-08-03"), "Debit Card", "USD", "Monthly home utility bills", null),
+                new Transaction(null, 1L, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.parse("2026-08-04"), "Credit Card", "USD", "Shell station fuel refill", null),
+                new Transaction(null, 1L, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.parse("2026-08-04"), "Credit Card", "USD", "Weekend concert & restaurant dining", null),
+                new Transaction(null, 1L, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.parse("2026-08-05"), "Credit Card", "USD", "Workstation upgrade", null),
+                new Transaction(null, 1L, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.parse("2026-08-06"), "Credit Card", "USD", "Wellness clinic health checkup", null),
+                new Transaction(null, 1L, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.parse("2026-08-06"), "UPI", "USD", "Software development learning course", null)
+            );
+            transactionRepository.saveAll(demoTxList);
+        }
+    }
+
     public SummaryResponse getSummary() {
         BigDecimal totalIncome = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.INCOME)).orElse(BigDecimal.ZERO);
         BigDecimal totalExpenses = Optional.ofNullable(transactionRepository.sumAmountByType(TransactionType.EXPENSE)).orElse(BigDecimal.ZERO);

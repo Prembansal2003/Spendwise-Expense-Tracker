@@ -291,33 +291,22 @@ export const apiService = {
     return true;
   },
 
-  // Reset sample dataset for demo user
+  // Reset transactions & sample dataset for user
   async resetSampleData(userId = 101) {
+    const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
     const storageKey = `spendwise_transactions_${userId}`;
     const budgetKey = `spendwise_budgets_${userId}`;
 
-    setLocalData(storageKey, INITIAL_TRANSACTIONS);
-    setLocalData(budgetKey, INITIAL_BUDGETS);
+    if (isDemoUser) {
+      setLocalData(storageKey, INITIAL_TRANSACTIONS);
+      setLocalData(budgetKey, INITIAL_BUDGETS);
+    } else {
+      setLocalData(storageKey, []);
+      setLocalData(budgetKey, CLEAN_DEFAULT_BUDGETS);
+    }
 
     try {
-      const res = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`);
-      if (res.ok) {
-        const list = await res.json();
-        for (const t of list) {
-          try {
-            await fetchApi(`${API_BASE_URL}/transactions/${t.id}?userId=${userId}`, { method: 'DELETE' });
-          } catch (e) {}
-        }
-        for (const tx of INITIAL_TRANSACTIONS) {
-          try {
-            await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({ ...tx, id: null })
-            });
-          } catch (e) {}
-        }
-      }
+      await fetchApi(`${API_BASE_URL}/transactions/reset?userId=${userId}`, { method: 'DELETE' });
     } catch (e) {
       console.warn('[SpendWise API] Backend reset skipped:', e.message);
     }

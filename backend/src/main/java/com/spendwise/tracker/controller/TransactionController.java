@@ -62,4 +62,10 @@ public class TransactionController {
         transactionService.deleteTransaction(id);
         return ResponseEntity.noContent().build();
     }
+
+    @DeleteMapping("/reset")
+    public ResponseEntity<Void> resetUserTransactions(@RequestParam(required = false) Long userId) {
+        transactionService.deleteAllTransactionsByUserId(userId);
+        return ResponseEntity.noContent().build();
+    }
 }
