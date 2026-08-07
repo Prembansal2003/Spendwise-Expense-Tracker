@@ -12,7 +12,8 @@ export default function BudgetTracker({
   budgets = [],
   currency,
   onUpdateBudget,
-  transactions = []
+  transactions = [],
+  onCreateTransaction
 }) {
   const [budgetPeriod, setBudgetPeriod] = useState('monthly'); // 'monthly' or 'yearly'
   const [editingCategory, setEditingCategory] = useState(null);
@@ -70,12 +71,13 @@ export default function BudgetTracker({
   };
 
   // Add New Savings Goal
-  const handleCreateSavingsGoal = (e) => {
+  const handleCreateSavingsGoal = async (e) => {
     e.preventDefault();
     if (!newGoalTitle.trim() || !newGoalTarget || Number(newGoalTarget) <= 0) return;
 
+    const fedSavedVal = Number(newGoalSaved || 0);
     const targetInUSD = convertCurrency(Number(newGoalTarget), currency, 'USD');
-    const savedInUSD = convertCurrency(Number(newGoalSaved || 0), currency, 'USD');
+    const savedInUSD = convertCurrency(fedSavedVal, currency, 'USD');
 
     const newGoal = {
       id: Date.now(),
@@ -86,23 +88,52 @@ export default function BudgetTracker({
     };
 
     setSavingsGoals([...savingsGoals, newGoal]);
+
+    // Automatically create a deduction expense transaction if initial deposit > 0
+    if (fedSavedVal > 0 && onCreateTransaction) {
+      await onCreateTransaction({
+        title: `Savings Goal Deposit: ${newGoalTitle.trim()}`,
+        amount: fedSavedVal,
+        type: 'EXPENSE',
+        category: 'OTHER',
+        paymentMethod: 'Bank Transfer',
+        notes: `Initial deposit allocated towards ${newGoalTitle.trim()} savings goal`,
+        transactionDate: new Date().toISOString().split('T')[0]
+      });
+    }
+
     setNewGoalTitle('');
     setNewGoalTarget('');
     setNewGoalSaved('');
     setShowAddGoalModal(false);
   };
 
-  // Add Deposit to Goal
-  const handleAddDeposit = (goalId) => {
+  // Add Deposit to Goal & Deduct Amount from Available Balance
+  const handleAddDeposit = async (goal) => {
     if (!editSavedAddAmount || Number(editSavedAddAmount) <= 0) return;
-    const depositInUSD = convertCurrency(Number(editSavedAddAmount), currency, 'USD');
+    const fedDepositVal = Number(editSavedAddAmount);
+    const depositInUSD = convertCurrency(fedDepositVal, currency, 'USD');
 
+    // 1. Update Savings Goal balance
     setSavingsGoals(savingsGoals.map(g => {
-      if (g.id === goalId) {
+      if (g.id === goal.id) {
         return { ...g, savedAmount: g.savedAmount + depositInUSD };
       }
       return g;
     }));
+
+    // 2. Automatically create an Outflow Expense Transaction to deduct from main cash balance!
+    if (onCreateTransaction) {
+      await onCreateTransaction({
+        title: `Savings Deposit: ${goal.title}`,
+        amount: fedDepositVal,
+        type: 'EXPENSE',
+        category: 'OTHER',
+        paymentMethod: 'Bank Transfer',
+        notes: `Deposit deducted from available cash and allocated to ${goal.title}`,
+        transactionDate: new Date().toISOString().split('T')[0]
+      });
+    }
 
     setEditingGoalId(null);
     setEditSavedAddAmount('');
@@ -489,7 +520,7 @@ export default function BudgetTracker({
                       value={editSavedAddAmount}
                       onChange={(e) => setEditSavedAddAmount(e.target.value)}
                     />
-                    <button className="btn btn-primary btn-xs" onClick={() => handleAddDeposit(goal.id)}>
+                    <button className="btn btn-primary btn-xs" onClick={() => handleAddDeposit(goal)}>
                       <Check size={12} />
                     </button>
                     <button className="btn btn-secondary btn-xs" onClick={() => setEditingGoalId(null)}>

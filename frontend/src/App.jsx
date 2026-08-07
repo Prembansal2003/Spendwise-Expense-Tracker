@@ -305,6 +305,7 @@ export default function App() {
             currency={currency}
             onUpdateBudget={handleUpdateBudget}
             transactions={transactions}
+            onCreateTransaction={handleSaveTransaction}
           />
         )}
       </main>
