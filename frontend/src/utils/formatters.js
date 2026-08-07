@@ -1,13 +1,51 @@
+// Load cached live rates if available
+const getCachedRates = () => {
+  try {
+    const saved = localStorage.getItem('spendwise_live_rates');
+    return saved ? JSON.parse(saved) : null;
+  } catch (e) {
+    return null;
+  }
+};
+
+const cachedRates = getCachedRates();
+
 // Currency Configs — rates relative to USD (1 USD = X units)
 export const CURRENCIES = [
-  { code: 'USD', symbol: '$',   label: 'USD ($)',  rate: 1      },
-  { code: 'EUR', symbol: '€',   label: 'EUR (€)',  rate: 0.92   },
-  { code: 'GBP', symbol: '£',   label: 'GBP (£)',  rate: 0.79   },
-  { code: 'INR', symbol: '₹',   label: 'INR (₹)',  rate: 83.2   },
-  { code: 'JPY', symbol: '¥',   label: 'JPY (¥)',  rate: 155.0  },
-  { code: 'CAD', symbol: 'CA$', label: 'CAD ($)',  rate: 1.36   },
-  { code: 'AUD', symbol: 'A$',  label: 'AUD ($)',  rate: 1.52   }
+  { code: 'USD', symbol: '$',   label: 'USD ($)',  rate: cachedRates?.USD || 1      },
+  { code: 'EUR', symbol: '€',   label: 'EUR (€)',  rate: cachedRates?.EUR || 0.92   },
+  { code: 'GBP', symbol: '£',   label: 'GBP (£)',  rate: cachedRates?.GBP || 0.79   },
+  { code: 'INR', symbol: '₹',   label: 'INR (₹)',  rate: cachedRates?.INR || 83.2   },
+  { code: 'JPY', symbol: '¥',   label: 'JPY (¥)',  rate: cachedRates?.JPY || 155.0  },
+  { code: 'CAD', symbol: 'CA$', label: 'CAD ($)',  rate: cachedRates?.CAD || 1.36   },
+  { code: 'AUD', symbol: 'A$',  label: 'AUD ($)',  rate: cachedRates?.AUD || 1.52   }
 ];
+
+/**
+ * Fetch live exchange rates from open.er-api.com (free, real-time FX API, no key required)
+ */
+export const fetchLiveExchangeRates = async () => {
+  try {
+    const res = await fetch('https://open.er-api.com/v6/latest/USD');
+    if (!res.ok) return false;
+    const data = await res.json();
+    if (data && data.rates) {
+      const ratesToSave = {};
+      CURRENCIES.forEach(c => {
+        if (data.rates[c.code]) {
+          c.rate = data.rates[c.code];
+          ratesToSave[c.code] = c.rate;
+        }
+      });
+      localStorage.setItem('spendwise_live_rates', JSON.stringify(ratesToSave));
+      console.log('[SpendWise API] ✅ Live FX Rates fetched:', ratesToSave);
+      return true;
+    }
+  } catch (err) {
+    console.warn('[SpendWise API] Could not fetch live FX rates, using cached/fallback:', err.message);
+  }
+  return false;
+};
 
 // Get currency object by code
 export const getCurrency = (code) =>

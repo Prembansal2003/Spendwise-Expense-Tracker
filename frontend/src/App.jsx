@@ -12,6 +12,7 @@ import AiAssistantModal from './components/AiAssistantModal';
 import AuthGate from './components/AuthGate';
 import { apiService } from './services/api';
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
+import { fetchLiveExchangeRates } from './utils/formatters';
 
 const DEFAULT_USER = {
   id: 101,
@@ -26,6 +27,16 @@ export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(true);
   const [currency, setCurrency] = useState('USD');
+  const [ratesTick, setRatesTick] = useState(0);
+
+  // Fetch Live Real-Time Market Exchange Rates on startup
+  useEffect(() => {
+    fetchLiveExchangeRates().then(updated => {
+      if (updated) {
+        setRatesTick(prev => prev + 1);
+      }
+    });
+  }, []);
   
   const [user, setUser] = useState(() => {
     try {
