@@ -205,6 +205,29 @@ export default function BudgetTracker({
     }
   };
 
+  // Compute stat card totals in active view currency
+  const totalBudgetedInViewCurrency = budgets.reduce((sum, b) => {
+    const storedCurr = b.currency || 'USD';
+    const storedCap = b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit;
+    let effectiveCap = storedCap;
+    if (budgetPeriod === 'yearly' && b.period !== 'YEARLY') {
+      effectiveCap = storedCap * 12;
+    } else if (budgetPeriod === 'monthly' && b.period === 'YEARLY') {
+      effectiveCap = storedCap / 12;
+    }
+    return sum + convertCurrency(effectiveCap, storedCurr, currency);
+  }, 0);
+
+  const totalSpentInViewCurrency = transactions
+    .filter(t => {
+      if (t.type !== 'EXPENSE') return false;
+      const d = t.transactionDate || '2026-08-01';
+      return budgetPeriod === 'monthly' ? d.startsWith(currentMonthKey) : d.startsWith(currentYearStr);
+    })
+    .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
+
+  const totalRemainingInViewCurrency = totalBudgetedInViewCurrency - totalSpentInViewCurrency;
+
   return (
     <div className="flex flex-col gap-6" style={{ marginBottom: '1.5rem' }}>
       
