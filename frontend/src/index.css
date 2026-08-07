@@ -1,83 +1,62 @@
-/* ==========================================================================
-   SpendWise - Bespoke Fintech Design System (Linear / Stripe / Revolut Style)
-   ========================================================================== */
-
 :root {
-  --font-heading: 'Outfit', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-  --font-body: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-
-  /* Refined Light Theme */
-  --bg-main: #f6f8fa;
-  --bg-card: #ffffff;
+  /* Dynamic Light Theme Tokens */
+  --bg-main: #f8fafc;
+  --bg-secondary: #ffffff;
+  --bg-card: rgba(255, 255, 255, 0.85);
   --bg-card-solid: #ffffff;
-  --bg-secondary: #f1f3f7;
-  --bg-hover: #e8ecf2;
-  --border-color: rgba(209, 217, 228, 0.7);
-  --border-color-hover: rgba(180, 192, 208, 1);
-  
-  --text-primary: #0d131e;
+  --border-color: #e2e8f0;
+  --border-color-hover: #cbd5e1;
+  --text-primary: #0f172a;
   --text-secondary: #475569;
-  --text-muted: #8e9bb0;
+  --text-muted: #64748b;
   
-  --primary: #4f46e5;
-  --primary-hover: #4338ca;
-  --primary-light: rgba(79, 70, 229, 0.08);
-  
-  --success: #059669;
-  --success-bg: rgba(5, 150, 105, 0.08);
-  
-  --danger: #e11d48;
-  --danger-bg: rgba(225, 29, 72, 0.08);
+  --primary: #6366f1;
+  --primary-hover: #4f46e5;
+  --primary-light: rgba(99, 102, 241, 0.1);
+  --success: #10b981;
+  --success-bg: rgba(16, 185, 129, 0.12);
+  --danger: #ef4444;
+  --danger-bg: rgba(239, 68, 68, 0.12);
+  --warning: #f59e0b;
+  --warning-bg: rgba(245, 158, 11, 0.12);
+  --info: #3b82f6;
 
-  --warning: #d97706;
-  --warning-bg: rgba(217, 119, 6, 0.08);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.07), 0 2px 4px -1px rgba(0, 0, 0, 0.04);
+  --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
 
-  --info: #0284c7;
-  --info-bg: rgba(2, 132, 199, 0.08);
-
-  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.02);
-  --shadow-md: 0 4px 12px rgba(15, 23, 42, 0.04), 0 1px 3px rgba(15, 23, 42, 0.02);
-  --shadow-lg: 0 12px 32px rgba(15, 23, 42, 0.08);
-  --shadow-glass: 0 4px 20px rgba(0, 0, 0, 0.03);
+  --font-heading: 'Plus Jakarta Sans', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', system-ui, -apple-system, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --radius-xl: 20px;
+  --radius-xl: 24px;
 }
 
-/* Elite Obsidian Dark Theme (Linear.app / Stripe Dashboard Inspired) */
-.dark {
-  --bg-main: #080b11;
-  --bg-card: #111622;
-  --bg-card-solid: #111622;
-  --bg-secondary: #171e2e;
-  --bg-hover: #1f283d;
-  --border-color: rgba(255, 255, 255, 0.07);
-  --border-color-hover: rgba(255, 255, 255, 0.16);
-  
-  --text-primary: #f1f5f9;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
-  
+html.dark {
+  /* Sleek Dark Mode Tokens */
+  --bg-main: #0b0f17;
+  --bg-secondary: #111827;
+  --bg-card: rgba(17, 24, 39, 0.75);
+  --bg-card-solid: #111827;
+  --border-color: #1f2937;
+  --border-color-hover: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --text-muted: #9ca3af;
+
   --primary: #6366f1;
   --primary-hover: #818cf8;
-  --primary-light: rgba(99, 102, 241, 0.12);
+  --primary-light: rgba(99, 102, 241, 0.18);
 
-  --success: #10b981;
-  --success-bg: rgba(16, 185, 129, 0.12);
-
-  --danger: #f43f5e;
-  --danger-bg: rgba(244, 63, 94, 0.12);
-
-  --warning: #f59e0b;
-  --warning-bg: rgba(245, 158, 11, 0.12);
-
-  --shadow-glass: 0 8px 32px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+  --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4);
+  --shadow-lg: 0 10px 25px -3px rgba(0, 0, 0, 0.6);
 }
 
-/* Global Reset */
-*, *::before, *::after {
+* {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
@@ -88,33 +67,21 @@ body {
   background-color: var(--bg-main);
   color: var(--text-primary);
   line-height: 1.5;
-  transition: background-color 0.25s ease, color 0.25s ease;
-  min-height: 100vh;
   -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
+  transition: background-color 0.25s ease, color 0.25s ease;
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-heading);
-  letter-spacing: -0.025em;
+  color: var(--text-primary);
+  letter-spacing: -0.02em;
 }
 
-/* Container */
-.app-container {
-  max-width: 1320px;
-  margin: 0 auto;
-  padding: 1.5rem 2rem;
-}
-
-@media (max-width: 640px) {
-  .app-container {
-    padding: 1rem;
-  }
-}
-
-/* Human-Crafted Fintech Card Utility */
+/* Glassmorphism Cards */
 .glass-card {
   background: var(--bg-card);
+  backdrop-filter: blur(12px);
   border: 1px solid var(--border-color);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-sm);
@@ -143,6 +110,7 @@ h1, h2, h3, h4, h5, h6 {
 
 @media (min-width: 640px) {
   .sm\:grid-cols-2 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sm\:grid-cols-3 { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 }
 
 @media (min-width: 1024px) {
@@ -181,68 +149,60 @@ h1, h2, h3, h4, h5, h6 {
 }
 
 .btn-secondary {
-  background: var(--bg-secondary);
+  background-color: var(--bg-secondary);
   color: var(--text-primary);
-  border: 1px solid var(--border-color);
+  border-color: var(--border-color);
 }
 
 .btn-secondary:hover {
-  background: var(--bg-hover);
   border-color: var(--border-color-hover);
+  background-color: var(--bg-card);
+  transform: translateY(-1px);
 }
 
 .btn-danger {
-  background: var(--danger-bg);
+  background-color: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid rgba(244, 63, 94, 0.2);
+  border-color: rgba(239, 68, 68, 0.2);
 }
 
 .btn-danger:hover {
-  background: var(--danger);
-  color: white;
+  background-color: var(--danger);
+  color: #ffffff;
 }
 
 .btn-sm {
   padding: 0.35rem 0.75rem;
-  font-size: 0.8rem;
+  font-size: 0.78rem;
   border-radius: var(--radius-sm);
 }
 
 .btn-icon {
-  width: 2.2rem;
-  height: 2.2rem;
-  padding: 0;
+  padding: 0.5rem;
   border-radius: var(--radius-md);
 }
 
-/* Micro Badges */
+/* Badges */
 .badge {
   display: inline-flex;
   align-items: center;
   gap: 0.3rem;
   padding: 0.2rem 0.55rem;
   font-size: 0.72rem;
-  font-weight: 600;
-  border-radius: 6px;
-  letter-spacing: 0.01em;
+  font-weight: 700;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
 }
 
 .badge-income {
   background-color: var(--success-bg);
   color: var(--success);
-  border: 1px solid rgba(16, 185, 129, 0.25);
 }
 
 .badge-expense {
   background-color: var(--danger-bg);
   color: var(--danger);
-  border: 1px solid rgba(244, 63, 94, 0.25);
-}
-
-.badge-warning {
-  background-color: var(--warning-bg);
-  color: var(--warning);
-  border: 1px solid rgba(245, 158, 11, 0.25);
 }
 
 /* Form Controls */
@@ -347,4 +307,60 @@ h1, h2, h3, h4, h5, h6 {
   height: 100%;
   border-radius: 3px;
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+/* Mobile Responsiveness Improvements (< 640px) */
+@media (max-width: 640px) {
+  body {
+    padding: 0.5rem;
+  }
+
+  .main-container {
+    padding: 0.5rem !important;
+  }
+
+  header.glass-card {
+    padding: 0.75rem 0.875rem !important;
+    margin-bottom: 1rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  nav {
+    width: 100%;
+    justify-content: space-between;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  nav .btn {
+    padding: 0.35rem 0.55rem !important;
+    font-size: 0.75rem !important;
+  }
+
+  .modal-overlay {
+    padding: 0.5rem !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-content {
+    padding: 1rem !important;
+    max-height: 92vh !important;
+    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .btn {
+    padding: 0.45rem 0.75rem;
+    font-size: 0.78rem;
+  }
+
+  .form-control {
+    font-size: 0.82rem;
+    padding: 0.45rem 0.65rem;
+  }
+
+  .glass-card {
+    padding: 1rem !important;
+  }
 }

@@ -126,6 +126,8 @@ export default function TransactionList({
                   backgroundColor: 'var(--bg-secondary)',
                   borderRadius: 'var(--radius-md)',
                   border: '1px solid var(--border-color)',
+                  flexWrap: 'wrap',
+                  gap: '0.75rem',
                   transition: 'transform 0.15s ease, border-color 0.15s ease'
                 }}
               >
