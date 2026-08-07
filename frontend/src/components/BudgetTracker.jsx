@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar, RefreshCw, Trash2, PiggyBank, PlusCircle, Check } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol, CURRENCIES } from '../utils/formatters';
+import api from '../services/api';
 
 const DEFAULT_SAVINGS_GOALS = [
   { id: 1, title: '🏖️ Summer Vacation', savedAmount: 0, targetAmount: 2000, currency: 'USD' },
@@ -45,16 +46,28 @@ export default function BudgetTracker({
   const [editSavedAddAmount, setEditSavedAddAmount] = useState('');
 
   useEffect(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) {
-        setSavingsGoals(JSON.parse(saved));
-      } else {
+    async function loadCloudGoals() {
+      try {
+        const cloudGoals = await api.getSavingsGoals(userId);
+        if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
+          setSavingsGoals(cloudGoals);
+          localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
+          return;
+        }
+      } catch (e) {}
+
+      try {
+        const saved = localStorage.getItem(storageKey);
+        if (saved) {
+          setSavingsGoals(JSON.parse(saved));
+        } else {
+          setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
+        }
+      } catch (e) {
         setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
       }
-    } catch (e) {
-      setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
     }
+    loadCloudGoals();
   }, [userId, storageKey, isDemoUser]);
 
   useEffect(() => {
@@ -97,7 +110,20 @@ export default function BudgetTracker({
     const targetInUSD = convertCurrency(Number(newGoalTarget), currency, 'USD');
     const savedInUSD = convertCurrency(fedSavedVal, currency, 'USD');
 
-    const newGoal = {
+    // 1. Sync directly to PostgreSQL cloud database table savings_goals!
+    let createdGoal = null;
+    try {
+      createdGoal = await api.createSavingsGoal(userId, {
+        title: newGoalTitle.trim(),
+        targetAmount: targetInUSD,
+        savedAmount: savedInUSD,
+        currency: 'USD'
+      });
+    } catch (err) {
+      console.warn('[BudgetTracker] Cloud DB goal creation skipped:', err.message);
+    }
+
+    const newGoal = createdGoal || {
       id: Date.now(),
       title: newGoalTitle.trim(),
       savedAmount: savedInUSD,
@@ -105,7 +131,7 @@ export default function BudgetTracker({
       currency: 'USD'
     };
 
-    setSavingsGoals([...savingsGoals, newGoal]);
+    setSavingsGoals(prev => [...prev, newGoal]);
 
     // Automatically create a deduction expense transaction if initial deposit > 0
     if (fedSavedVal > 0 && onCreateTransaction) {
@@ -132,15 +158,22 @@ export default function BudgetTracker({
     const fedDepositVal = Number(editSavedAddAmount);
     const depositInUSD = convertCurrency(fedDepositVal, currency, 'USD');
 
-    // 1. Update Savings Goal balance
-    setSavingsGoals(savingsGoals.map(g => {
+    // 1. Sync deposit to PostgreSQL cloud DB table savings_goals!
+    if (goal.id && (typeof goal.id === 'number' || !String(goal.id).startsWith('auto_'))) {
+      try {
+        await api.depositToSavingsGoal(goal.id, depositInUSD);
+      } catch (e) {}
+    }
+
+    // 2. Update local state
+    setSavingsGoals(prev => prev.map(g => {
       if (g.id === goal.id) {
-        return { ...g, savedAmount: g.savedAmount + depositInUSD };
+        return { ...g, savedAmount: (g.savedAmount || 0) + depositInUSD };
       }
       return g;
     }));
 
-    // 2. Automatically create an Outflow Expense Transaction to deduct from main cash balance!
+    // 3. Automatically create an Outflow Expense Transaction to deduct from main cash balance!
     if (onCreateTransaction) {
       await onCreateTransaction({
         title: `Savings Deposit: ${goal.title}`,
@@ -157,51 +190,15 @@ export default function BudgetTracker({
     setEditSavedAddAmount('');
   };
 
-  // Auto-reconstruct Active Savings Goals from existing deposit transactions if missing from state
-  const mergedSavingsGoals = [...savingsGoals];
-
-  transactions.forEach(t => {
-    if (t.type !== 'EXPENSE' || !t.title) return;
-    const titleLower = t.title.toLowerCase();
-    let goalName = '';
-
-    if (titleLower.startsWith('savings deposit:')) {
-      goalName = t.title.replace(/^savings deposit:/i, '').trim();
-    } else if (titleLower.startsWith('savings goal deposit:')) {
-      goalName = t.title.replace(/^savings goal deposit:/i, '').trim();
-    }
-
-    if (goalName) {
-      const cleanGoalName = goalName.toLowerCase().replace(/[^\w\s]/gi, '').trim();
-      const exists = mergedSavingsGoals.some(g => {
-        const cleanGTitle = (g.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
-        return cleanGTitle === cleanGoalName || (cleanGTitle && cleanGoalName.includes(cleanGoalName)) || (cleanGTitle && cleanGTitle.includes(cleanGoalName));
-      });
-
-      if (!exists && cleanGoalName) {
-        let targetAmount = 5000.00;
-        if (t.notes) {
-          const targetMatch = t.notes.match(/\[Target:([\d\.]+)\]/i);
-          if (targetMatch && targetMatch[1]) {
-            targetAmount = Number(targetMatch[1]);
-          }
-        }
-
-        mergedSavingsGoals.push({
-          id: `auto_${cleanGoalName.replace(/\s+/g, '_')}`,
-          title: goalName.charAt(0).toUpperCase() + goalName.slice(1),
-          savedAmount: 0,
-          targetAmount: targetAmount,
-          currency: 'USD'
-        });
-      }
-    }
-  });
-
   // Delete Savings Goal
-  const handleDeleteGoal = (goalId) => {
+  const handleDeleteGoal = async (goalId) => {
     if (window.confirm('Delete this savings goal?')) {
-      setSavingsGoals(savingsGoals.filter(g => g.id !== goalId));
+      if (typeof goalId === 'number') {
+        try {
+          await api.deleteSavingsGoal(goalId);
+        } catch (e) {}
+      }
+      setSavingsGoals(prev => prev.filter(g => g.id !== goalId));
     }
   };
 
