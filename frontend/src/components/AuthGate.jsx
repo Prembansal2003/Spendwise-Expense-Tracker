@@ -58,7 +58,6 @@ export default function AuthGate({ onLoginSuccess }) {
           return;
         }
 
-        // Backend returned null - server unreachable
         setIsLoading(false);
         setErrorMsg('Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.');
         setDebugInfo('⚠️ Backend server is waking up (Render free tier cold start). Please retry.');
@@ -91,7 +90,6 @@ export default function AuthGate({ onLoginSuccess }) {
           return;
         }
 
-        // Backend returned null — DO NOT create local fallback user
         setIsLoading(false);
         setErrorMsg('Cannot reach the server. The backend may be starting up — please wait 30 seconds and try again.');
         setDebugInfo('⚠️ Backend server is waking up (Render free tier cold start). Please retry.');
@@ -107,8 +105,8 @@ export default function AuthGate({ onLoginSuccess }) {
   const handleQuickDemoLogin = () => {
     const demoUser = {
       id: 101,
-      name: 'Alex Morgan',
-      email: 'alex.morgan@spendwise.io',
+      name: 'Prem Agrawal',
+      email: 'agrawalprem00@gmail.com',
       role: 'PRO_MEMBER',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       createdAt: 'Aug 2026'
@@ -177,10 +175,10 @@ export default function AuthGate({ onLoginSuccess }) {
           }}>
             <div>
               <span style={{ fontWeight: 700, fontSize: '0.9rem', color: 'var(--primary)', display: 'block' }}>⚡ 1-Click Instant Demo Login</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Test the full platform immediately as Alex Morgan</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Test the full platform immediately as Prem Agrawal</span>
             </div>
             <button className="btn btn-primary" onClick={handleQuickDemoLogin}>
-              <span>Login as Alex</span>
+              <span>Login as Prem</span>
               <ArrowRight size={16} />
             </button>
           </div>
@@ -266,7 +264,7 @@ export default function AuthGate({ onLoginSuccess }) {
                     type="text"
                     className="form-control"
                     style={{ paddingLeft: '2.25rem' }}
-                    placeholder="Alex Morgan"
+                    placeholder="Prem Agrawal"
                     required
                     value={formData.name}
                     onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -283,7 +281,7 @@ export default function AuthGate({ onLoginSuccess }) {
                   type="email"
                   className="form-control"
                   style={{ paddingLeft: '2.25rem' }}
-                  placeholder="alex.morgan@spendwise.io"
+                  placeholder="agrawalprem00@gmail.com"
                   required
                   value={formData.email}
                   onChange={(e) => setFormData({ ...formData, email: e.target.value })}

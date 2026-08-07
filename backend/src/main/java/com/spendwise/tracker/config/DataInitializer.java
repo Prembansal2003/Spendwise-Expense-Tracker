@@ -39,7 +39,7 @@ public class DataInitializer implements CommandLineRunner {
         if (userRepository.count() == 0) {
             User demoUser = new User();
             demoUser.setName("Prem Agrawal");
-            demoUser.setEmail("bansalprem900@gmail.com");
+            demoUser.setEmail("agrawalprem00@gmail.com");
             demoUser.setPassword(PasswordEncoderUtil.encode("password123"));
             demoUser.setRole("PRO_MEMBER");
             demoUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");

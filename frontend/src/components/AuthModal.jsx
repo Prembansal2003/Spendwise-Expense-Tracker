@@ -45,7 +45,7 @@ export default function AuthModal({
         {
           id: 101,
           name: 'Prem Agrawal',
-          email: 'bansalprem900@gmail.com',
+          email: 'agrawalprem00@gmail.com',
           password: 'password123',
           role: 'PRO_MEMBER',
           avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
@@ -132,7 +132,7 @@ export default function AuthModal({
     const demoUser = {
       id: 101,
       name: 'Prem Agrawal',
-      email: 'bansalprem900@gmail.com',
+      email: 'agrawalprem00@gmail.com',
       role: 'PRO_MEMBER',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       createdAt: 'Aug 2026'
@@ -248,7 +248,7 @@ export default function AuthModal({
                 type="email"
                 className="form-control"
                 style={{ paddingLeft: '2.25rem' }}
-                placeholder="bansalprem900@gmail.com"
+                placeholder="agrawalprem00@gmail.com"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}

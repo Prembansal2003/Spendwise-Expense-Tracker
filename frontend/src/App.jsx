@@ -17,7 +17,7 @@ import { fetchLiveExchangeRates } from './utils/formatters';
 const DEFAULT_USER = {
   id: 101,
   name: 'Prem Agrawal',
-  email: 'bansalprem900@gmail.com',
+  email: 'agrawalprem00@gmail.com',
   role: 'PRO_MEMBER',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   createdAt: 'Aug 2026'
@@ -316,7 +316,7 @@ export default function App() {
           SpendWise Expense Tracker • Designed & Developed by Prem Agrawal
         </div>
         <div className="flex items-center gap-3" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexWrap: 'wrap', justifyContent: 'center' }}>
-          <span>📧 Contact: <a href="mailto:bansalprem900@gmail.com" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>bansalprem900@gmail.com</a></span>
+          <span>📧 Contact: <a href="mailto:agrawalprem00@gmail.com" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>agrawalprem00@gmail.com</a></span>
           <span>•</span>
           <span>Spring Boot REST Engine + React Vite Web UI</span>
         </div>
