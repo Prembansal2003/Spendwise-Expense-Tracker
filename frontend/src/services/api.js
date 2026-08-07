@@ -105,6 +105,17 @@ export const apiService = {
 
   // ========== TRANSACTIONS ==========
   async getTransactions(filters = {}, userId = 101) {
+    const storageKey = `spendwise_transactions_${userId}`;
+    const defaultData = (userId === 101 || userId === '101') ? INITIAL_TRANSACTIONS : [];
+    let localList = getLocalData(storageKey, defaultData);
+    if ((!localList || localList.length === 0) && (userId === 101 || userId === '101')) {
+      localList = INITIAL_TRANSACTIONS;
+      setLocalData(storageKey, INITIAL_TRANSACTIONS);
+    }
+
+    let isBackend = false;
+    let combinedList = [...localList];
+
     try {
       const query = new URLSearchParams();
       if (filters.type) query.append('type', filters.type);
@@ -114,39 +125,34 @@ export const apiService = {
 
       const res = await fetchApi(`${API_BASE_URL}/transactions?${query.toString()}`);
       if (res.ok) {
-        let data = await res.json();
-        console.log(`[SpendWise API] Loaded ${data.length} transactions from BACKEND DB`);
-        if ((!data || data.length === 0) && (userId === 101 || userId === '101')) {
-          data = INITIAL_TRANSACTIONS;
+        const backendData = await res.json();
+        isBackend = true;
+        if (Array.isArray(backendData) && backendData.length > 0) {
+          const map = new Map();
+          localList.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
+          backendData.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
+          combinedList = Array.from(map.values());
+          setLocalData(storageKey, combinedList);
         }
-        return { data, isBackend: true };
       }
-      console.warn('[SpendWise API] getTransactions non-OK:', res.status);
     } catch (err) {
-      console.warn('[SpendWise API] getTransactions failed, using localStorage fallback:', err.message);
+      console.warn('[SpendWise API] getTransactions backend fetch skipped:', err.message);
     }
 
-    const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = (userId === 101 || userId === '101') ? INITIAL_TRANSACTIONS : [];
-    let list = getLocalData(storageKey, defaultData);
-    if ((!list || list.length === 0) && (userId === 101 || userId === '101')) {
-      list = INITIAL_TRANSACTIONS;
-      setLocalData(storageKey, INITIAL_TRANSACTIONS);
-    }
-    console.log(`[SpendWise API] Loaded ${list.length} transactions from LOCAL STORAGE (fallback)`);
-
-    if (filters.type) list = list.filter(t => t.type === filters.type);
-    if (filters.category) list = list.filter(t => t.category === filters.category);
+    if (filters.type) combinedList = combinedList.filter(t => t.type === filters.type);
+    if (filters.category) combinedList = combinedList.filter(t => t.category === filters.category);
     if (filters.search) {
       const q = filters.search.toLowerCase();
-      list = list.filter(t => t.title.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q)));
+      combinedList = combinedList.filter(t => t.title.toLowerCase().includes(q) || (t.notes && t.notes.toLowerCase().includes(q)));
     }
-    return { data: list, isBackend: false };
+    return { data: combinedList, isBackend };
   },
 
   async createTransaction(transaction, userId = 101) {
     const txDate = transaction.date || transaction.transactionDate || new Date().toISOString().split('T')[0];
+    const tempId = Date.now();
     const payload = {
+      id: tempId,
       userId: Number(userId) || 101,
       title: transaction.title,
       amount: Number(transaction.amount),
@@ -158,6 +164,11 @@ export const apiService = {
       currency: transaction.currency || 'USD'
     };
 
+    const storageKey = `spendwise_transactions_${userId}`;
+    const list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    list.unshift(payload);
+    setLocalData(storageKey, list);
+
     try {
       const res = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
         method: 'POST',
@@ -166,18 +177,16 @@ export const apiService = {
       });
       if (res.ok) {
         const data = await res.json();
+        const idx = list.findIndex(t => String(t.id) === String(tempId));
+        if (idx >= 0) list[idx] = data;
+        setLocalData(storageKey, list);
         return data;
       }
     } catch (err) {
-      console.warn('[SpendWise API] createTransaction failed, saving to localStorage:', err.message);
+      console.warn('[SpendWise API] createTransaction backend sync skipped:', err.message);
     }
 
-    const storageKey = `spendwise_transactions_${userId}`;
-    const list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
-    const newTx = { ...payload, id: Date.now() };
-    list.unshift(newTx);
-    setLocalData(storageKey, list);
-    return newTx;
+    return payload;
   },
 
   async updateTransaction(id, transaction, userId = 101) {
@@ -194,6 +203,18 @@ export const apiService = {
       currency: transaction.currency || 'USD'
     };
 
+    // Update local storage immediately so edits are preserved 100%
+    const storageKey = `spendwise_transactions_${userId}`;
+    let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
+    const existingIdx = list.findIndex(t => String(t.id) === String(id));
+    let updatedItem = { ...payload, id };
+    if (existingIdx >= 0) {
+      list[existingIdx] = { ...list[existingIdx], ...payload, id };
+    } else {
+      list.unshift(updatedItem);
+    }
+    setLocalData(storageKey, list);
+
     try {
       const res = await fetchApi(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
         method: 'PUT',
@@ -201,49 +222,33 @@ export const apiService = {
         body: JSON.stringify(payload)
       });
       if (res.ok) {
-        const data = await res.json();
-        return data;
-      } else {
-        console.warn(`[SpendWise API] updateTransaction non-OK: ${res.status}, falling back to POST...`);
-        const createRes = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(payload)
-        });
-        if (createRes.ok) {
-          return await createRes.json();
-        }
+        const backendResult = await res.json();
+        const idx = list.findIndex(t => String(t.id) === String(id));
+        if (idx >= 0) list[idx] = backendResult;
+        setLocalData(storageKey, list);
+        return backendResult;
       }
     } catch (err) {
-      console.warn('[SpendWise API] updateTransaction failed, updating localStorage:', err.message);
+      console.warn('[SpendWise API] updateTransaction backend sync skipped:', err.message);
     }
 
-    const storageKey = `spendwise_transactions_${userId}`;
-    let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
-    const existingIdx = list.findIndex(t => String(t.id) === String(id));
-    if (existingIdx >= 0) {
-      list[existingIdx] = { ...list[existingIdx], ...payload, id };
-    } else {
-      list.unshift({ ...payload, id });
-    }
-    setLocalData(storageKey, list);
-    return { ...payload, id };
+    return updatedItem;
   },
 
   async deleteTransaction(id, userId = 101) {
-    try {
-      const res = await fetchApi(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
-        method: 'DELETE'
-      });
-      if (res.ok) return true;
-    } catch (err) {
-      console.warn('[SpendWise API] deleteTransaction failed, removing from localStorage:', err.message);
-    }
-
     const storageKey = `spendwise_transactions_${userId}`;
     let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
     list = list.filter(t => String(t.id) !== String(id));
     setLocalData(storageKey, list);
+
+    try {
+      await fetchApi(`${API_BASE_URL}/transactions/${id}?userId=${userId}`, {
+        method: 'DELETE'
+      });
+    } catch (err) {
+      console.warn('[SpendWise API] deleteTransaction backend sync skipped:', err.message);
+    }
+
     return true;
   },
 
