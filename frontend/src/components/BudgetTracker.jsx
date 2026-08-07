@@ -504,7 +504,20 @@ export default function BudgetTracker({
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {savingsGoals.map(goal => {
-                      const savedInView = convertCurrency(goal.savedAmount, goal.currency || 'USD', currency);
+                      // Dynamically sum all deposit transactions matching this goal's title
+                      const cleanGoalTitle = (goal.title || '').toLowerCase().replace(/^[^\w\s]+/, '').trim();
+                      const depositSumUSD = transactions
+                        .filter(t => {
+                          if (t.type !== 'EXPENSE') return false;
+                          const tTitle = (t.title || '').toLowerCase();
+                          const tNotes = (t.notes || '').toLowerCase();
+                          return cleanGoalTitle && (tTitle.includes(cleanGoalTitle) || tNotes.includes(cleanGoalTitle));
+                        })
+                        .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', 'USD'), 0);
+
+                      const totalSavedUSD = (goal.savedAmount || 0) + depositSumUSD;
+
+                      const savedInView = convertCurrency(totalSavedUSD, goal.currency || 'USD', currency);
                       const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
                       const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
                       const isCompleted = savedInView >= targetInView;
