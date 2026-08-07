@@ -5,14 +5,15 @@ import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } fro
 export default function BudgetTracker({
   budgets,
   currency,
-  onUpdateBudget
+  onUpdateBudget,
+  transactions = []
 }) {
   const [editingCategory, setEditingCategory] = useState(null);
   const [newLimit, setNewLimit] = useState('');
 
   const handleEditClick = (b) => {
     setEditingCategory(b.category);
-    // Convert current monthlyLimit from its stored currency -> active view currency for editing
+    // Convert stored limit from its stored currency -> active view currency for editing
     const displayVal = convertCurrency(b.monthlyLimit, b.currency || 'USD', currency);
     setNewLimit(displayVal ? displayVal.toFixed(2) : '');
   };
@@ -43,17 +44,28 @@ export default function BudgetTracker({
           {budgets.map(b => {
             const meta = CATEGORY_META[b.category] || { name: b.category, icon: '📦', color: '#64748b' };
             const isEditing = editingCategory === b.category;
-            const pct = Math.min(b.percentageUsed, 100);
+
+            // Calculate actual spend for this category by converting each expense from its stored currency -> active view currency
+            const actualSpendInViewCurrency = transactions
+              .filter(t => t.type === 'EXPENSE' && t.category === b.category)
+              .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
+
+            // Convert monthly limit cap from stored budget currency -> active view currency
+            const limitInViewCurrency = convertCurrency(b.monthlyLimit, b.currency || 'USD', currency);
+
+            // Compute exact used percentage and status in active view currency
+            const usedPct = limitInViewCurrency > 0 ? (actualSpendInViewCurrency / limitInViewCurrency) * 100 : 0;
+            const pct = Math.min(usedPct, 100);
 
             let statusBg = 'var(--success)';
             let statusText = 'On Track';
             let statusIcon = <CheckCircle size={14} color="var(--success)" />;
 
-            if (b.status === 'EXCEEDED') {
+            if (usedPct > 100) {
               statusBg = 'var(--danger)';
               statusText = 'Over Budget!';
               statusIcon = <ShieldAlert size={14} color="var(--danger)" />;
-            } else if (b.status === 'WARNING') {
+            } else if (usedPct >= 80) {
               statusBg = 'var(--warning)';
               statusText = 'Near Cap (80%+)';
               statusIcon = <AlertTriangle size={14} color="var(--warning)" />;
@@ -66,7 +78,7 @@ export default function BudgetTracker({
                   padding: '1.25rem',
                   backgroundColor: 'var(--bg-secondary)',
                   borderRadius: 'var(--radius-md)',
-                  border: `1px solid ${b.status === 'EXCEEDED' ? 'rgba(239,68,68,0.4)' : 'var(--border-color)'}`
+                  border: `1px solid ${usedPct > 100 ? 'rgba(239,68,68,0.4)' : 'var(--border-color)'}`
                 }}
               >
                 <div className="flex items-center justify-between" style={{ marginBottom: '0.75rem' }}>
@@ -110,10 +122,10 @@ export default function BudgetTracker({
                 ) : (
                   <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(b.currentSpend, currency, 'USD')}</strong>
+                      Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(actualSpendInViewCurrency, currency, currency)}</strong>
                     </span>
                     <span style={{ color: 'var(--text-muted)' }}>
-                      Cap: <strong>{formatCurrency(b.monthlyLimit, currency, b.currency || 'USD')}</strong>
+                      Cap: <strong>{formatCurrency(limitInViewCurrency, currency, currency)}</strong>
                     </span>
                   </div>
                 )}
@@ -136,7 +148,7 @@ export default function BudgetTracker({
                     <span style={{ fontWeight: 600, color: statusBg }}>{statusText}</span>
                   </div>
                   <span style={{ color: 'var(--text-muted)' }}>
-                    {b.percentageUsed.toFixed(1)}% used
+                    {usedPct.toFixed(1)}% used
                   </span>
                 </div>
 
