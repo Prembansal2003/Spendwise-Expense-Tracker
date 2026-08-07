@@ -39,8 +39,9 @@ export default function App() {
       if (saved) {
         const parsed = JSON.parse(saved);
         if (parsed.email === 'alex.morgan@spendwise.io' || parsed.email === 'bansalprem900@gmail.com') {
-          localStorage.setItem('spendwise_user', JSON.stringify(DEFAULT_USER));
-          return DEFAULT_USER;
+          const updated = { ...DEFAULT_USER, ...parsed, name: 'Prem Agrawal', email: 'agrawalprem00@gmail.com' };
+          localStorage.setItem('spendwise_user', JSON.stringify(updated));
+          return updated;
         }
         return parsed;
       }
@@ -86,6 +87,40 @@ export default function App() {
 
   useEffect(() => {
     loadData();
+  }, [user?.id]);
+
+  // Continuous Real-Time Data Synchronization (polls every 8 seconds)
+  useEffect(() => {
+    if (!user?.id) return;
+
+    const intervalId = setInterval(async () => {
+      try {
+        const txRes = await apiService.getTransactions({}, user.id);
+        if (txRes && Array.isArray(txRes.data)) {
+          setTransactions(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(txRes.data)) {
+              return txRes.data;
+            }
+            return prev;
+          });
+          setIsBackend(txRes.isBackend);
+        }
+
+        const bRes = await apiService.getBudgets(user.id);
+        if (bRes && Array.isArray(bRes)) {
+          setBudgets(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(bRes)) {
+              return bRes;
+            }
+            return prev;
+          });
+        }
+      } catch (e) {
+        console.warn('[SpendWise Continuous Sync] Background sync skipped:', e.message);
+      }
+    }, 8000); // 8-second continuous polling interval
+
+    return () => clearInterval(intervalId);
   }, [user?.id]);
 
   const showToast = (msg) => {
