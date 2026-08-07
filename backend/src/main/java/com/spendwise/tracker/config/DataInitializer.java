@@ -28,9 +28,11 @@ public class DataInitializer implements CommandLineRunner {
         // 0. Ensure user_id and currency columns exist on pre-existing PostgreSQL tables
         try {
             jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
-            jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'USD'");
+            jdbcTemplate.execute("ALTER TABLE transactions ADD COLUMN IF NOT EXISTS currency VARCHAR(20) DEFAULT 'USD'");
+            jdbcTemplate.execute("ALTER TABLE transactions ALTER COLUMN currency TYPE VARCHAR(20)");
             jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
-            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS currency VARCHAR(3) DEFAULT 'USD'");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS currency VARCHAR(20) DEFAULT 'USD'");
+            jdbcTemplate.execute("ALTER TABLE budgets ALTER COLUMN currency TYPE VARCHAR(20)");
         } catch (Exception e) {
             System.err.println("Schema alter check: " + e.getMessage());
         }
@@ -65,19 +67,20 @@ public class DataInitializer implements CommandLineRunner {
         }
 
         // 3. Seed Initial Transactions if empty (covering ALL categories)
+        // Transaction constructor field order: (id, userId, title, amount, type, category, transactionDate, paymentMethod, currency, notes, createdAt)
         if (transactionRepository.count() == 0) {
             transactionRepository.saveAll(List.of(
-                    new Transaction(null, 1L, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(6), "Bank Transfer", "Monthly tech payroll credit", "USD", null),
-                    new Transaction(null, 1L, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(5), "UPI", "iOS app milestone completion", "USD", null),
-                    new Transaction(null, 1L, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.now().minusDays(4), "Bank Transfer", "Quarterly index fund yield", "USD", null),
-                    new Transaction(null, 1L, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "Monthly housing rent payment", "USD", null),
-                    new Transaction(null, 1L, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "Whole Foods market shopping", "USD", null),
-                    new Transaction(null, 1L, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "Monthly home utility bills", "USD", null),
-                    new Transaction(null, 1L, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(3), "Credit Card", "Shell station fuel refill", "USD", null),
-                    new Transaction(null, 1L, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "Weekend concert & dining", "USD", null),
-                    new Transaction(null, 1L, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(2), "Credit Card", "Workstation upgrade", "USD", null),
-                    new Transaction(null, 1L, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "Wellness clinic checkup", "USD", null),
-                    new Transaction(null, 1L, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "Software development learning course", "USD", null)
+                    new Transaction(null, 1L, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(6), "Bank Transfer", "USD", "Monthly tech payroll credit", null),
+                    new Transaction(null, 1L, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(5), "UPI", "USD", "iOS app milestone completion", null),
+                    new Transaction(null, 1L, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.now().minusDays(4), "Bank Transfer", "USD", "Quarterly index fund yield", null),
+                    new Transaction(null, 1L, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "USD", "Monthly housing rent payment", null),
+                    new Transaction(null, 1L, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "USD", "Whole Foods market shopping", null),
+                    new Transaction(null, 1L, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "USD", "Monthly home utility bills", null),
+                    new Transaction(null, 1L, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(3), "Credit Card", "USD", "Shell station fuel refill", null),
+                    new Transaction(null, 1L, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "USD", "Weekend concert & dining", null),
+                    new Transaction(null, 1L, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(2), "Credit Card", "USD", "Workstation upgrade", null),
+                    new Transaction(null, 1L, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "USD", "Wellness clinic checkup", null),
+                    new Transaction(null, 1L, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "USD", "Software development learning course", null)
             ));
         }
     }

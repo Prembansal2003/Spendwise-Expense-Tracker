@@ -52,7 +52,7 @@ public class Transaction {
     @Column(name = "payment_method")
     private String paymentMethod;
 
-    @Column(length = 3)
+    @Column(length = 20)
     private String currency = "USD";  // ISO 4217 currency code, amounts stored in this currency
 
     @Column(length = 500)
