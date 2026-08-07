@@ -1,4 +1,4 @@
-import { CATEGORY_META, formatCurrency, convertCurrency, CURRENCIES } from './formatters';
+import { CATEGORY_META, formatCurrency, convertCurrency } from './formatters';
 
 /**
  * Perform deep financial analysis on user's transactions and budgets.
@@ -137,12 +137,70 @@ export function analyzeFinances(transactions = [], budgets = [], currency = 'USD
 
 /**
  * Intelligent Deep Natural Language AI Financial Assistant Query Engine.
- * Answers ANY financial, budgeting, investment, general Q&A, or unknown query logically without repeating standard text.
+ * Answers ANY financial, budgeting, investment, or category query without keyword conflicts.
  */
 export function askAiAssistant(question = '', analysis, currency = 'USD', transactions = [], budgets = []) {
   const q = question.toLowerCase().trim();
 
-  // 1. Greetings / Identity
+  // 1. Health Score Audit (Check FIRST before medical/health category)
+  if (q.includes('health score') || q.includes('health grade') || q.includes('health breakdown') || q.includes('score breakdown') || q.includes('score audit')) {
+    return `🏆 **Financial Health Score: ${analysis.healthScore}/100**\n\n` +
+      `• **Total Monthly Inflow**: ${formatCurrency(analysis.totalIncome, currency, currency)}\n` +
+      `• **Total Monthly Outflow**: ${formatCurrency(analysis.totalExpense, currency, currency)}\n` +
+      `• **Net Savings Buffer**: ${formatCurrency(analysis.netSavings, currency, currency)}\n` +
+      `• **Savings Rate**: ${analysis.savingsRate.toFixed(1)}%\n` +
+      `• **Essential Needs Ratio**: ${analysis.needsPct.toFixed(0)}% of income\n\n` +
+      `${analysis.healthScore >= 70 ? '🎉 Outstanding financial discipline! Cash flow and savings buffers are strong.' : '⚡ To boost your score: reduce discretionary spending and stay under budget caps.'}`;
+  }
+
+  // 2. 50/30/20 Rule Analysis
+  if (q.includes('50/30/20') || q.includes('rule') || q.includes('split') || q.includes('ratio')) {
+    return `📊 **50/30/20 Budget Breakdown Analysis:**\n\n` +
+      `• **Needs (Essentials)**: ${formatCurrency(analysis.needsSpending, currency, currency)} (${analysis.needsPct.toFixed(1)}% of income — Ideal: ≤50%)\n` +
+      `• **Wants (Discretionary)**: ${formatCurrency(analysis.wantsSpending, currency, currency)} (${analysis.wantsPct.toFixed(1)}% of income — Ideal: ≤30%)\n` +
+      `• **Savings & Surplus**: ${formatCurrency(Math.max(0, analysis.netSavings), currency, currency)} (${analysis.savingsRate.toFixed(1)}% of income — Ideal: ≥20%)\n\n` +
+      `${analysis.needsPct <= 50 ? '✅ Essential needs spending is well controlled!' : '⚠️ Essential costs exceed 50% of income. Try optimizing recurring utility bills.'}`;
+  }
+
+  // 3. Category Budget Cap Alerts
+  if (q.includes('cap') || q.includes('alert') || q.includes('risk') || q.includes('limit')) {
+    if (analysis.categoryAlerts.length === 0) {
+      return `✅ **All Category Budgets On Track!**\nNo categories are near or over limit. Excellent discipline!`;
+    }
+    return `⚠️ **Category Budget Status Alerts:**\n\n` +
+      analysis.categoryAlerts.map(a => a.text).join('\n');
+  }
+
+  // 4. Highest Expense Category
+  if (q.includes('highest') || q.includes('top') || q.includes('most') || q.includes('largest')) {
+    if (!analysis.topCategory) return `No expense records recorded yet! Add transactions to generate category outflow analytics.`;
+    return `📊 **Top Outflow Category:**\n\n` +
+      `• **Category**: ${analysis.topCategory.icon} ${analysis.topCategory.name}\n` +
+      `• **Total Spent**: ${formatCurrency(analysis.topCategory.amount, currency, currency)}\n` +
+      `• **Share of Outflow**: ${analysis.topCategory.percentage}% of total expenses\n\n` +
+      `💡 Tip: Capping this category by 10-15% could add ${formatCurrency(analysis.topCategory.amount * 0.15, currency, currency)} to your monthly savings!`;
+  }
+
+  // 5. Why Expenses High / Outflow Drivers
+  if (q.includes('why') || q.includes('high') || q.includes('where') || q.includes('going') || q.includes('increase')) {
+    if (analysis.sortedCategories.length === 0) {
+      return `ℹ️ You have no expenses recorded yet. Add transactions to generate outflow diagnostics!`;
+    }
+
+    const top3 = analysis.sortedCategories.slice(0, 3).map(cat => {
+      const meta = CATEGORY_META[cat] || { name: cat, icon: '📦' };
+      const amt = analysis.categoryTotals[cat];
+      const pct = analysis.totalExpense > 0 ? ((amt / analysis.totalExpense) * 100).toFixed(1) : 0;
+      return `  - **${meta.icon} ${meta.name}**: ${formatCurrency(amt, currency, currency)} (${pct}% of total)`;
+    }).join('\n');
+
+    return `📈 **Outflow Driver Diagnostics:**\n\n` +
+      `Your total monthly expenses are **${formatCurrency(analysis.totalExpense, currency, currency)}**.\n\n` +
+      `**Top Spending Drivers:**\n${top3}\n\n` +
+      `💡 Focus on reducing the top category (**${analysis.topCategory ? analysis.topCategory.name : 'top category'}**) by 10% to save ${formatCurrency((analysis.topCategory?.amount || 0) * 0.1, currency, currency)}/month.`;
+  }
+
+  // 6. Greetings / Identity
   if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('greetings')) {
     return `👋 **Hello!** I am your **SpendWise AI Financial Advisor**.\n\n` +
       `Here is your live financial snapshot:\n` +
@@ -162,7 +220,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `5. **Next Month Forecasting**: Project your future cash flow velocity.`;
   }
 
-  // 2. Investment & Asset Allocation Queries (Gold, Stocks, Crypto, Real Estate, Mutual Funds, FD)
+  // 7. Investment & Asset Allocation Queries (Gold, Stocks, Crypto, Real Estate, Mutual Funds, FD)
   if (q.includes('gold') || q.includes('stock') || q.includes('crypto') || q.includes('bitcoin') || q.includes('mutual fund') || q.includes('fd') || q.includes('bond') || q.includes('invest')) {
     const surplusStr = formatCurrency(Math.max(0, analysis.netSavings), currency, currency);
     return `📈 **Investment & Wealth Building Guidance:**\n\n` +
@@ -174,7 +232,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `💡 **Advice**: Secure a **3-6 month emergency fund** (${formatCurrency(analysis.totalExpense * 3, currency, currency)}) before committing capital to long-term equities.`;
   }
 
-  // 3. Trip / Vacation / Life Savings Goal Planning (e.g. "how to save for a trip to Japan?", "vacation", "car", "wedding")
+  // 8. Trip / Vacation / Life Savings Goal Planning
   if (q.includes('trip') || q.includes('vacation') || q.includes('japan') || q.includes('travel') || q.includes('car') || q.includes('house') || q.includes('wedding') || q.includes('goal')) {
     const numberMatch = q.match(/(\d+(\.\d+)?)/);
     const targetAmount = numberMatch ? parseFloat(numberMatch[0]) : convertCurrency(1500, 'USD', currency);
@@ -194,7 +252,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `💡 **Pro Tip**: Set up a dedicated sub-account or automated monthly transfer of ${formatCurrency(targetAmount / 6, currency, currency)} over 6 months to reach your goal stress-free!`;
   }
 
-  // 4. Emergency Fund / Runway Queries
+  // 9. Emergency Fund / Runway Queries
   if (q.includes('emergency') || q.includes('runway') || q.includes('buffer') || q.includes('safety net')) {
     const minBuffer = analysis.totalExpense * 3;
     const recBuffer = analysis.totalExpense * 6;
@@ -205,7 +263,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `💡 Keep your emergency fund in a high-yield liquid savings account or short-term FD so it remains 100% accessible during unexpected life events!`;
   }
 
-  // 5. Debt, Credit Card & Taxes Queries
+  // 10. Debt, Credit Card & Taxes Queries
   if (q.includes('credit') || q.includes('debt') || q.includes('loan') || q.includes('emi') || q.includes('tax') || q.includes('interest')) {
     return `💳 **Debt & Credit Optimization Strategy:**\n\n` +
       `• **High-Interest Debt First (Avalanche Method)**: Pay off credit cards or personal loans (15-24% interest) immediately.\n` +
@@ -214,14 +272,14 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `• **Tax Deductions**: Utilize government tax-saving instruments (retirement funds, health insurance premiums).`;
   }
 
-  // 6. Category-specific queries (Food, Rent, Utilities, Transport, Entertainment, Shopping, Health, Salary, etc.)
+  // 11. Category-specific queries (Food, Rent, Utilities, Transport, Entertainment, Shopping, Medical/Health, Salary, etc.)
   const categoryKeywords = {
     FOOD: ['food', 'dining', 'eating', 'groceries', 'restaurant', 'meal', 'dosa', 'swiggy', 'zomato'],
     HOUSING: ['housing', 'rent', 'apartment', 'house', 'mortgage'],
     TRANSPORT: ['transport', 'car', 'fuel', 'gas', 'uber', 'cab', 'transit', 'bus', 'train'],
     ENTERTAINMENT: ['entertainment', 'movie', 'cinema', 'netflix', 'game', 'gaming', 'subscription', 'fun'],
     UTILITIES: ['utility', 'utilities', 'electric', 'electricity', 'water', 'internet', 'bill', 'bills'],
-    HEALTH: ['health', 'medical', 'hospital', 'doctor', 'gym', 'fitness', 'medicine', 'pharmacy'],
+    HEALTH: ['medical', 'hospital', 'doctor', 'gym', 'fitness', 'medicine', 'pharmacy', 'health expense'],
     SHOPPING: ['shopping', 'clothes', 'tech', 'store', 'amazon', 'gear', 'buy'],
     SALARY: ['salary', 'paycheck', 'job', 'wage'],
     FREELANCE: ['freelance', 'gig', 'side project', 'client'],
@@ -258,80 +316,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
     }
   }
 
-  // 7. Merchant Title Search (e.g. "Amazon", "Uber", "Swiggy", "Dosa")
-  const words = q.split(/\s+/).filter(w => w.length > 2 && !['how', 'much', 'did', 'spend', 'what', 'where', 'my', 'the', 'can', 'should', 'buy', 'about', 'want'].includes(w));
-  if (words.length > 0) {
-    const matchedItems = transactions.filter(t => {
-      const titleLower = (t.title || '').toLowerCase();
-      const notesLower = (t.notes || '').toLowerCase();
-      return words.some(w => titleLower.includes(w) || notesLower.includes(w));
-    });
-
-    if (matchedItems.length > 0) {
-      const sumAmt = matchedItems.reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
-      const itemList = matchedItems.slice(0, 4)
-        .map(t => `  - **${t.title}**: ${formatCurrency(t.amount, currency, t.currency || currency)} (${t.transactionDate || 'Date N/A'})`)
-        .join('\n');
-
-      return `🔍 **Search Results for "${words.join(' ')}":**\n\n` +
-        `Found **${matchedItems.length} matching transaction(s)** totaling **${formatCurrency(sumAmt, currency, currency)}**:\n\n` +
-        itemList;
-    }
-  }
-
-  // 8. Purchase Feasibility / Affordability (e.g. "can I buy a phone for 500?")
-  const numberMatch = q.match(/(\d+(\.\d+)?)/);
-  if ((q.includes('buy') || q.includes('afford') || q.includes('cost') || q.includes('purchase')) && numberMatch) {
-    const itemPrice = parseFloat(numberMatch[0]);
-    const surplus = analysis.netSavings;
-
-    if (surplus <= 0) {
-      return `⚠️ **Affordability Audit for ${formatCurrency(itemPrice, currency, currency)}:**\n\n` +
-        `Your current monthly cash flow is in a **deficit** (${formatCurrency(surplus, currency, currency)}). Purchasing an item for ${formatCurrency(itemPrice, currency, currency)} will increase your deficit.`;
-    }
-
-    if (itemPrice <= surplus) {
-      const remainingSurplus = surplus - itemPrice;
-      return `✅ **Affordable Purchase:**\n\n` +
-        `Your monthly net savings surplus is **${formatCurrency(surplus, currency, currency)}**.\n` +
-        `Purchasing this item for **${formatCurrency(itemPrice, currency, currency)}** will leave you with a positive remaining surplus of **${formatCurrency(remainingSurplus, currency, currency)}** this month!`;
-    } else {
-      const monthsNeeded = (itemPrice / surplus).toFixed(1);
-      return `⚠️ **Budget Stretch Notice:**\n\n` +
-        `Your current monthly net surplus is **${formatCurrency(surplus, currency, currency)}**.\n` +
-        `An item costing **${formatCurrency(itemPrice, currency, currency)}** exceeds your single-month savings buffer. Saving your surplus for **~${monthsNeeded} months** will let you buy it debt-free!`;
-    }
-  }
-
-  // 9. 50/30/20 Rule Analysis
-  if (q.includes('50/30/20') || q.includes('rule') || q.includes('split') || q.includes('ratio')) {
-    return `📊 **50/30/20 Budget Breakdown Analysis:**\n\n` +
-      `• **Needs (Essentials)**: ${formatCurrency(analysis.needsSpending, currency, currency)} (${analysis.needsPct.toFixed(1)}% of income — Ideal: ≤50%)\n` +
-      `• **Wants (Discretionary)**: ${formatCurrency(analysis.wantsSpending, currency, currency)} (${analysis.wantsPct.toFixed(1)}% of income — Ideal: ≤30%)\n` +
-      `• **Savings & Surplus**: ${formatCurrency(Math.max(0, analysis.netSavings), currency, currency)} (${analysis.savingsRate.toFixed(1)}% of income — Ideal: ≥20%)\n\n` +
-      `${analysis.needsPct <= 50 ? '✅ Essential needs spending is well controlled!' : '⚠️ Essential costs exceed 50% of income. Try optimizing recurring utility bills.'}`;
-  }
-
-  // 10. Why expense high / Where money going
-  if (q.includes('why') || q.includes('high') || q.includes('where') || q.includes('going') || q.includes('increase')) {
-    if (analysis.sortedCategories.length === 0) {
-      return `ℹ️ You have no expenses recorded yet. Add transactions to generate outflow diagnostics!`;
-    }
-
-    const top3 = analysis.sortedCategories.slice(0, 3).map(cat => {
-      const meta = CATEGORY_META[cat] || { name: cat, icon: '📦' };
-      const amt = analysis.categoryTotals[cat];
-      const pct = analysis.totalExpense > 0 ? ((amt / analysis.totalExpense) * 100).toFixed(1) : 0;
-      return `  - **${meta.icon} ${meta.name}**: ${formatCurrency(amt, currency, currency)} (${pct}% of total)`;
-    }).join('\n');
-
-    return `📈 **Outflow Driver Diagnostics:**\n\n` +
-      `Your total monthly expenses are **${formatCurrency(analysis.totalExpense, currency, currency)}**.\n\n` +
-      `**Top Spending Drivers:**\n${top3}\n\n` +
-      `💡 Focus on reducing the top category (**${analysis.topCategory ? analysis.topCategory.name : 'top category'}**) by 10% to save ${formatCurrency((analysis.topCategory?.amount || 0) * 0.1, currency, currency)}/month.`;
-  }
-
-  // 11. Income / Earnings query
+  // 12. Income / Earnings query
   if (q.includes('income') || q.includes('earn') || q.includes('earned') || q.includes('salary') || q.includes('inflow')) {
     const incomeTx = transactions.filter(t => t.type === 'INCOME');
     if (incomeTx.length === 0) {
@@ -343,22 +328,13 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       list;
   }
 
-  // 12. General Savings Advice / Tips
-  if (q.includes('save') || q.includes('saving') || q.includes('tip') || q.includes('reduce') || q.includes('cut')) {
+  // 13. General Savings Advice / Action Plan
+  if (q.includes('save') || q.includes('saving') || q.includes('tip') || q.includes('action plan') || q.includes('cut')) {
     return `💡 **Tailored Savings Action Plan:**\n\n` +
       `Current Savings Rate: **${analysis.savingsRate.toFixed(1)}%** (${formatCurrency(analysis.netSavings, currency, currency)}/month)\n\n` +
       `1. ${analysis.actionPlan[0] || 'Track daily micro-purchases.'}\n` +
       `2. ${analysis.actionPlan[1] || 'Set monthly category caps.'}\n` +
       `3. ${analysis.actionPlan[2] || 'Automate savings transfers on payday.'}`;
-  }
-
-  // 13. Health Score Query
-  if (q.includes('health') || q.includes('score') || q.includes('grade')) {
-    return `🏆 **Financial Health Score: ${analysis.healthScore}/100**\n\n` +
-      `• Total Inflow: ${formatCurrency(analysis.totalIncome, currency, currency)}\n` +
-      `• Total Outflow: ${formatCurrency(analysis.totalExpense, currency, currency)}\n` +
-      `• Net Buffer: ${formatCurrency(analysis.netSavings, currency, currency)}\n\n` +
-      `${analysis.healthScore >= 70 ? '🎉 Outstanding financial discipline! Cash flow and savings buffers are strong.' : '⚡ To boost your score: reduce discretionary spending and stay under budget caps.'}`;
   }
 
   // 14. Forecast / Next Month
@@ -372,7 +348,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `Maintaining current trends will keep your financial health on target!`;
   }
 
-  // 15. Dynamic Generative Q&A Synthesis for ANY Unknown Question (No static default templates!)
+  // 15. Dynamic Generative Q&A Synthesis Fallback
   const cleanQ = question.trim();
   const surplusStatus = analysis.netSavings >= 0 ? `monthly surplus of ${formatCurrency(analysis.netSavings, currency, currency)}` : `monthly deficit of ${formatCurrency(Math.abs(analysis.netSavings), currency, currency)}`;
   const topCategoryText = analysis.topCategory ? `highest expense area is ${analysis.topCategory.name} (${formatCurrency(analysis.topCategory.amount, currency, currency)})` : 'no recorded expenses yet';
