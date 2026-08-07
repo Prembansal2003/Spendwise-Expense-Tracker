@@ -13,7 +13,7 @@ console.log('[SpendWise API] Base URL:', API_BASE_URL);
 
 // Auto wake-up ping: fires immediately on app load to warm Render free-tier container
 const _wakeUp = () => {
-  fetch(`${API_BASE_URL}/auth/profile/1`, { method: 'GET', signal: AbortSignal.timeout(90000) })
+  fetch(`${API_BASE_URL}/auth/profile/101`, { method: 'GET', signal: AbortSignal.timeout(90000) })
     .then(() => console.log('[SpendWise API] ✅ Backend is awake and ready'))
     .catch(() => console.log('[SpendWise API] ⏳ Backend waking up (Render cold start)...'));
 };
@@ -56,7 +56,7 @@ const setLocalData = (key, value) => {
 };
 
 export const apiService = {
-  // ========== AUTH ==========
+  // ========== AUTH & PROFILE ==========
   async registerUser(name, email, password) {
     try {
       const res = await fetchApi(`${API_BASE_URL}/auth/register`, {
@@ -101,6 +101,36 @@ export const apiService = {
       console.error('[SpendWise API] Login network error:', err);
       return null;
     }
+  },
+
+  async getUserProfile(userId = 101) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] getUserProfile failed:', err.message);
+    }
+    return null;
+  },
+
+  async updateUserProfile(userId = 101, payload = {}) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/auth/profile/${userId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] updateUserProfile failed:', err.message);
+    }
+    return null;
   },
 
   // ========== TRANSACTIONS ==========
@@ -203,7 +233,6 @@ export const apiService = {
       currency: transaction.currency || 'USD'
     };
 
-    // Update local storage immediately so edits are preserved 100%
     const storageKey = `spendwise_transactions_${userId}`;
     let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
     const existingIdx = list.findIndex(t => String(t.id) === String(id));

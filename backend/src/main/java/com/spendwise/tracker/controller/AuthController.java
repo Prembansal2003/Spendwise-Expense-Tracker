@@ -29,4 +29,9 @@ public class AuthController {
     public ResponseEntity<AuthResponse> getProfile(@PathVariable Long id) {
         return ResponseEntity.ok(authService.getProfile(id));
     }
+
+    @PutMapping("/profile/{id}")
+    public ResponseEntity<AuthResponse> updateProfile(@PathVariable Long id, @RequestBody AuthRequest request) {
+        return ResponseEntity.ok(authService.updateProfile(id, request));
+    }
 }

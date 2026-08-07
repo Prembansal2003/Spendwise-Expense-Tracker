@@ -160,12 +160,28 @@ export default function App() {
     showToast('🔄 All 11 category sample transactions reloaded!');
   };
 
-  const handleUpdateAvatar = (newAvatarUrl) => {
+  // Sync profile picture & user details with cloud database across all devices
+  useEffect(() => {
+    if (user?.id) {
+      apiService.getUserProfile(user.id).then(profile => {
+        if (profile && profile.avatarUrl && profile.avatarUrl !== user.avatarUrl) {
+          const updated = { ...user, ...profile };
+          setUser(updated);
+          localStorage.setItem('spendwise_user', JSON.stringify(updated));
+        }
+      });
+    }
+  }, [user?.id]);
+
+  const handleUpdateAvatar = async (newAvatarUrl) => {
     if (!user) return;
     const updatedUser = { ...user, avatarUrl: newAvatarUrl };
     setUser(updatedUser);
     localStorage.setItem('spendwise_user', JSON.stringify(updatedUser));
     showToast('📸 Profile picture updated successfully!');
+
+    // Persist avatar to cloud database for multi-device sync
+    await apiService.updateUserProfile(user.id, { avatarUrl: newAvatarUrl });
   };
 
   // Enforce Auth Gate for Signed-Out Visitors
