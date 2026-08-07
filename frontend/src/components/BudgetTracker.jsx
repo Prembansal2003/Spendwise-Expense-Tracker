@@ -468,9 +468,13 @@ export default function BudgetTracker({
                 onClick={() => setShowAddGoalModal(false)}
               >
                 Cancel
-</div>
-                  </form>
-                )}
+              </button>
+              <button type="submit" className="btn btn-primary btn-sm">
+                Save Target Goal
+              </button>
+            </div>
+          </form>
+        )}
 
                 {/* Savings Goals Grid */}
                 {savingsGoals.length === 0 ? (
