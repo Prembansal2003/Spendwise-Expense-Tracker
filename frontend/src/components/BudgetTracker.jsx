@@ -110,12 +110,12 @@ export default function BudgetTracker({
     // Automatically create a deduction expense transaction if initial deposit > 0
     if (fedSavedVal > 0 && onCreateTransaction) {
       await onCreateTransaction({
-        title: `Savings Goal Deposit: ${newGoalTitle.trim()}`,
+        title: `Savings Deposit: ${newGoalTitle.trim()}`,
         amount: fedSavedVal,
         type: 'EXPENSE',
         category: 'OTHER',
         paymentMethod: 'Bank Transfer',
-        notes: `Initial deposit allocated towards ${newGoalTitle.trim()} savings goal`,
+        notes: `[GoalID:${newGoal.id}] Initial deposit allocated towards ${newGoalTitle.trim()} savings goal`,
         transactionDate: new Date().toISOString().split('T')[0]
       });
     }
@@ -148,7 +148,7 @@ export default function BudgetTracker({
         type: 'EXPENSE',
         category: 'OTHER',
         paymentMethod: 'Bank Transfer',
-        notes: `Deposit deducted from available cash and allocated to ${goal.title}`,
+        notes: `[GoalID:${goal.id}] Deposit deducted from available cash and allocated to ${goal.title}`,
         transactionDate: new Date().toISOString().split('T')[0]
       });
     }
@@ -504,14 +504,28 @@ export default function BudgetTracker({
                 ) : (
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     {savingsGoals.map(goal => {
-                      // Dynamically sum all deposit transactions matching this goal's title
-                      const cleanGoalTitle = (goal.title || '').toLowerCase().replace(/^[^\w\s]+/, '').trim();
+                      // Robust multi-criteria matching: Match Goal ID in notes, clean title, or key title words
+                      const cleanGoalTitle = (goal.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
+                      const goalWords = cleanGoalTitle.split(/\s+/).filter(w => w.length >= 3);
+
                       const depositSumUSD = transactions
                         .filter(t => {
                           if (t.type !== 'EXPENSE') return false;
                           const tTitle = (t.title || '').toLowerCase();
                           const tNotes = (t.notes || '').toLowerCase();
-                          return cleanGoalTitle && (tTitle.includes(cleanGoalTitle) || tNotes.includes(cleanGoalTitle));
+
+                          // 1. Direct Goal ID tag match in notes
+                          if (tNotes.includes(`[goalid:${goal.id}]`)) return true;
+
+                          // 2. Clean full title match in transaction title or notes
+                          if (cleanGoalTitle && (tTitle.includes(cleanGoalTitle) || tNotes.includes(cleanGoalTitle))) return true;
+
+                          // 3. Significant title keywords match (e.g. "vacation", "laptop", "emergency")
+                          if (goalWords.length > 0) {
+                            return goalWords.some(w => tTitle.includes(w) || tNotes.includes(w));
+                          }
+
+                          return false;
                         })
                         .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', 'USD'), 0);
 
