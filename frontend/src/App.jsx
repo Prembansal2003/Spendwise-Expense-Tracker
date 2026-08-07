@@ -16,8 +16,8 @@ import { fetchLiveExchangeRates } from './utils/formatters';
 
 const DEFAULT_USER = {
   id: 101,
-  name: 'Alex Morgan',
-  email: 'alex.morgan@spendwise.io',
+  name: 'Prem Agrawal',
+  email: 'bansalprem900@gmail.com',
   role: 'PRO_MEMBER',
   avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
   createdAt: 'Aug 2026'
@@ -41,7 +41,16 @@ export default function App() {
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('spendwise_user');
-      return saved ? JSON.parse(saved) : DEFAULT_USER;
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (parsed.email === 'alex.morgan@spendwise.io') {
+          localStorage.setItem('spendwise_user', JSON.stringify(DEFAULT_USER));
+          return DEFAULT_USER;
+        }
+        return parsed;
+      }
+      localStorage.setItem('spendwise_user', JSON.stringify(DEFAULT_USER));
+      return DEFAULT_USER;
     } catch (e) {
       return DEFAULT_USER;
     }
@@ -81,6 +90,16 @@ export default function App() {
   };
 
   useEffect(() => {
+    // Ensure fresh sample dataset for Prem Agrawal if needed
+    if (user?.id === 101) {
+      const storageKey = `spendwise_transactions_${user.id}`;
+      const budgetKey = `spendwise_budgets_${user.id}`;
+      const existingTx = localStorage.getItem(storageKey);
+      if (!existingTx || existingTx.includes('Tech Corp Salary') || existingTx.includes('Alex Morgan')) {
+        localStorage.setItem(storageKey, JSON.stringify(INITIAL_TRANSACTIONS));
+        localStorage.setItem(budgetKey, JSON.stringify(INITIAL_BUDGETS));
+      }
+    }
     loadData();
   }, [user?.id]);
 
@@ -150,7 +169,7 @@ export default function App() {
     localStorage.setItem(storageKey, JSON.stringify(INITIAL_TRANSACTIONS));
     localStorage.setItem(budgetKey, JSON.stringify(INITIAL_BUDGETS));
     loadData();
-    showToast('🔄 Demo dataset reloaded!');
+    showToast('🔄 All category transactions reloaded!');
   };
 
   // Enforce Auth Gate for Signed-Out Visitors
@@ -280,8 +299,27 @@ export default function App() {
         </div>
       )}
 
-      <footer style={{ textAlign: 'center', margin: '2rem 0 1rem 0', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-        SpendWise Full Stack Java Application • Spring Boot REST API + React Vite Web UI
+      {/* Modern Footer with Prem Agrawal Name & Email */}
+      <footer className="glass-card" style={{
+        textAlign: 'center',
+        margin: '2.5rem 0 1rem 0',
+        padding: '1.25rem 1rem',
+        fontSize: '0.85rem',
+        color: 'var(--text-secondary)',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        gap: '0.4rem',
+        borderRadius: 'var(--radius-lg)'
+      }}>
+        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+          SpendWise Expense Tracker • Designed & Developed by Prem Agrawal
+        </div>
+        <div className="flex items-center gap-3" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexWrap: 'wrap', justifyContent: 'center' }}>
+          <span>📧 Contact: <a href="mailto:bansalprem900@gmail.com" style={{ color: 'var(--primary)', textDecoration: 'none', fontWeight: 700 }}>bansalprem900@gmail.com</a></span>
+          <span>•</span>
+          <span>Spring Boot REST Engine + React Vite Web UI</span>
+        </div>
       </footer>
 
     </div>

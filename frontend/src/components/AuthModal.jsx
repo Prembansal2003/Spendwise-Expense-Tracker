@@ -44,8 +44,8 @@ export default function AuthModal({
       let knownUsers = [
         {
           id: 101,
-          name: 'Alex Morgan',
-          email: 'alex.morgan@spendwise.io',
+          name: 'Prem Agrawal',
+          email: 'bansalprem900@gmail.com',
           password: 'password123',
           role: 'PRO_MEMBER',
           avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
@@ -131,8 +131,8 @@ export default function AuthModal({
   const handleQuickDemoLogin = () => {
     const demoUser = {
       id: 101,
-      name: 'Alex Morgan',
-      email: 'alex.morgan@spendwise.io',
+      name: 'Prem Agrawal',
+      email: 'bansalprem900@gmail.com',
       role: 'PRO_MEMBER',
       avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
       createdAt: 'Aug 2026'
@@ -198,7 +198,7 @@ export default function AuthModal({
             <Sparkles size={18} color="var(--primary)" />
             <div>
               <span style={{ fontWeight: 700, fontSize: '0.8125rem', color: 'var(--primary)' }}>Instant Demo Access</span>
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sign in instantly as Alex Morgan</p>
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Sign in instantly as Prem Agrawal</p>
             </div>
           </div>
           <button className="btn btn-primary btn-sm" onClick={handleQuickDemoLogin}>
@@ -231,7 +231,7 @@ export default function AuthModal({
                   type="text"
                   className="form-control"
                   style={{ paddingLeft: '2.25rem' }}
-                  placeholder="Alex Morgan"
+                  placeholder="Prem Agrawal"
                   required
                   value={formData.name}
                   onChange={(e) => setFormData({ ...formData, name: e.target.value })}
@@ -248,7 +248,7 @@ export default function AuthModal({
                 type="email"
                 className="form-control"
                 style={{ paddingLeft: '2.25rem' }}
-                placeholder="alex.morgan@spendwise.io"
+                placeholder="bansalprem900@gmail.com"
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}

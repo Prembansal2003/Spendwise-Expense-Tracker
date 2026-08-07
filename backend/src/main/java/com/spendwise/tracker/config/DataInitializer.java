@@ -38,8 +38,8 @@ public class DataInitializer implements CommandLineRunner {
         // 1. Seed Initial User if empty
         if (userRepository.count() == 0) {
             User demoUser = new User();
-            demoUser.setName("Alex Morgan");
-            demoUser.setEmail("alex.morgan@spendwise.io");
+            demoUser.setName("Prem Agrawal");
+            demoUser.setEmail("bansalprem900@gmail.com");
             demoUser.setPassword(PasswordEncoderUtil.encode("password123"));
             demoUser.setRole("PRO_MEMBER");
             demoUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
@@ -53,29 +53,31 @@ public class DataInitializer implements CommandLineRunner {
             int year = now.getYear();
 
             budgetRepository.saveAll(List.of(
-                    new Budget(null, 1L, Category.FOOD, new BigDecimal("600.00"), new BigDecimal("420.50"), "USD", month, year),
-                    new Budget(null, 1L, Category.HOUSING, new BigDecimal("1500.00"), new BigDecimal("1450.00"), "USD", month, year),
-                    new Budget(null, 1L, Category.TRANSPORT, new BigDecimal("300.00"), new BigDecimal("185.00"), "USD", month, year),
-                    new Budget(null, 1L, Category.ENTERTAINMENT, new BigDecimal("250.00"), new BigDecimal("210.00"), "USD", month, year),
-                    new Budget(null, 1L, Category.UTILITIES, new BigDecimal("350.00"), new BigDecimal("280.00"), "USD", month, year),
-                    new Budget(null, 1L, Category.SHOPPING, new BigDecimal("400.00"), new BigDecimal("310.00"), "USD", month, year),
-                    new Budget(null, 1L, Category.HEALTH, new BigDecimal("200.00"), new BigDecimal("75.00"), "USD", month, year)
+                    new Budget(null, 1L, Category.FOOD, new BigDecimal("600.00"), new BigDecimal("215.50"), "USD", month, year),
+                    new Budget(null, 1L, Category.HOUSING, new BigDecimal("1800.00"), new BigDecimal("1600.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.TRANSPORT, new BigDecimal("300.00"), new BigDecimal("85.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.ENTERTAINMENT, new BigDecimal("250.00"), new BigDecimal("145.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.UTILITIES, new BigDecimal("350.00"), new BigDecimal("185.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.SHOPPING, new BigDecimal("400.00"), new BigDecimal("320.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.HEALTH, new BigDecimal("250.00"), new BigDecimal("150.00"), "USD", month, year),
+                    new Budget(null, 1L, Category.OTHER, new BigDecimal("200.00"), new BigDecimal("75.00"), "USD", month, year)
             ));
         }
 
-        // 3. Seed Initial Transactions if empty
+        // 3. Seed Initial Transactions if empty (covering ALL categories)
         if (transactionRepository.count() == 0) {
             transactionRepository.saveAll(List.of(
-                    new Transaction(null, 1L, "Tech Corp Salary", new BigDecimal("5200.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(5), "Bank Transfer", "Monthly salary payment", "USD", null),
-                    new Transaction(null, 1L, "Apartment Rent", new BigDecimal("1450.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "August rent", "USD", null),
-                    new Transaction(null, 1L, "Organic Groceries", new BigDecimal("165.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "Whole Foods market", "USD", null),
-                    new Transaction(null, 1L, "Freelance UI Design", new BigDecimal("850.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(3), "UPI", "Dashboard project completion", "USD", null),
-                    new Transaction(null, 1L, "Electric & Water Bill", new BigDecimal("180.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "Monthly utility payment", "USD", null),
-                    new Transaction(null, 1L, "Gasoline / Fuel", new BigDecimal("65.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(2), "Credit Card", "Shell station refill", "USD", null),
-                    new Transaction(null, 1L, "Cinema & Dinner Out", new BigDecimal("110.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "Weekend movie night", "USD", null),
-                    new Transaction(null, 1L, "Weekly Grocery Run", new BigDecimal("155.00"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(1), "Debit Card", "Trader Joes", "USD", null),
-                    new Transaction(null, 1L, "Wireless Earbuds", new BigDecimal("140.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(1), "Credit Card", "Tech store purchase", "USD", null),
-                    new Transaction(null, 1L, "Gym Membership", new BigDecimal("55.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now(), "Credit Card", "Monthly fitness club fee", "USD", null)
+                    new Transaction(null, 1L, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(6), "Bank Transfer", "Monthly tech payroll credit", "USD", null),
+                    new Transaction(null, 1L, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(5), "UPI", "iOS app milestone completion", "USD", null),
+                    new Transaction(null, 1L, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.now().minusDays(4), "Bank Transfer", "Quarterly index fund yield", "USD", null),
+                    new Transaction(null, 1L, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "Monthly housing rent payment", "USD", null),
+                    new Transaction(null, 1L, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "Whole Foods market shopping", "USD", null),
+                    new Transaction(null, 1L, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "Monthly home utility bills", "USD", null),
+                    new Transaction(null, 1L, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(3), "Credit Card", "Shell station fuel refill", "USD", null),
+                    new Transaction(null, 1L, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "Weekend concert & dining", "USD", null),
+                    new Transaction(null, 1L, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(2), "Credit Card", "Workstation upgrade", "USD", null),
+                    new Transaction(null, 1L, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "Wellness clinic checkup", "USD", null),
+                    new Transaction(null, 1L, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "Software development learning course", "USD", null)
             ));
         }
     }
