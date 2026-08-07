@@ -308,7 +308,7 @@ Here is your live financial snapshot:
 • **Net Surplus**: ${T(e.netSavings,n,n)}
 • **Health Score**: ${e.healthScore}/100
 
-You can ask me questions like **"how to save for a trip?"**, **"should I invest in stocks or gold?"**, **"how much did I spend on food?"**, or **"can I buy a laptop for 1000?"**!`;if(r.includes("who are you")||r.includes("what can you do")||r.includes("help"))return`🤖 **SpendWise AI Advisor Capabilities:**
+Select any question from the categories below to view instant, data-driven financial insights!`;if(r.includes("who are you")||r.includes("what can you do")||r.includes("help"))return`🤖 **SpendWise AI Advisor Capabilities:**
 
 1. **Custom Data Queries**: Search your expenses by merchant, category, or date.
 2. **Purchase Feasibility**: Calculate if you can afford a new purchase based on your live surplus.

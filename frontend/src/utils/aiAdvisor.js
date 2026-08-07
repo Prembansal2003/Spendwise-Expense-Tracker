@@ -150,7 +150,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `• **Monthly Outflow**: ${formatCurrency(analysis.totalExpense, currency, currency)}\n` +
       `• **Net Surplus**: ${formatCurrency(analysis.netSavings, currency, currency)}\n` +
       `• **Health Score**: ${analysis.healthScore}/100\n\n` +
-      `You can ask me questions like **"how to save for a trip?"**, **"should I invest in stocks or gold?"**, **"how much did I spend on food?"**, or **"can I buy a laptop for 1000?"**!`;
+      `Select any question from the categories below to view instant, data-driven financial insights!`;
   }
 
   if (q.includes('who are you') || q.includes('what can you do') || q.includes('help')) {
