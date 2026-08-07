@@ -147,6 +147,7 @@ export const apiService = {
   async createTransaction(transaction, userId = 101) {
     const txDate = transaction.date || transaction.transactionDate || new Date().toISOString().split('T')[0];
     const payload = {
+      userId: Number(userId) || 101,
       title: transaction.title,
       amount: Number(transaction.amount),
       type: transaction.type,
@@ -182,6 +183,7 @@ export const apiService = {
   async updateTransaction(id, transaction, userId = 101) {
     const txDate = transaction.date || transaction.transactionDate || new Date().toISOString().split('T')[0];
     const payload = {
+      userId: Number(userId) || 101,
       title: transaction.title,
       amount: Number(transaction.amount),
       type: transaction.type,
@@ -201,6 +203,16 @@ export const apiService = {
       if (res.ok) {
         const data = await res.json();
         return data;
+      } else {
+        console.warn(`[SpendWise API] updateTransaction non-OK: ${res.status}, falling back to POST...`);
+        const createRes = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(payload)
+        });
+        if (createRes.ok) {
+          return await createRes.json();
+        }
       }
     } catch (err) {
       console.warn('[SpendWise API] updateTransaction failed, updating localStorage:', err.message);
@@ -208,7 +220,12 @@ export const apiService = {
 
     const storageKey = `spendwise_transactions_${userId}`;
     let list = getLocalData(storageKey, INITIAL_TRANSACTIONS);
-    list = list.map(t => String(t.id) === String(id) ? { ...t, ...payload } : t);
+    const existingIdx = list.findIndex(t => String(t.id) === String(id));
+    if (existingIdx >= 0) {
+      list[existingIdx] = { ...list[existingIdx], ...payload, id };
+    } else {
+      list.unshift({ ...payload, id });
+    }
     setLocalData(storageKey, list);
     return { ...payload, id };
   },

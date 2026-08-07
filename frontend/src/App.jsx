@@ -127,7 +127,7 @@ export default function App() {
       showToast('🎉 New transaction recorded!');
     }
     setEditingTransaction(null);
-    loadData();
+    await loadData();
   };
 
   // Delete Transaction
