@@ -13,7 +13,7 @@ console.log('[SpendWise API] Base URL:', API_BASE_URL);
 
 // Auto wake-up ping: fires immediately on app load to warm Render free-tier container
 const _wakeUp = () => {
-  fetch(`${API_BASE_URL}/auth/profile/101`, { method: 'GET', signal: AbortSignal.timeout(90000) })
+  fetch(`${API_BASE_URL}/transactions?userId=101`, { method: 'GET', signal: AbortSignal.timeout(90000) })
     .then(() => console.log('[SpendWise API] ✅ Backend is awake and ready'))
     .catch(() => console.log('[SpendWise API] ⏳ Backend waking up (Render cold start)...'));
 };

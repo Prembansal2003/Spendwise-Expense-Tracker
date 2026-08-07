@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Sun, Moon, Plus, Download, LayoutDashboard, Receipt, Target, User, LogOut, ChevronDown, Bot, ZoomIn } from 'lucide-react';
+import { Wallet, Sun, Moon, Plus, Download, LayoutDashboard, Receipt, Target, User, LogOut, ChevronDown, Bot, ZoomIn, BarChart2 } from 'lucide-react';
 import { CURRENCIES } from '../utils/formatters';
 import NotificationCenter from './NotificationCenter';
 
