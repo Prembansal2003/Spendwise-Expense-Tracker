@@ -337,7 +337,7 @@ export const apiService = {
     return list;
   },
 
-  async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') => {
+  async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') {
     const yearlyLimit = period === 'YEARLY' ? Number(monthlyLimit) * 12 : Number(monthlyLimit) * 12;
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets?userId=${userId}`, {
