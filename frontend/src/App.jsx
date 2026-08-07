@@ -12,6 +12,7 @@ import AiAssistantModal from './components/AiAssistantModal';
 import AuthGate from './components/AuthGate';
 import { apiService } from './services/api';
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
+import { toUSD } from './utils/formatters';
 
 const DEFAULT_USER = {
   id: 101,
@@ -95,11 +96,16 @@ export default function App() {
   // Add / Edit Transaction
   const handleSaveTransaction = async (data) => {
     if (!user) return;
+
+    // Convert entered amount from current display currency → USD base for storage
+    const usdAmount = toUSD(data.amount, currency);
+    const dataInUSD = { ...data, amount: usdAmount };
+
     if (editingTransaction) {
-      await apiService.updateTransaction(editingTransaction.id, data, user.id);
+      await apiService.updateTransaction(editingTransaction.id, dataInUSD, user.id);
       showToast('✅ Transaction updated successfully');
     } else {
-      await apiService.createTransaction(data, user.id);
+      await apiService.createTransaction(dataInUSD, user.id);
       showToast('🎉 New transaction recorded!');
     }
     setEditingTransaction(null);
@@ -212,6 +218,7 @@ export default function App() {
         onClose={() => { setIsAddModalOpen(false); setEditingTransaction(null); }}
         onSave={handleSaveTransaction}
         editingTransaction={editingTransaction}
+        currency={currency}
       />
 
       <ExportModal

@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
-import { CATEGORY_META } from '../utils/formatters';
+import { CATEGORY_META, getCurrencySymbol, fromUSD } from '../utils/formatters';
 
 export default function TransactionModal({
   isOpen,
   onClose,
   onSave,
-  editingTransaction
+  editingTransaction,
+  currency = 'USD'
 }) {
   const [formData, setFormData] = useState({
     title: '',
@@ -20,9 +21,11 @@ export default function TransactionModal({
 
   useEffect(() => {
     if (editingTransaction) {
+      // Convert stored USD amount back to display currency for editing
+      const displayAmount = fromUSD(editingTransaction.amount, currency);
       setFormData({
         title: editingTransaction.title || '',
-        amount: editingTransaction.amount || '',
+        amount: displayAmount ? Number(displayAmount.toFixed(2)) : '',
         type: editingTransaction.type || 'EXPENSE',
         category: editingTransaction.category || 'FOOD',
         transactionDate: editingTransaction.transactionDate || new Date().toISOString().split('T')[0],
@@ -40,7 +43,7 @@ export default function TransactionModal({
         notes: ''
       });
     }
-  }, [editingTransaction, isOpen]);
+  }, [editingTransaction, isOpen, currency]);
 
   if (!isOpen) return null;
 
@@ -119,17 +122,27 @@ export default function TransactionModal({
           {/* Amount & Date Grid */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="form-group">
-              <label className="form-label">Amount</label>
-              <input
-                type="number"
-                step="0.01"
-                min="0.01"
-                className="form-control"
-                placeholder="0.00"
-                required
-                value={formData.amount}
-                onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-              />
+              <label className="form-label">Amount ({getCurrencySymbol(currency)})</label>
+              <div style={{ position: 'relative' }}>
+                <span style={{
+                  position: 'absolute', left: '0.75rem', top: '50%',
+                  transform: 'translateY(-50%)', color: 'var(--text-muted)',
+                  fontWeight: 600, fontSize: '0.95rem', pointerEvents: 'none'
+                }}>
+                  {getCurrencySymbol(currency)}
+                </span>
+                <input
+                  type="number"
+                  step="0.01"
+                  min="0.01"
+                  className="form-control"
+                  style={{ paddingLeft: '2rem' }}
+                  placeholder="0.00"
+                  required
+                  value={formData.amount}
+                  onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
+                />
+              </div>
             </div>
             <div className="form-group">
               <label className="form-label">Date</label>
