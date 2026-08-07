@@ -62,6 +62,12 @@ html.dark {
   padding: 0;
 }
 
+html, body {
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
 body {
   font-family: var(--font-body);
   background-color: var(--bg-main);
@@ -309,58 +315,96 @@ h1, h2, h3, h4, h5, h6 {
   transition: width 0.4s cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-/* Mobile Responsiveness Improvements (< 640px) */
+/* Native Mobile Optimization Rules (< 640px) */
 @media (max-width: 640px) {
-  body {
-    padding: 0.5rem;
+  html, body {
+    overflow-x: hidden !important;
+    width: 100vw !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .hidden-mobile {
+    display: none !important;
   }
 
   .main-container {
     padding: 0.5rem !important;
+    max-width: 100vw !important;
+    overflow-x: hidden !important;
   }
 
   header.glass-card {
-    padding: 0.75rem 0.875rem !important;
-    margin-bottom: 1rem !important;
-    border-radius: var(--radius-md) !important;
+    padding: 0.75rem 0.85rem !important;
+    margin-bottom: 0.875rem !important;
+    border-radius: var(--radius-lg) !important;
   }
 
-  nav {
+  .header-top {
+    width: 100%;
+  }
+
+  .header-bottom {
+    width: 100%;
+    gap: 0.5rem !important;
+  }
+
+  .nav-tabs-container {
+    flex: 1;
+    display: flex;
+    justify-content: space-around;
+    background: var(--bg-secondary);
+    padding: 0.2rem;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border-color);
+  }
+
+  .nav-tabs-container .btn {
+    flex: 1;
+    padding: 0.35rem 0.3rem !important;
+    font-size: 0.72rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .header-action-group {
     width: 100%;
     justify-content: space-between;
-    overflow-x: auto;
-    white-space: nowrap;
+    margin-top: 0.25rem;
   }
 
-  nav .btn {
-    padding: 0.35rem 0.55rem !important;
-    font-size: 0.75rem !important;
+  .header-action-group .btn-primary {
+    flex: 1;
   }
 
+  /* Modals native mobile bottom sheet */
   .modal-overlay {
-    padding: 0.5rem !important;
+    padding: 0 !important;
     align-items: flex-end !important;
   }
 
   .modal-content {
-    padding: 1rem !important;
-    max-height: 92vh !important;
-    border-radius: var(--radius-lg) var(--radius-lg) 0 0 !important;
     width: 100% !important;
     max-width: 100% !important;
+    max-height: 90vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    padding: 1.25rem 1rem !important;
+    margin: 0 !important;
   }
 
-  .btn {
-    padding: 0.45rem 0.75rem;
-    font-size: 0.78rem;
+  /* Grid Stack for mobile */
+  .grid-cols-1, .sm\:grid-cols-2, .sm\:grid-cols-3, .lg\:grid-cols-3, .lg\:grid-cols-4 {
+    grid-template-columns: repeat(1, minmax(0, 1fr)) !important;
   }
 
-  .form-control {
-    font-size: 0.82rem;
-    padding: 0.45rem 0.65rem;
-  }
-
+  /* Stat cards padding */
   .glass-card {
-    padding: 1rem !important;
+    padding: 0.875rem !important;
+    border-radius: var(--radius-md) !important;
+  }
+
+  /* Form controls */
+  .form-control {
+    font-size: 0.85rem !important;
+    padding: 0.5rem 0.65rem !important;
   }
 }
