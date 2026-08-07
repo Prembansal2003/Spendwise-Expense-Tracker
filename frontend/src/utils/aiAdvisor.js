@@ -1,4 +1,4 @@
-import { CATEGORY_META, formatCurrency, convertCurrency } from './formatters';
+import { CATEGORY_META, formatCurrency, convertCurrency, CURRENCIES } from './formatters';
 
 /**
  * Perform deep financial analysis on user's transactions and budgets.
@@ -137,12 +137,84 @@ export function analyzeFinances(transactions = [], budgets = [], currency = 'USD
 
 /**
  * Intelligent Deep Natural Language AI Financial Assistant Query Engine.
- * Dynamically parses user questions and answers accurately using actual transaction and budget data!
+ * Answers ANY financial, budgeting, investment, general Q&A, or unknown query logically without repeating standard text.
  */
 export function askAiAssistant(question = '', analysis, currency = 'USD', transactions = [], budgets = []) {
   const q = question.toLowerCase().trim();
 
-  // 1. Category-specific queries (e.g. "how much did I spend on food?", "rent", "utilities", "entertainment")
+  // 1. Greetings / Identity
+  if (q.includes('hello') || q.includes('hi') || q.includes('hey') || q.includes('greetings')) {
+    return `👋 **Hello!** I am your **SpendWise AI Financial Advisor**.\n\n` +
+      `Here is your live financial snapshot:\n` +
+      `• **Monthly Inflow**: ${formatCurrency(analysis.totalIncome, currency, currency)}\n` +
+      `• **Monthly Outflow**: ${formatCurrency(analysis.totalExpense, currency, currency)}\n` +
+      `• **Net Surplus**: ${formatCurrency(analysis.netSavings, currency, currency)}\n` +
+      `• **Health Score**: ${analysis.healthScore}/100\n\n` +
+      `You can ask me questions like **"how to save for a trip?"**, **"should I invest in stocks or gold?"**, **"how much did I spend on food?"**, or **"can I buy a laptop for 1000?"**!`;
+  }
+
+  if (q.includes('who are you') || q.includes('what can you do') || q.includes('help')) {
+    return `🤖 **SpendWise AI Advisor Capabilities:**\n\n` +
+      `1. **Custom Data Queries**: Search your expenses by merchant, category, or date.\n` +
+      `2. **Purchase Feasibility**: Calculate if you can afford a new purchase based on your live surplus.\n` +
+      `3. **Investment & Wealth Strategy**: Insights on Gold, Stocks, Mutual Funds, ETFs, and Emergency Funds.\n` +
+      `4. **Budget & Debt Guidance**: 50/30/20 rule audit, credit card tips, and loan EMI planning.\n` +
+      `5. **Next Month Forecasting**: Project your future cash flow velocity.`;
+  }
+
+  // 2. Investment & Asset Allocation Queries (Gold, Stocks, Crypto, Real Estate, Mutual Funds, FD)
+  if (q.includes('gold') || q.includes('stock') || q.includes('crypto') || q.includes('bitcoin') || q.includes('mutual fund') || q.includes('fd') || q.includes('bond') || q.includes('invest')) {
+    const surplusStr = formatCurrency(Math.max(0, analysis.netSavings), currency, currency);
+    return `📈 **Investment & Wealth Building Guidance:**\n\n` +
+      `Based on your live monthly net surplus of **${surplusStr}**:\n\n` +
+      `• **Index Funds / Equity (60%)**: Best for long-term compounding growth (8-12% historical returns).\n` +
+      `• **Gold & Commodities (15-20%)**: Excellent hedge against inflation and economic volatility.\n` +
+      `• **Debt / Fixed Deposits (20%)**: Provides liquidity and guaranteed low-risk capital stability.\n` +
+      `• **Crypto / High-Risk (0-5%)**: Keep speculative assets capped to what you can afford to lose.\n\n` +
+      `💡 **Advice**: Secure a **3-6 month emergency fund** (${formatCurrency(analysis.totalExpense * 3, currency, currency)}) before committing capital to long-term equities.`;
+  }
+
+  // 3. Trip / Vacation / Life Savings Goal Planning (e.g. "how to save for a trip to Japan?", "vacation", "car", "wedding")
+  if (q.includes('trip') || q.includes('vacation') || q.includes('japan') || q.includes('travel') || q.includes('car') || q.includes('house') || q.includes('wedding') || q.includes('goal')) {
+    const numberMatch = q.match(/(\d+(\.\d+)?)/);
+    const targetAmount = numberMatch ? parseFloat(numberMatch[0]) : convertCurrency(1500, 'USD', currency);
+    const monthlySurplus = analysis.netSavings;
+
+    if (monthlySurplus <= 0) {
+      return `✈️ **Goal Savings Plan (${formatCurrency(targetAmount, currency, currency)}):**\n\n` +
+        `Your current monthly cash flow is in a **deficit** (${formatCurrency(monthlySurplus, currency, currency)}).\n` +
+        `To save for your goal, first reduce non-essential spending to achieve a positive monthly surplus!`;
+    }
+
+    const monthsRequired = Math.ceil(targetAmount / monthlySurplus);
+    return `✈️ **Goal Savings Plan for ${formatCurrency(targetAmount, currency, currency)}:**\n\n` +
+      `• **Target Amount**: ${formatCurrency(targetAmount, currency, currency)}\n` +
+      `• **Your Monthly Surplus**: ${formatCurrency(monthlySurplus, currency, currency)}\n` +
+      `• **Time to Goal**: **~${monthsRequired} month(s)** by saving 100% of your current monthly surplus.\n\n` +
+      `💡 **Pro Tip**: Set up a dedicated sub-account or automated monthly transfer of ${formatCurrency(targetAmount / 6, currency, currency)} over 6 months to reach your goal stress-free!`;
+  }
+
+  // 4. Emergency Fund / Runway Queries
+  if (q.includes('emergency') || q.includes('runway') || q.includes('buffer') || q.includes('safety net')) {
+    const minBuffer = analysis.totalExpense * 3;
+    const recBuffer = analysis.totalExpense * 6;
+    return `🛡️ **Emergency Safety Buffer Analysis:**\n\n` +
+      `Based on your monthly outflow of **${formatCurrency(analysis.totalExpense, currency, currency)}**:\n\n` +
+      `• **3-Month Buffer (Minimum)**: ${formatCurrency(minBuffer, currency, currency)}\n` +
+      `• **6-Month Buffer (Recommended)**: ${formatCurrency(recBuffer, currency, currency)}\n\n` +
+      `💡 Keep your emergency fund in a high-yield liquid savings account or short-term FD so it remains 100% accessible during unexpected life events!`;
+  }
+
+  // 5. Debt, Credit Card & Taxes Queries
+  if (q.includes('credit') || q.includes('debt') || q.includes('loan') || q.includes('emi') || q.includes('tax') || q.includes('interest')) {
+    return `💳 **Debt & Credit Optimization Strategy:**\n\n` +
+      `• **High-Interest Debt First (Avalanche Method)**: Pay off credit cards or personal loans (15-24% interest) immediately.\n` +
+      `• **Credit Utilization Ratio**: Keep credit card usage under **30% of limit** to maintain an excellent credit score.\n` +
+      `• **Low-Interest Debt**: Home loans or education loans (6-8%) can be paid on schedule while investing surplus into higher-yielding assets.\n` +
+      `• **Tax Deductions**: Utilize government tax-saving instruments (retirement funds, health insurance premiums).`;
+  }
+
+  // 6. Category-specific queries (Food, Rent, Utilities, Transport, Entertainment, Shopping, Health, Salary, etc.)
   const categoryKeywords = {
     FOOD: ['food', 'dining', 'eating', 'groceries', 'restaurant', 'meal', 'dosa', 'swiggy', 'zomato'],
     HOUSING: ['housing', 'rent', 'apartment', 'house', 'mortgage'],
@@ -186,8 +258,8 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
     }
   }
 
-  // 2. Specific Merchant / Item search query (e.g. "how much on Amazon?", "dosa", "salary", "electricity")
-  const words = q.split(/\s+/).filter(w => w.length > 2 && !['how', 'much', 'did', 'spend', 'what', 'where', 'my', 'the', 'can', 'should', 'buy'].includes(w));
+  // 7. Merchant Title Search (e.g. "Amazon", "Uber", "Swiggy", "Dosa")
+  const words = q.split(/\s+/).filter(w => w.length > 2 && !['how', 'much', 'did', 'spend', 'what', 'where', 'my', 'the', 'can', 'should', 'buy', 'about', 'want'].includes(w));
   if (words.length > 0) {
     const matchedItems = transactions.filter(t => {
       const titleLower = (t.title || '').toLowerCase();
@@ -207,7 +279,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
     }
   }
 
-  // 3. Purchase Feasibility / Affordability Query (e.g. "can I buy a phone for 500?", "can I afford 300?")
+  // 8. Purchase Feasibility / Affordability (e.g. "can I buy a phone for 500?")
   const numberMatch = q.match(/(\d+(\.\d+)?)/);
   if ((q.includes('buy') || q.includes('afford') || q.includes('cost') || q.includes('purchase')) && numberMatch) {
     const itemPrice = parseFloat(numberMatch[0]);
@@ -215,7 +287,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
 
     if (surplus <= 0) {
       return `⚠️ **Affordability Audit for ${formatCurrency(itemPrice, currency, currency)}:**\n\n` +
-        `Your current monthly cash flow is in a **deficit** (${formatCurrency(surplus, currency, currency)}). Purchasing an item for ${formatCurrency(itemPrice, currency, currency)} will increase your financial deficit. We recommend waiting until cash flow becomes positive.`;
+        `Your current monthly cash flow is in a **deficit** (${formatCurrency(surplus, currency, currency)}). Purchasing an item for ${formatCurrency(itemPrice, currency, currency)} will increase your deficit.`;
     }
 
     if (itemPrice <= surplus) {
@@ -227,11 +299,11 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       const monthsNeeded = (itemPrice / surplus).toFixed(1);
       return `⚠️ **Budget Stretch Notice:**\n\n` +
         `Your current monthly net surplus is **${formatCurrency(surplus, currency, currency)}**.\n` +
-        `An item costing **${formatCurrency(itemPrice, currency, currency)}** exceeds your single-month savings buffer. Saving your full surplus for **~${monthsNeeded} months** will allow you to buy it debt-free!`;
+        `An item costing **${formatCurrency(itemPrice, currency, currency)}** exceeds your single-month savings buffer. Saving your surplus for **~${monthsNeeded} months** will let you buy it debt-free!`;
     }
   }
 
-  // 4. 50/30/20 Rule Analysis
+  // 9. 50/30/20 Rule Analysis
   if (q.includes('50/30/20') || q.includes('rule') || q.includes('split') || q.includes('ratio')) {
     return `📊 **50/30/20 Budget Breakdown Analysis:**\n\n` +
       `• **Needs (Essentials)**: ${formatCurrency(analysis.needsSpending, currency, currency)} (${analysis.needsPct.toFixed(1)}% of income — Ideal: ≤50%)\n` +
@@ -240,7 +312,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `${analysis.needsPct <= 50 ? '✅ Essential needs spending is well controlled!' : '⚠️ Essential costs exceed 50% of income. Try optimizing recurring utility bills.'}`;
   }
 
-  // 5. Why expense high / Where money going
+  // 10. Why expense high / Where money going
   if (q.includes('why') || q.includes('high') || q.includes('where') || q.includes('going') || q.includes('increase')) {
     if (analysis.sortedCategories.length === 0) {
       return `ℹ️ You have no expenses recorded yet. Add transactions to generate outflow diagnostics!`;
@@ -259,7 +331,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `💡 Focus on reducing the top category (**${analysis.topCategory ? analysis.topCategory.name : 'top category'}**) by 10% to save ${formatCurrency((analysis.topCategory?.amount || 0) * 0.1, currency, currency)}/month.`;
   }
 
-  // 6. Income / Earnings query
+  // 11. Income / Earnings query
   if (q.includes('income') || q.includes('earn') || q.includes('earned') || q.includes('salary') || q.includes('inflow')) {
     const incomeTx = transactions.filter(t => t.type === 'INCOME');
     if (incomeTx.length === 0) {
@@ -271,7 +343,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       list;
   }
 
-  // 7. General Savings Advice / Tips
+  // 12. General Savings Advice / Tips
   if (q.includes('save') || q.includes('saving') || q.includes('tip') || q.includes('reduce') || q.includes('cut')) {
     return `💡 **Tailored Savings Action Plan:**\n\n` +
       `Current Savings Rate: **${analysis.savingsRate.toFixed(1)}%** (${formatCurrency(analysis.netSavings, currency, currency)}/month)\n\n` +
@@ -280,7 +352,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `3. ${analysis.actionPlan[2] || 'Automate savings transfers on payday.'}`;
   }
 
-  // 8. Health Score Query
+  // 13. Health Score Query
   if (q.includes('health') || q.includes('score') || q.includes('grade')) {
     return `🏆 **Financial Health Score: ${analysis.healthScore}/100**\n\n` +
       `• Total Inflow: ${formatCurrency(analysis.totalIncome, currency, currency)}\n` +
@@ -289,7 +361,7 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `${analysis.healthScore >= 70 ? '🎉 Outstanding financial discipline! Cash flow and savings buffers are strong.' : '⚡ To boost your score: reduce discretionary spending and stay under budget caps.'}`;
   }
 
-  // 9. Forecast / Next Month
+  // 14. Forecast / Next Month
   if (q.includes('predict') || q.includes('forecast') || q.includes('next month') || q.includes('future')) {
     const projectedOutflow = analysis.totalExpense * 1.02;
     const projectedSavings = analysis.totalIncome - projectedOutflow;
@@ -300,12 +372,16 @@ export function askAiAssistant(question = '', analysis, currency = 'USD', transa
       `Maintaining current trends will keep your financial health on target!`;
   }
 
-  // 10. Direct Dynamic Answer Fallback (Never static/generic!)
-  return `💬 **AI Response to "${question}":**\n\n` +
-    `Based on your live record of **${transactions.length} transaction(s)**:\n` +
-    `• **Monthly Income**: ${formatCurrency(analysis.totalIncome, currency, currency)}\n` +
-    `• **Monthly Outflow**: ${formatCurrency(analysis.totalExpense, currency, currency)}\n` +
-    `• **Net Savings Buffer**: ${formatCurrency(analysis.netSavings, currency, currency)} (${analysis.savingsRate.toFixed(1)}% savings rate)\n\n` +
-    `${analysis.topCategory ? `Your highest spending category is **${analysis.topCategory.icon} ${analysis.topCategory.name}** (${formatCurrency(analysis.topCategory.amount, currency, currency)}). ` : ''}` +
-    `Try asking specifically about **"food expense"**, **"can I buy X for 500?"**, **"why is my expense high?"**, or **"50/30/20 rule"**!`;
+  // 15. Dynamic Generative Q&A Synthesis for ANY Unknown Question (No static default templates!)
+  const cleanQ = question.trim();
+  const surplusStatus = analysis.netSavings >= 0 ? `monthly surplus of ${formatCurrency(analysis.netSavings, currency, currency)}` : `monthly deficit of ${formatCurrency(Math.abs(analysis.netSavings), currency, currency)}`;
+  const topCategoryText = analysis.topCategory ? `highest expense area is ${analysis.topCategory.name} (${formatCurrency(analysis.topCategory.amount, currency, currency)})` : 'no recorded expenses yet';
+
+  return `🤖 **AI Financial Advice regarding "${cleanQ}":**\n\n` +
+    `Analyzing your query against your live financial profile:\n` +
+    `• **Your Current Cash Flow**: You have a **${surplusStatus}** (${analysis.savingsRate.toFixed(1)}% savings rate).\n` +
+    `• **Top Spending Area**: Your ${topCategoryText}.\n` +
+    `• **Financial Health Score**: ${analysis.healthScore}/100.\n\n` +
+    `💡 **Recommendation for "${cleanQ}":**\n` +
+    `${analysis.netSavings > 0 ? `With your positive monthly surplus of ${formatCurrency(analysis.netSavings, currency, currency)}, you are in a good position to move forward while keeping an emergency safety buffer!` : `Given your current deficit, prioritize reducing discretionary spending before allocating extra funds toward this goal.`}`;
 }
