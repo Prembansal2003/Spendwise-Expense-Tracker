@@ -40,7 +40,7 @@ export default function AiAssistantModal({
     setIsTyping(true);
 
     setTimeout(() => {
-      const aiReplyText = askAiAssistant(query, analysis, currency);
+      const aiReplyText = askAiAssistant(query, analysis, currency, transactions, budgets);
       setMessages(prev => [...prev, { sender: 'ai', text: aiReplyText }]);
       setIsTyping(false);
     }, 400);
