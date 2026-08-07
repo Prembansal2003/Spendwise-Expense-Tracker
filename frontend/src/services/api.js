@@ -437,5 +437,5 @@ export const apiService = {
   }
 };
 
-export { api as apiService, api };
-export default api;
+export const api = apiService;
+export default apiService;
