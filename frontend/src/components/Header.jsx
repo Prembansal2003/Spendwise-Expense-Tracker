@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Wallet, Sun, Moon, Plus, Download, LayoutDashboard, Receipt, Target, User, LogOut, ChevronDown, Bot } from 'lucide-react';
+import { Wallet, Sun, Moon, Plus, Download, LayoutDashboard, Receipt, Target, User, LogOut, ChevronDown, Bot, ZoomIn } from 'lucide-react';
 import { CURRENCIES } from '../utils/formatters';
 import NotificationCenter from './NotificationCenter';
 
@@ -128,7 +128,10 @@ export default function Header({
                     <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)' }}>{user.email}</div>
                   </div>
                   <button className="btn btn-secondary btn-sm" style={{ width: '100%', justifyContent: 'flex-start', border: 'none', marginBottom: '0.2rem' }} onClick={() => { setShowDropdown(false); onOpenProfileModal(); }}>
-                    <User size={14} /> Settings
+                    <ZoomIn size={14} /> View / Edit Photo
+                  </button>
+                  <button className="btn btn-secondary btn-sm" style={{ width: '100%', justifyContent: 'flex-start', border: 'none', marginBottom: '0.2rem' }} onClick={() => { setShowDropdown(false); onOpenProfileModal(); }}>
+                    <User size={14} /> Profile Settings
                   </button>
                   <button className="btn btn-danger btn-sm" style={{ width: '100%', justifyContent: 'flex-start', border: 'none' }} onClick={() => { setShowDropdown(false); onLogout(); }}>
                     <LogOut size={14} /> Log Out

@@ -1,5 +1,5 @@
 import React, { useState, useRef } from 'react';
-import { X, ShieldCheck, Mail, Calendar, Award, LogOut, CheckCircle2, UserCheck, Camera, Upload, Link, Check, RefreshCw } from 'lucide-react';
+import { X, ShieldCheck, Mail, Calendar, Award, LogOut, CheckCircle2, UserCheck, Camera, Upload, Check, Maximize2, ZoomIn, Download, ExternalLink } from 'lucide-react';
 
 const PRESET_AVATARS = [
   { label: 'Prem Agrawal', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80' },
@@ -18,6 +18,7 @@ export default function ProfileModal({
   onUpdateAvatar
 }) {
   const [showEditor, setShowEditor] = useState(false);
+  const [isLightboxOpen, setIsLightboxOpen] = useState(false);
   const [customUrl, setCustomUrl] = useState('');
   const fileInputRef = useRef(null);
 
@@ -78,26 +79,53 @@ export default function ProfileModal({
           position: 'relative'
         }}>
           
-          {/* Avatar Image Container with Camera Badge */}
-          <div style={{ position: 'relative', display: 'inline-block', marginBottom: '0.75rem' }}>
+          {/* Avatar Image Container - Click to Enlarge */}
+          <div
+            style={{ position: 'relative', display: 'inline-block', marginBottom: '0.5rem', cursor: 'pointer' }}
+            onClick={() => setIsLightboxOpen(true)}
+            title="Click to view full size profile picture"
+          >
             <img
               src={user.avatarUrl}
               alt={user.name}
               style={{
-                width: '84px',
-                height: '84px',
+                width: '90px',
+                height: '90px',
                 borderRadius: '50%',
                 objectFit: 'cover',
-                border: '3px solid var(--primary)',
-                boxShadow: '0 6px 18px rgba(99, 102, 241, 0.35)'
+                border: '3.5px solid var(--primary)',
+                boxShadow: '0 6px 20px rgba(99, 102, 241, 0.4)',
+                transition: 'transform 0.2s ease, filter 0.2s ease'
               }}
+              className="avatar-hover-zoom"
             />
+
+            {/* Click to Enlarge Zoom Icon Overlay */}
+            <div style={{
+              position: 'absolute',
+              top: '2px',
+              right: '2px',
+              backgroundColor: 'rgba(0,0,0,0.6)',
+              color: '#fff',
+              borderRadius: '50%',
+              width: '26px',
+              height: '26px',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              backdropFilter: 'blur(4px)'
+            }}>
+              <ZoomIn size={14} />
+            </div>
 
             {/* Camera Edit Overlay Button */}
             <button
               type="button"
               title="Change Profile Picture"
-              onClick={() => setShowEditor(!showEditor)}
+              onClick={(e) => {
+                e.stopPropagation();
+                setShowEditor(!showEditor);
+              }}
               style={{
                 position: 'absolute',
                 bottom: '2px',
@@ -112,25 +140,28 @@ export default function ProfileModal({
                 justifyContent: 'center',
                 border: '2.5px solid var(--bg-card-solid)',
                 cursor: 'pointer',
-                boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
-                transition: 'transform 0.2s ease'
+                boxShadow: '0 2px 8px rgba(0,0,0,0.3)'
               }}
             >
               <Camera size={14} />
             </button>
           </div>
 
-          {/* Quick Edit Profile Picture Toggle */}
+          {/* Subtitle Label */}
           <div style={{ marginBottom: '1rem' }}>
-            <button
-              type="button"
-              className="btn btn-secondary btn-sm"
-              onClick={() => setShowEditor(!showEditor)}
-              style={{ fontSize: '0.75rem', gap: '0.35rem', margin: '0 auto' }}
+            <span
+              style={{ fontSize: '0.75rem', color: 'var(--primary)', cursor: 'pointer', fontWeight: 600, textDecoration: 'underline' }}
+              onClick={() => setIsLightboxOpen(true)}
             >
-              <Camera size={13} />
-              <span>{showEditor ? 'Hide Photo Options' : 'Change Profile Picture'}</span>
-            </button>
+              🔍 Click photo to view large
+            </span>
+            <span style={{ margin: '0 0.35rem', color: 'var(--text-muted)' }}>•</span>
+            <span
+              style={{ fontSize: '0.75rem', color: 'var(--text-muted)', cursor: 'pointer' }}
+              onClick={() => setShowEditor(!showEditor)}
+            >
+              📷 Change photo
+            </span>
           </div>
 
           {/* Expanded Profile Picture Editor Options */}
@@ -270,7 +301,7 @@ export default function ProfileModal({
         }}>
           <h5 style={{ fontWeight: '700', marginBottom: '0.35rem' }}>🔒 Account Security & Profile</h5>
           <p style={{ color: 'var(--text-muted)' }}>
-            Your custom profile photo is saved securely in your profile preferences.
+            Click photo anytime to preview in full resolution.
           </p>
         </div>
 
@@ -291,6 +322,96 @@ export default function ProfileModal({
         </div>
 
       </div>
+
+      {/* FULLSCREEN LIGHTBOX ENLARGED PHOTO PREVIEW */}
+      {isLightboxOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            zIndex: 99999,
+            backgroundColor: 'rgba(0, 0, 0, 0.85)',
+            backdropFilter: 'blur(16px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1.5rem',
+            animation: 'fadeIn 0.2s ease-out'
+          }}
+          onClick={() => setIsLightboxOpen(false)}
+        >
+          <div
+            style={{
+              backgroundColor: 'var(--bg-card-solid)',
+              borderRadius: '24px',
+              padding: '2rem',
+              maxWidth: '420px',
+              width: '100%',
+              textAlign: 'center',
+              boxShadow: '0 25px 60px rgba(0, 0, 0, 0.7)',
+              border: '1px solid var(--border-color)',
+              position: 'relative'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <button
+              className="btn btn-secondary btn-icon"
+              style={{ position: 'absolute', top: '1rem', right: '1rem' }}
+              onClick={() => setIsLightboxOpen(false)}
+            >
+              <X size={20} />
+            </button>
+
+            <h4 style={{ fontSize: '1.2rem', fontWeight: 800, marginBottom: '1.25rem' }}>
+              Profile Photo Preview
+            </h4>
+
+            {/* Enlarged Photo */}
+            <div style={{ margin: '0 auto 1.25rem auto', display: 'inline-block' }}>
+              <img
+                src={user.avatarUrl}
+                alt={user.name}
+                style={{
+                  width: '280px',
+                  height: '280px',
+                  borderRadius: '20px',
+                  objectFit: 'cover',
+                  border: '4px solid var(--primary)',
+                  boxShadow: '0 12px 30px rgba(99, 102, 241, 0.45)'
+                }}
+              />
+            </div>
+
+            <div style={{ fontWeight: 800, fontSize: '1.2rem', marginBottom: '0.2rem' }}>
+              {user.name}
+            </div>
+            <div style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginBottom: '1.25rem' }}>
+              {user.email}
+            </div>
+
+            <div className="flex items-center justify-center gap-3">
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  setIsLightboxOpen(false);
+                  setShowEditor(true);
+                }}
+              >
+                <Camera size={15} />
+                <span>Change Photo</span>
+              </button>
+              <button
+                className="btn btn-secondary btn-sm"
+                onClick={() => setIsLightboxOpen(false)}
+              >
+                Close View
+              </button>
+            </div>
+
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
