@@ -1,6 +1,12 @@
-import React, { useState } from 'react';
-import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar, RefreshCw } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar, RefreshCw, Trash2, PiggyBank, PlusCircle, Check } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
+
+const DEFAULT_SAVINGS_GOALS = [
+  { id: 1, title: '🏖️ Summer Vacation', savedAmount: 1500, targetAmount: 2000, currency: 'USD' },
+  { id: 2, title: '💻 New Work Laptop', savedAmount: 1200, targetAmount: 2400, currency: 'USD' },
+  { id: 3, title: '🛡️ Emergency Fund', savedAmount: 4500, targetAmount: 5000, currency: 'USD' }
+];
 
 export default function BudgetTracker({
   budgets = [],
@@ -12,6 +18,30 @@ export default function BudgetTracker({
   const [editingCategory, setEditingCategory] = useState(null);
   const [newLimit, setNewLimit] = useState('');
   const [editPeriod, setEditPeriod] = useState('MONTHLY');
+
+  // Interactive Savings Goals State & Persistence
+  const [savingsGoals, setSavingsGoals] = useState(() => {
+    try {
+      const saved = localStorage.getItem('spendwise_savings_goals');
+      return saved ? JSON.parse(saved) : DEFAULT_SAVINGS_GOALS;
+    } catch (e) {
+      return DEFAULT_SAVINGS_GOALS;
+    }
+  });
+
+  const [showAddGoalModal, setShowAddGoalModal] = useState(false);
+  const [newGoalTitle, setNewGoalTitle] = useState('');
+  const [newGoalTarget, setNewGoalTarget] = useState('');
+  const [newGoalSaved, setNewGoalSaved] = useState('');
+
+  const [editingGoalId, setEditingGoalId] = useState(null);
+  const [editSavedAddAmount, setEditSavedAddAmount] = useState('');
+
+  useEffect(() => {
+    try {
+      localStorage.setItem('spendwise_savings_goals', JSON.stringify(savingsGoals));
+    } catch (e) {}
+  }, [savingsGoals]);
 
   // Filter transactions for current month vs current year
   const currentDate = new Date();
@@ -37,6 +67,52 @@ export default function BudgetTracker({
     // Save with the active header currency fed by the user!
     onUpdateBudget(cat, monthlyLimit, editPeriod);
     setEditingCategory(null);
+  };
+
+  // Add New Savings Goal
+  const handleCreateSavingsGoal = (e) => {
+    e.preventDefault();
+    if (!newGoalTitle.trim() || !newGoalTarget || Number(newGoalTarget) <= 0) return;
+
+    const targetInUSD = convertCurrency(Number(newGoalTarget), currency, 'USD');
+    const savedInUSD = convertCurrency(Number(newGoalSaved || 0), currency, 'USD');
+
+    const newGoal = {
+      id: Date.now(),
+      title: newGoalTitle.trim(),
+      savedAmount: savedInUSD,
+      targetAmount: targetInUSD,
+      currency: 'USD'
+    };
+
+    setSavingsGoals([...savingsGoals, newGoal]);
+    setNewGoalTitle('');
+    setNewGoalTarget('');
+    setNewGoalSaved('');
+    setShowAddGoalModal(false);
+  };
+
+  // Add Deposit to Goal
+  const handleAddDeposit = (goalId) => {
+    if (!editSavedAddAmount || Number(editSavedAddAmount) <= 0) return;
+    const depositInUSD = convertCurrency(Number(editSavedAddAmount), currency, 'USD');
+
+    setSavingsGoals(savingsGoals.map(g => {
+      if (g.id === goalId) {
+        return { ...g, savedAmount: g.savedAmount + depositInUSD };
+      }
+      return g;
+    }));
+
+    setEditingGoalId(null);
+    setEditSavedAddAmount('');
+  };
+
+  // Delete Savings Goal
+  const handleDeleteGoal = (goalId) => {
+    if (window.confirm('Delete this savings goal?')) {
+      setSavingsGoals(savingsGoals.filter(g => g.id !== goalId));
+    }
   };
 
   return (
@@ -252,50 +328,190 @@ export default function BudgetTracker({
         </div>
       </div>
 
-      {/* Savings Goals Widget */}
+      {/* DYNAMIC INTERACTIVE SAVINGS GOALS SECTION */}
       <div className="glass-card" style={{ padding: '1.5rem' }}>
-        <h2 style={{ fontSize: '1.2rem', fontWeight: 700, marginBottom: '1rem' }}>
-          Active Savings Goals
-        </h2>
+        <div className="flex items-center justify-between" style={{ marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+          <div>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <PiggyBank size={20} className="text-primary" />
+              <span>Active Savings Goals</span>
+            </h2>
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+              Set personal target savings milestones for vacations, emergencies, and big purchases
+            </p>
+          </div>
+
+          <button
+            className="btn btn-primary btn-sm"
+            onClick={() => setShowAddGoalModal(true)}
+            style={{ gap: '0.35rem' }}
+          >
+            <PlusCircle size={14} />
+            <span>Add New Goal</span>
+          </button>
+        </div>
+
+        {/* Add Goal Form Inline */}
+        {showAddGoalModal && (
+          <form
+            onSubmit={handleCreateSavingsGoal}
+            style={{
+              padding: '1.25rem',
+              backgroundColor: 'var(--bg-secondary)',
+              borderRadius: 'var(--radius-md)',
+              border: '1px dashed var(--primary)',
+              marginBottom: '1.25rem',
+              animation: 'fadeIn 0.2s ease-in'
+            }}
+          >
+            <h4 style={{ fontSize: '0.95rem', fontWeight: 700, marginBottom: '0.75rem' }}>
+              ✨ Create New Savings Target Goal
+            </h4>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3" style={{ marginBottom: '0.875rem' }}>
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+                  Goal Title & Emoji
+                </label>
+                <input
+                  type="text"
+                  className="form-control form-control-sm"
+                  placeholder="e.g. 🚗 Car Downpayment"
+                  value={newGoalTitle}
+                  onChange={(e) => setNewGoalTitle(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+                  Target Goal Amount ({currency})
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-control form-control-sm"
+                  placeholder="e.g. 5000"
+                  value={newGoalTarget}
+                  onChange={(e) => setNewGoalTarget(e.target.value)}
+                  required
+                />
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-muted)', display: 'block', marginBottom: '0.3rem' }}>
+                  Already Saved ({currency})
+                </label>
+                <input
+                  type="number"
+                  step="0.01"
+                  className="form-control form-control-sm"
+                  placeholder="e.g. 1000 (Optional)"
+                  value={newGoalSaved}
+                  onChange={(e) => setNewGoalSaved(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-2 justify-end">
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowAddGoalModal(false)}
+              >
+                Cancel
+              </button>
+              <button type="submit" className="btn btn-primary btn-sm">
+                Save Target Goal
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Savings Goals Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 700 }}>🏖️ Summer Vacation</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--success)', fontWeight: 600 }}>75%</span>
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-              {formatCurrency(1500, currency)} / {formatCurrency(2000, currency)}
-            </div>
-            <div className="progress-bar-bg">
-              <div className="progress-bar-fill" style={{ width: '75%', backgroundColor: 'var(--success)' }} />
-            </div>
-          </div>
+          {savingsGoals.map(goal => {
+            const savedInView = convertCurrency(goal.savedAmount, goal.currency || 'USD', currency);
+            const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
+            const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
+            const isCompleted = savedInView >= targetInView;
+            const isAddingDeposit = editingGoalId === goal.id;
 
-          <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 700 }}>💻 New Work Laptop</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--info)', fontWeight: 600 }}>50%</span>
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-              {formatCurrency(1200, currency)} / {formatCurrency(2400, currency)}
-            </div>
-            <div className="progress-bar-bg">
-              <div className="progress-bar-fill" style={{ width: '50%', backgroundColor: 'var(--info)' }} />
-            </div>
-          </div>
+            return (
+              <div
+                key={goal.id}
+                style={{
+                  padding: '1.25rem',
+                  backgroundColor: 'var(--bg-secondary)',
+                  borderRadius: 'var(--radius-md)',
+                  border: `1px solid ${isCompleted ? 'var(--success)' : 'var(--border-color)'}`
+                }}
+              >
+                <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{goal.title}</span>
+                  <div className="flex items-center gap-1">
+                    <span style={{ fontSize: '0.75rem', color: isCompleted ? 'var(--success)' : 'var(--primary)', fontWeight: 700 }}>
+                      {pct.toFixed(0)}%
+                    </span>
+                    <button
+                      className="btn btn-danger btn-icon"
+                      style={{ width: '1.5rem', height: '1.5rem', padding: 0 }}
+                      onClick={() => handleDeleteGoal(goal.id)}
+                      title="Delete Goal"
+                    >
+                      <Trash2 size={11} />
+                    </button>
+                  </div>
+                </div>
 
-          <div style={{ padding: '1.25rem', backgroundColor: 'var(--bg-secondary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-            <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem' }}>
-              <span style={{ fontWeight: 700 }}>🛡️ Emergency Fund</span>
-              <span style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: 600 }}>90%</span>
-            </div>
-            <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-              {formatCurrency(4500, currency)} / {formatCurrency(5000, currency)}
-            </div>
-            <div className="progress-bar-bg">
-              <div className="progress-bar-fill" style={{ width: '90%', backgroundColor: 'var(--primary)' }} />
-            </div>
-          </div>
+                <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+                  {formatCurrency(savedInView, currency, currency)} / {formatCurrency(targetInView, currency, currency)}
+                </div>
+
+                {/* Progress Bar */}
+                <div className="progress-bar-bg" style={{ marginBottom: '0.75rem' }}>
+                  <div
+                    className="progress-bar-fill"
+                    style={{
+                      width: `${pct}%`,
+                      backgroundColor: isCompleted ? 'var(--success)' : 'var(--primary)'
+                    }}
+                  />
+                </div>
+
+                {/* Deposit Action */}
+                {isAddingDeposit ? (
+                  <div className="flex gap-1.5 items-center">
+                    <input
+                      type="number"
+                      step="0.01"
+                      className="form-control form-control-sm"
+                      placeholder={`Add ${currency}`}
+                      value={editSavedAddAmount}
+                      onChange={(e) => setEditSavedAddAmount(e.target.value)}
+                    />
+                    <button className="btn btn-primary btn-xs" onClick={() => handleAddDeposit(goal.id)}>
+                      <Check size={12} />
+                    </button>
+                    <button className="btn btn-secondary btn-xs" onClick={() => setEditingGoalId(null)}>
+                      Cancel
+                    </button>
+                  </div>
+                ) : (
+                  <button
+                    className="btn btn-secondary btn-xs"
+                    style={{ width: '100%', justifyContent: 'center' }}
+                    onClick={() => {
+                      setEditingGoalId(goal.id);
+                      setEditSavedAddAmount('');
+                    }}
+                  >
+                    + Add Deposit
+                  </button>
+                )}
+
+              </div>
+            );
+          })}
         </div>
       </div>
 
