@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar } from 'lucide-react';
+import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar, RefreshCw } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
 
 export default function BudgetTracker({
@@ -22,7 +22,7 @@ export default function BudgetTracker({
   const handleEditClick = (b) => {
     setEditingCategory(b.category);
     setEditPeriod(b.period || 'MONTHLY');
-    // Calculate stored limit cap depending on budget period
+    // Compute stored limit cap in current active view currency for editing
     const storedLimit = b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit;
     const displayVal = convertCurrency(storedLimit, b.currency || 'USD', currency);
     setNewLimit(displayVal ? displayVal.toFixed(2) : '');
@@ -31,10 +31,10 @@ export default function BudgetTracker({
   const handleSaveBudget = (cat) => {
     if (!newLimit || Number(newLimit) < 0) return;
 
-    // Convert value entered in view currency -> USD base currency
-    const usdVal = convertCurrency(Number(newLimit), currency, 'USD');
-    const monthlyLimit = editPeriod === 'YEARLY' ? usdVal / 12 : usdVal;
+    const fedValue = Number(newLimit);
+    const monthlyLimit = editPeriod === 'YEARLY' ? fedValue / 12 : fedValue;
     
+    // Save with the active header currency fed by the user!
     onUpdateBudget(cat, monthlyLimit, editPeriod);
     setEditingCategory(null);
   };
@@ -51,9 +51,7 @@ export default function BudgetTracker({
               <span>{budgetPeriod === 'monthly' ? 'Monthly Category Budgets' : 'Yearly Category Budgets'}</span>
             </h2>
             <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
-              {budgetPeriod === 'monthly'
-                ? 'Set monthly spending caps and receive real-time monthly limit alerts'
-                : 'Set annual spending budgets to manage long-term category goals'}
+              Real-time multi-currency budget limits with live exchange rate conversion
             </p>
           </div>
 
@@ -81,8 +79,9 @@ export default function BudgetTracker({
           {budgets.map(b => {
             const meta = CATEGORY_META[b.category] || { name: b.category, icon: '📦', color: '#64748b' };
             const isEditing = editingCategory === b.category;
+            const storedCurr = b.currency || 'USD';
 
-            // Compute actual spend according to selected period
+            // Compute actual spend according to selected period in active view currency
             const actualSpendInViewCurrency = transactions
               .filter(t => {
                 if (t.type !== 'EXPENSE' || t.category !== b.category) return false;
@@ -95,12 +94,17 @@ export default function BudgetTracker({
               })
               .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
 
-            // Compute budget cap according to selected period
-            const baseLimitInUSD = budgetPeriod === 'yearly'
-              ? (b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit * 12)
-              : b.monthlyLimit;
+            // Compute stored cap in its native stored currency
+            const storedCap = b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit;
+            let effectiveCapInStoredCurr = storedCap;
+            if (budgetPeriod === 'yearly' && b.period !== 'YEARLY') {
+              effectiveCapInStoredCurr = storedCap * 12;
+            } else if (budgetPeriod === 'monthly' && b.period === 'YEARLY') {
+              effectiveCapInStoredCurr = storedCap / 12;
+            }
 
-            const limitInViewCurrency = convertCurrency(baseLimitInUSD, b.currency || 'USD', currency);
+            // Dynamically convert cap from stored currency -> active view currency using live rates!
+            const limitInViewCurrency = convertCurrency(effectiveCapInStoredCurr, storedCurr, currency);
 
             // Used Percentage
             const usedPct = limitInViewCurrency > 0 ? (actualSpendInViewCurrency / limitInViewCurrency) * 100 : 0;
@@ -135,16 +139,23 @@ export default function BudgetTracker({
                     <span style={{ fontSize: '1.2rem' }}>{meta.icon}</span>
                     <div>
                       <span style={{ fontWeight: 700, fontSize: '0.95rem', display: 'block' }}>{meta.name}</span>
-                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
-                        {budgetPeriod === 'monthly' ? 'Monthly Limit' : 'Annual Limit'}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                          {budgetPeriod === 'monthly' ? 'Monthly Limit' : 'Annual Limit'}
+                        </span>
+                        {storedCurr !== currency && (
+                          <span style={{ fontSize: '0.65rem', backgroundColor: 'var(--primary-light)', color: 'var(--primary)', padding: '1px 4px', borderRadius: '4px', fontWeight: 600 }}>
+                            Fed in {storedCurr}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                   <button
                     className="btn btn-secondary btn-icon"
                     style={{ width: '1.8rem', height: '1.8rem' }}
                     onClick={() => handleEditClick(b)}
-                    title="Edit Budget Cap"
+                    title={`Edit Budget Cap (stored in ${storedCurr})`}
                   >
                     <Edit3 size={12} />
                   </button>
@@ -153,6 +164,9 @@ export default function BudgetTracker({
                 {/* Edit inline modal */}
                 {isEditing ? (
                   <div className="flex flex-col gap-2" style={{ marginBottom: '0.75rem' }}>
+                    <div style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
+                      Setting cap in active currency (<strong>{currency}</strong>):
+                    </div>
                     <div className="flex gap-1.5">
                       <select
                         className="form-control form-control-sm"
@@ -177,7 +191,7 @@ export default function BudgetTracker({
                           style={{ paddingLeft: '1.6rem', fontSize: '0.85rem' }}
                           value={newLimit}
                           onChange={(e) => setNewLimit(e.target.value)}
-                          placeholder="Cap Amount"
+                          placeholder={`Cap in ${currency}`}
                         />
                       </div>
                     </div>
@@ -186,18 +200,27 @@ export default function BudgetTracker({
                         Cancel
                       </button>
                       <button className="btn btn-primary btn-xs" onClick={() => handleSaveBudget(b.category)}>
-                        Save Cap
+                        Save Cap ({currency})
                       </button>
                     </div>
                   </div>
                 ) : (
-                  <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>
-                    <span style={{ color: 'var(--text-muted)' }}>
-                      Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(actualSpendInViewCurrency, currency, currency)}</strong>
-                    </span>
-                    <span style={{ color: 'var(--text-muted)' }}>
-                      Cap: <strong>{formatCurrency(limitInViewCurrency, currency, currency)}</strong>
-                    </span>
+                  <div className="flex flex-col gap-1" style={{ marginBottom: '0.5rem' }}>
+                    <div className="flex items-center justify-between" style={{ fontSize: '0.85rem' }}>
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        Spent: <strong style={{ color: 'var(--text-primary)' }}>{formatCurrency(actualSpendInViewCurrency, currency, currency)}</strong>
+                      </span>
+                      <span style={{ color: 'var(--text-muted)' }}>
+                        Cap: <strong>{formatCurrency(limitInViewCurrency, currency, currency)}</strong>
+                      </span>
+                    </div>
+
+                    {/* Stored Currency conversion sub-label */}
+                    {storedCurr !== currency && (
+                      <div style={{ fontSize: '0.7rem', color: 'var(--text-muted)', textAlign: 'right', fontStyle: 'italic' }}>
+                        Original fed cap: {formatCurrency(effectiveCapInStoredCurr, storedCurr, storedCurr)}
+                      </div>
+                    )}
                   </div>
                 )}
 

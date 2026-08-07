@@ -13,7 +13,7 @@ import AuthGate from './components/AuthGate';
 
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
 import { apiService } from './services/api';
-import { convertCurrency } from './utils/formatters';
+import { convertCurrency, fetchLiveExchangeRates } from './utils/formatters';
 
 const DEFAULT_USER = {
   id: 101,
@@ -65,13 +65,14 @@ export default function App() {
   const [editingTransaction, setEditingTransaction] = useState(null);
   const [toastMessage, setToastMessage] = useState(null);
 
-  // Sync Dark Mode Class
+  // Sync Dark Mode Class & Fetch Real-Time Live FX Rates
   useEffect(() => {
     if (darkMode) {
       document.documentElement.classList.add('dark');
     } else {
       document.documentElement.classList.remove('dark');
     }
+    fetchLiveExchangeRates();
   }, [darkMode]);
 
   // Load Transactions & Budgets scoped by User ID
