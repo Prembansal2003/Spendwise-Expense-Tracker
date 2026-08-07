@@ -20,6 +20,7 @@ import java.util.stream.Collectors;
 public class TransactionService {
 
     private final TransactionRepository transactionRepository;
+    private final SavingsGoalService savingsGoalService;
 
     public List<Transaction> getAllTransactions(TransactionType type, Category category, String search, LocalDate startDate, LocalDate endDate, Long userId) {
         List<Transaction> transactions;
@@ -70,7 +71,11 @@ public class TransactionService {
         transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
         transaction.setCurrency(request.getCurrency() != null ? request.getCurrency() : "USD");
         transaction.setNotes(request.getNotes());
-        return transactionRepository.save(transaction);
+        Transaction saved = transactionRepository.save(transaction);
+        if (saved.getTitle() != null && (saved.getTitle().toLowerCase().contains("savings deposit") || saved.getTitle().toLowerCase().contains("savings goal deposit"))) {
+            savingsGoalService.syncGoalFromTransaction(saved.getUserId(), saved.getTitle(), saved.getNotes(), saved.getAmount(), "ADD");
+        }
+        return saved;
     }
 
     public Transaction updateTransaction(Long id, TransactionRequest request) {
@@ -90,10 +95,13 @@ public class TransactionService {
     }
 
     public void deleteTransaction(Long id) {
-        if (!transactionRepository.existsById(id)) {
-            throw new RuntimeException("Transaction not found with id: " + id);
+        Transaction tx = transactionRepository.findById(id).orElse(null);
+        if (tx != null) {
+            if (tx.getTitle() != null && (tx.getTitle().toLowerCase().contains("savings deposit") || tx.getTitle().toLowerCase().contains("savings goal deposit"))) {
+                savingsGoalService.syncGoalFromTransaction(tx.getUserId(), tx.getTitle(), tx.getNotes(), tx.getAmount(), "DEDUCT");
+            }
+            transactionRepository.deleteById(id);
         }
-        transactionRepository.deleteById(id);
     }
 
     @org.springframework.transaction.annotation.Transactional

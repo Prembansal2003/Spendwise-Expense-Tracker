@@ -378,5 +378,63 @@ export const apiService = {
     }
     setLocalData(storageKey, list);
     return list;
+  },
+
+  // ========== SAVINGS GOALS DEDICATED DATABASE TABLE API ==========
+  async getSavingsGoals(userId = 101) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/savings-goals?userId=${userId}`);
+      if (res.ok) {
+        const data = await res.json();
+        return data;
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] getSavingsGoals backend fetch skipped:', err.message);
+    }
+    return null;
+  },
+
+  async createSavingsGoal(userId = 101, goalData = {}) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/savings-goals`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: Number(userId) || 101, ...goalData })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] createSavingsGoal backend sync skipped:', err.message);
+    }
+    return null;
+  },
+
+  async depositToSavingsGoal(goalId, amount) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/savings-goals/${goalId}/deposit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount: Number(amount) })
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] depositToSavingsGoal backend sync skipped:', err.message);
+    }
+    return null;
+  },
+
+  async deleteSavingsGoal(goalId) {
+    try {
+      await fetchApi(`${API_BASE_URL}/savings-goals/${goalId}`, { method: 'DELETE' });
+      return true;
+    } catch (err) {
+      console.warn('[SpendWise API] deleteSavingsGoal backend sync skipped:', err.message);
+    }
+    return false;
   }
 };
+
+export default api;
