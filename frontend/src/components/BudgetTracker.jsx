@@ -375,6 +375,8 @@ export default function BudgetTracker({
               <button type="submit" className="btn btn-primary btn-sm">Save</button>
             </div>
           </form>
+        )}
+
         {/* Savings Goals Grid */}
         {mergedSavingsGoals.length === 0 ? (
           <div
