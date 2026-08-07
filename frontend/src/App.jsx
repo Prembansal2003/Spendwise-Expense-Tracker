@@ -3,16 +3,16 @@ import Header from './components/Header';
 import StatCards from './components/StatCards';
 import AnalyticsCharts from './components/AnalyticsCharts';
 import TransactionList from './components/TransactionList';
-import TransactionModal from './components/TransactionModal';
 import BudgetTracker from './components/BudgetTracker';
+import TransactionModal from './components/TransactionModal';
 import ExportModal from './components/ExportModal';
 import AuthModal from './components/AuthModal';
 import ProfileModal from './components/ProfileModal';
 import AiAssistantModal from './components/AiAssistantModal';
 import AuthGate from './components/AuthGate';
-import { apiService } from './services/api';
+
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
-import { fetchLiveExchangeRates } from './utils/formatters';
+import { apiService } from './services/api';
 
 const DEFAULT_USER = {
   id: 101,
@@ -25,25 +25,19 @@ const DEFAULT_USER = {
 
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
-  const [darkMode, setDarkMode] = useState(true);
-  const [currency, setCurrency] = useState('USD');
-  const [ratesTick, setRatesTick] = useState(0);
-
-  // Fetch Live Real-Time Market Exchange Rates on startup
-  useEffect(() => {
-    fetchLiveExchangeRates().then(updated => {
-      if (updated) {
-        setRatesTick(prev => prev + 1);
-      }
-    });
-  }, []);
+  const [darkMode, setDarkMode] = useState(() => {
+    return localStorage.getItem('spendwise_theme') === 'dark' || true; // Dark mode by default
+  });
+  const [currency, setCurrency] = useState(() => {
+    return localStorage.getItem('spendwise_currency') || 'USD';
+  });
   
   const [user, setUser] = useState(() => {
     try {
       const saved = localStorage.getItem('spendwise_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.email === 'alex.morgan@spendwise.io') {
+        if (parsed.email === 'alex.morgan@spendwise.io' || parsed.email === 'bansalprem900@gmail.com') {
           localStorage.setItem('spendwise_user', JSON.stringify(DEFAULT_USER));
           return DEFAULT_USER;
         }
@@ -82,7 +76,22 @@ export default function App() {
   const loadData = async () => {
     if (!user) return;
     const txRes = await apiService.getTransactions({}, user.id);
-    setTransactions(txRes.data);
+    let txList = txRes.data;
+
+    // Check if test items like Ghar, chai, samosa, dosa are present in user 101's list
+    const hasTestItems = Array.isArray(txList) && txList.some(t => {
+      const title = (t.title || '').toLowerCase();
+      return title === 'ghar' || title === 'chai' || title === 'samosa' || title === 'dosa' || title === 'ds';
+    });
+
+    if (hasTestItems && (user.id === 101 || user.id === '101')) {
+      console.log('[SpendWise App] Detected test items, replacing with full 11 category sample dataset...');
+      await apiService.resetSampleData(user.id);
+      const rechecked = await apiService.getTransactions({}, user.id);
+      txList = rechecked.data;
+    }
+
+    setTransactions(txList);
     setIsBackend(txRes.isBackend);
 
     const bRes = await apiService.getBudgets(user.id);
@@ -90,22 +99,12 @@ export default function App() {
   };
 
   useEffect(() => {
-    // Ensure fresh sample dataset for Prem Agrawal if needed
-    if (user?.id === 101) {
-      const storageKey = `spendwise_transactions_${user.id}`;
-      const budgetKey = `spendwise_budgets_${user.id}`;
-      const existingTx = localStorage.getItem(storageKey);
-      if (!existingTx || existingTx.includes('Tech Corp Salary') || existingTx.includes('Alex Morgan')) {
-        localStorage.setItem(storageKey, JSON.stringify(INITIAL_TRANSACTIONS));
-        localStorage.setItem(budgetKey, JSON.stringify(INITIAL_BUDGETS));
-      }
-    }
     loadData();
   }, [user?.id]);
 
   const showToast = (msg) => {
     setToastMessage(msg);
-    setTimeout(() => setToastMessage(null), 3000);
+    setTimeout(() => setToastMessage(null), 3500);
   };
 
   const handleLoginSuccess = (userObj) => {
@@ -162,14 +161,12 @@ export default function App() {
     loadData();
   };
 
-  const handleResetData = () => {
+  const handleResetData = async () => {
     if (!user) return;
-    const storageKey = `spendwise_transactions_${user.id}`;
-    const budgetKey = `spendwise_budgets_${user.id}`;
-    localStorage.setItem(storageKey, JSON.stringify(INITIAL_TRANSACTIONS));
-    localStorage.setItem(budgetKey, JSON.stringify(INITIAL_BUDGETS));
-    loadData();
-    showToast('🔄 All category transactions reloaded!');
+    showToast('⏳ Reloading all sample category transactions...');
+    await apiService.resetSampleData(user.id);
+    await loadData();
+    showToast('🔄 All 11 category sample transactions reloaded!');
   };
 
   // Enforce Auth Gate for Signed-Out Visitors
@@ -218,6 +215,7 @@ export default function App() {
               currency={currency}
               onEditTransaction={handleEditTransaction}
               onDeleteTransaction={handleDeleteTransaction}
+              onResetData={handleResetData}
             />
           </>
         )}
@@ -228,6 +226,7 @@ export default function App() {
             currency={currency}
             onEditTransaction={handleEditTransaction}
             onDeleteTransaction={handleDeleteTransaction}
+            onResetData={handleResetData}
           />
         )}
 
@@ -288,31 +287,32 @@ export default function App() {
           color: 'var(--text-primary)',
           border: '1px solid var(--primary)',
           boxShadow: 'var(--shadow-lg)',
-          padding: '0.75rem 1.25rem',
+          padding: '0.875rem 1.25rem',
           borderRadius: 'var(--radius-md)',
+          zIndex: 1100,
           fontWeight: 600,
-          fontSize: '0.875rem',
-          zIndex: 2000,
+          fontSize: '0.9rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          backdropFilter: 'blur(12px)',
           animation: 'slideUp 0.3s ease-out'
         }}>
           {toastMessage}
         </div>
       )}
 
-      {/* Modern Footer with Prem Agrawal Name & Email */}
-      <footer className="glass-card" style={{
+      {/* Glassmorphism Author Footer */}
+      <footer style={{
+        marginTop: '3rem',
+        padding: '1.5rem 1rem',
+        borderTop: '1px solid var(--border-color)',
+        backgroundColor: 'var(--bg-card-solid)',
+        backdropFilter: 'blur(12px)',
         textAlign: 'center',
-        margin: '2.5rem 0 1rem 0',
-        padding: '1.25rem 1rem',
-        fontSize: '0.85rem',
-        color: 'var(--text-secondary)',
-        display: 'flex',
-        flexDirection: 'column',
-        alignItems: 'center',
-        gap: '0.4rem',
-        borderRadius: 'var(--radius-lg)'
+        borderRadius: 'var(--radius-lg) var(--radius-lg) 0 0'
       }}>
-        <div style={{ fontWeight: 800, fontSize: '0.95rem', color: 'var(--text-primary)', letterSpacing: '-0.01em' }}>
+        <div style={{ fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)', marginBottom: '0.35rem' }}>
           SpendWise Expense Tracker • Designed & Developed by Prem Agrawal
         </div>
         <div className="flex items-center gap-3" style={{ fontSize: '0.8rem', color: 'var(--text-muted)', flexWrap: 'wrap', justifyContent: 'center' }}>

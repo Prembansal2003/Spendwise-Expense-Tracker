@@ -230,6 +230,38 @@ export const apiService = {
     return true;
   },
 
+  // Reset sample dataset for demo user
+  async resetSampleData(userId = 101) {
+    const storageKey = `spendwise_transactions_${userId}`;
+    const budgetKey = `spendwise_budgets_${userId}`;
+
+    setLocalData(storageKey, INITIAL_TRANSACTIONS);
+    setLocalData(budgetKey, INITIAL_BUDGETS);
+
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`);
+      if (res.ok) {
+        const list = await res.json();
+        for (const t of list) {
+          try {
+            await fetchApi(`${API_BASE_URL}/transactions/${t.id}?userId=${userId}`, { method: 'DELETE' });
+          } catch (e) {}
+        }
+        for (const tx of INITIAL_TRANSACTIONS) {
+          try {
+            await fetchApi(`${API_BASE_URL}/transactions?userId=${userId}`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ ...tx, id: null })
+            });
+          } catch (e) {}
+        }
+      }
+    } catch (e) {
+      console.warn('[SpendWise API] Backend reset skipped:', e.message);
+    }
+  },
+
   // ========== BUDGETS ==========
   async getBudgets(userId = 101) {
     try {

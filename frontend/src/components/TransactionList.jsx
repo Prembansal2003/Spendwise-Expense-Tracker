@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
-import { Search, Filter, ArrowUpDown, Edit2, Trash2, Calendar, CreditCard, Tag } from 'lucide-react';
+import { Search, Filter, ArrowUpDown, Edit2, Trash2, Calendar, CreditCard, Tag, RotateCcw } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, formatDate } from '../utils/formatters';
 
 export default function TransactionList({
   transactions,
   currency,
   onEditTransaction,
-  onDeleteTransaction
+  onDeleteTransaction,
+  onResetData
 }) {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedType, setSelectedType] = useState('ALL');
@@ -102,6 +103,18 @@ export default function TransactionList({
             <option value="amount-desc">Amount: High to Low</option>
             <option value="amount-asc">Amount: Low to High</option>
           </select>
+
+          {onResetData && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onResetData}
+              title="Reload default sample transactions for all 11 categories"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}
+            >
+              <RotateCcw size={14} />
+              <span>Reload Sample Data</span>
+            </button>
+          )}
         </div>
       </div>
 
