@@ -8,37 +8,58 @@
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-Supported-blue.svg)](https://www.postgresql.org/)
 [![PWA](https://img.shields.io/badge/PWA-Ready-brightgreen.svg)](https://web.dev/progressive-web-apps/)
 
-**SpendWise** is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a modern **React 18 single-page web UI** featuring glassmorphism aesthetics, live real-time forex currency conversions, interactive Chart.js analytics, monthly & yearly category budget caps, automated cash balance deductions on savings deposits, and multi-device cloud database synchronization.
+**SpendWise** is a production-grade, human-engineered **Java Full Stack Financial Intelligence Application**. It combines a high-performance **Spring Boot 3 REST API backend** with a modern **React 18 single-page web UI** featuring glassmorphism aesthetics, AI financial advisor widget, live real-time forex currency conversions, interactive Chart.js analytics, monthly & yearly category budget caps, automated cash balance deductions on savings deposits, and multi-device cloud database synchronization.
 
 ---
 
 ## 📸 Visual Showcase & Application Screenshots
 
-### 1. 🎯 Monthly Category Budgets & Live Forex Conversion
+### 1. 📊 Main Financial Overview & Monthly/Yearly Analysis
+Complete overview header featuring KPI metrics (Net Balance, Total Inflow, Total Outflow, Savings Rate %), Header Currency selector, AI Advisor trigger button, and Monthly & Yearly Financial Analysis.
+
+![Main Financial Overview](docs/screenshots/01_overview_dashboard.png)
+
+---
+
+### 2. 🤖 SpendWise AI Financial Advisor Widget
+Interactive AI Financial Advisor featuring an automated **Health Score Audit**, **50/30/20 Budget Check**, **Expenses & Outflow Analysis**, **Income Forecasts**, and **Tailored Savings Action Plans**.
+
+![AI Financial Advisor Widget](docs/screenshots/02_ai_financial_advisor.png)
+
+---
+
+### 3. 🎯 Monthly Category Budgets & Live Forex Conversion
 Real-time multi-currency category budget limits stored in original fed currency and converted dynamically across display currencies (`USD`, `EUR`, `GBP`, `INR`, `JPY`, `CAD`, `AUD`) with automated over-budget alerts.
 
-![Monthly Category Budgets](docs/screenshots/01_monthly_category_budgets.png)
+![Monthly Category Budgets](docs/screenshots/03_monthly_category_budgets.png)
 
 ---
 
-### 2. 💸 Income & Expense Transaction Workbench
+### 4. 💸 Income & Expense Transaction Workbench
 Sleek modal for recording new income or expense transactions with merchant titles, custom amounts, transaction date selection, category tags, and payment method badges.
 
-![New Transaction Modal](docs/screenshots/02_new_transaction_modal.png)
+![New Transaction Modal](docs/screenshots/04_new_transaction_modal.png)
 
 ---
 
-### 3. 🐷 Interactive Active Savings Goals & Automated Cash Deductions
+### 5. 🐷 Interactive Active Savings Goals & Automated Cash Deductions
 Define personal savings milestones (Vacation, Laptop, Emergency Fund) with target progress bars, percentage tracking, and **automated cash balance deductions** when adding deposits.
 
-![Active Savings Goals](docs/screenshots/03_active_savings_goals.png)
+![Active Savings Goals](docs/screenshots/05_active_savings_goals.png)
 
 ---
 
-### 4. 📥 Custom Timeframe Data Export & PDF Statement Generator
+### 6. 📈 12-Month Cashflow Breakdown & Filtered Transaction Log
+Interactive 12-month bar chart comparing Income vs Outflow, category expense share doughnut chart, and transaction history with **specific date picker filtering**.
+
+![Cashflow Analytics & Transactions](docs/screenshots/06_cashflow_breakdown_and_transactions.png)
+
+---
+
+### 7. 📥 Custom Timeframe Data Export & PDF Statement Generator
 Filter transaction records by custom start/end date ranges (`From Date` – `To Date`) or preset timeframes, then export to **Excel CSV**, **JSON Backup**, or print a formatted **PDF Statement**.
 
-![Custom Timeframe Data Export](docs/screenshots/04_custom_timeframe_export.png)
+![Custom Timeframe Data Export](docs/screenshots/07_custom_timeframe_export.png)
 
 ---
 
@@ -49,30 +70,34 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
 - **12-Month Breakdown & Yearly Analysis**: Multi-period bar charts comparing Income vs Outflow per month for any selected year (2020 through 2030 + All Years).
 - **Interactive Visualizations**: Cash flow trend line charts & category spending doughnut breakdowns with percentage legends using **Chart.js**.
 
-### 2. 💱 Real-Time Live Forex Exchange Rates & Multi-Currency System
+### 2. 🤖 AI Financial Advisor Widget
+- Automated **Financial Health Score (0–100)** calculation based on live savings rate and budget compliance.
+- Interactive category-based AI advisor with data-driven advice on 50/30/20 budgets, expense spikes, and investment goals.
+
+### 3. 💱 Real-Time Live Forex Exchange Rates & Multi-Currency System
 - Live currency API integration (`open.er-api.com`) fetching real-time exchange rates.
 - Instant conversion between **USD ($)**, **EUR (€)**, **GBP (£)**, **INR (₹)**, **JPY (¥)**, **CAD (CA$)**, and **AUD (A$)**.
 - **Fed-Currency Budget Storage**: Stores budget caps in whichever currency fed by the user and dynamically converts to any header display currency in real time.
 
-### 3. 🎯 Monthly & Yearly Category Budgets
+### 4. 🎯 Monthly & Yearly Category Budgets
 - Set monthly or annual spending caps per category (Food, Housing, Transport, Entertainment, Utilities, Health, Shopping, etc.).
 - Real-time limit progress bars with automated alerts:
   - ⚠️ **Warning Alert**: Triggered at 80%+ category limit.
   - 🚨 **Exceeded Alert**: Triggered when spending passes 100% capacity.
 
-### 4. 🐷 Dynamic Active Savings Goals
+### 5. 🐷 Dynamic Active Savings Goals
 - Create personal target savings goals (Vacation, Emergency Fund, Laptop).
 - **Automated Cash Deduction**: Depositing money into a savings goal automatically creates an outflow transaction, deducting the deposit from your available cash balance.
 
-### 5. 🔍 Specific Date Filtering & Custom Timeframe Exports
+### 6. 🔍 Specific Date Filtering & Custom Timeframe Exports
 - **Specific Date Filter**: Filter transaction history by exact calendar date (`YYYY-MM-DD`).
 - **Custom Timeframe Export**: Filter transaction records by custom start/end date ranges and download **CSV**, **JSON**, or printable **PDF Statements**.
 
-### 6. 📸 Profile Picture Upload & Lightbox Preview
+### 7. 📸 Profile Picture Upload & Lightbox Preview
 - Upload photo from device, paste web URL, or choose preset avatars.
 - **Fullscreen Lightbox**: Click profile photo anytime to preview in fullscreen backdrop-blur view.
 
-### 7. 🔄 Continuous Real-Time Sync & Persistent Sessions
+### 8. 🔄 Continuous Real-Time Sync & Persistent Sessions
 - **8-Second Background Polling**: Syncs data continuously across connected devices.
 - **Persistent Sessions**: User remains signed in on refresh until explicitly clicking **Log Out**.
 
