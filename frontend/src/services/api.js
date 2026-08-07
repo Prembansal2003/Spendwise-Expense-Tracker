@@ -16,7 +16,7 @@ const fetchApi = async (url, options = {}) => {
   if (options.body) console.log('[SpendWise API] Payload:', options.body);
 
   const controller = new AbortController();
-  const timeoutId = setTimeout(() => controller.abort(), 30000); // 30 second timeout
+  const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s for Render cold start
 
   try {
     const res = await fetch(url, { ...options, signal: controller.signal });
