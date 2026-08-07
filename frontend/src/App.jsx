@@ -12,7 +12,7 @@ import AiAssistantModal from './components/AiAssistantModal';
 import AuthGate from './components/AuthGate';
 
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
-import { apiService } from './services/api';
+import api, { apiService } from './services/api';
 import { convertCurrency, fetchLiveExchangeRates } from './utils/formatters';
 
 const DEFAULT_USER = {
