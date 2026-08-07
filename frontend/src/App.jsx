@@ -160,6 +160,14 @@ export default function App() {
     showToast('🔄 All 11 category sample transactions reloaded!');
   };
 
+  const handleUpdateAvatar = (newAvatarUrl) => {
+    if (!user) return;
+    const updatedUser = { ...user, avatarUrl: newAvatarUrl };
+    setUser(updatedUser);
+    localStorage.setItem('spendwise_user', JSON.stringify(updatedUser));
+    showToast('📸 Profile picture updated successfully!');
+  };
+
   // Enforce Auth Gate for Signed-Out Visitors
   if (!user) {
     return (
@@ -258,6 +266,7 @@ export default function App() {
         onClose={() => setIsProfileModalOpen(false)}
         user={user}
         onLogout={handleLogout}
+        onUpdateAvatar={handleUpdateAvatar}
       />
 
       <AiAssistantModal
