@@ -1,22 +1,16 @@
 import React from 'react';
 import { DollarSign, TrendingUp, TrendingDown, PiggyBank, ArrowUpRight, ArrowDownRight, Wallet } from 'lucide-react';
-import { formatCurrency, toUSD, fromUSD } from '../utils/formatters';
+import { formatCurrency, convertCurrency } from '../utils/formatters';
 
 export default function StatCards({ transactions, currency }) {
-  // Normalize each transaction to USD first, then sum, then convert to display currency
-  // This handles mixed-currency transactions correctly
-  const toDisplayAmount = (t) => {
-    const usd = toUSD(Number(t.amount || 0), t.currency || 'USD');
-    return fromUSD(usd, currency);
-  };
-
+  // Convert each transaction's stored amount & currency to the active display currency
   const totalIncome = transactions
     .filter(t => t.type === 'INCOME')
-    .reduce((sum, t) => sum + toDisplayAmount(t), 0);
+    .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
 
   const totalExpense = transactions
     .filter(t => t.type === 'EXPENSE')
-    .reduce((sum, t) => sum + toDisplayAmount(t), 0);
+    .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
 
   const balance = totalIncome - totalExpense;
   const savingsRate = totalIncome > 0 ? ((totalIncome - totalExpense) / totalIncome) * 100 : 0;
@@ -51,21 +45,21 @@ export default function StatCards({ transactions, currency }) {
       <div className="glass-card" style={{ padding: '1.25rem' }}>
         <div className="flex items-center justify-between" style={{ marginBottom: '0.6rem' }}>
           <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-            Cash Inflow
+            Total Inflow
           </span>
           <div style={{
             width: '32px', height: '32px', borderRadius: '8px',
-            backgroundColor: 'var(--success-bg)', color: 'var(--success)',
+            backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <TrendingUp size={16} />
           </div>
         </div>
-        <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--success)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
+        <div style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.25rem', color: 'var(--success)' }}>
           {formatCurrency(totalIncome, currency, currency)}
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {transactions.filter(t => t.type === 'INCOME').length} credited items
+          Total earned across records
         </div>
       </div>
 
@@ -77,17 +71,17 @@ export default function StatCards({ transactions, currency }) {
           </span>
           <div style={{
             width: '32px', height: '32px', borderRadius: '8px',
-            backgroundColor: 'var(--danger-bg)', color: 'var(--danger)',
+            backgroundColor: 'rgba(239, 68, 68, 0.15)', color: 'var(--danger)',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <TrendingDown size={16} />
           </div>
         </div>
-        <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--danger)', letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
+        <div style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.25rem', color: 'var(--danger)' }}>
           {formatCurrency(totalExpense, currency, currency)}
         </div>
         <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
-          {transactions.filter(t => t.type === 'EXPENSE').length} recorded expenses
+          Total spent across records
         </div>
       </div>
 
@@ -99,23 +93,17 @@ export default function StatCards({ transactions, currency }) {
           </span>
           <div style={{
             width: '32px', height: '32px', borderRadius: '8px',
-            backgroundColor: 'var(--info-bg)', color: 'var(--info)',
+            backgroundColor: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b',
             display: 'flex', alignItems: 'center', justifyContent: 'center'
           }}>
             <PiggyBank size={16} />
           </div>
         </div>
-        <div style={{ fontSize: '1.65rem', fontWeight: 800, color: 'var(--info)', letterSpacing: '-0.03em', marginBottom: '0.35rem' }}>
+        <div style={{ fontSize: '1.65rem', fontWeight: 800, letterSpacing: '-0.03em', marginBottom: '0.25rem' }}>
           {savingsRate.toFixed(1)}%
         </div>
-        <div className="progress-bar-bg">
-          <div
-            className="progress-bar-fill"
-            style={{
-              width: `${Math.min(Math.max(savingsRate, 0), 100)}%`,
-              backgroundColor: savingsRate >= 20 ? 'var(--success)' : savingsRate > 0 ? 'var(--warning)' : 'var(--danger)'
-            }}
-          />
+        <div style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+          {savingsRate >= 20 ? '🎉 Excellent savings habit!' : 'Target: 20%+ savings rate'}
         </div>
       </div>
 

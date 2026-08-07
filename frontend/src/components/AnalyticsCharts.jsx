@@ -12,7 +12,7 @@ import {
   Filler
 } from 'chart.js';
 import { Line, Doughnut } from 'react-chartjs-2';
-import { CATEGORY_META, formatCurrency } from '../utils/formatters';
+import { CATEGORY_META, formatCurrency, convertCurrency } from '../utils/formatters';
 
 // Register ChartJS modules
 ChartJS.register(
@@ -30,10 +30,11 @@ ChartJS.register(
 export default function AnalyticsCharts({ transactions, currency, darkMode }) {
   const expenses = transactions.filter(t => t.type === 'EXPENSE');
 
-  // Compute category totals
+  // Compute category totals converted to current display currency
   const categoryTotals = {};
   expenses.forEach(t => {
-    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + Number(t.amount || 0);
+    const converted = convertCurrency(t.amount, t.currency || 'USD', currency);
+    categoryTotals[t.category] = (categoryTotals[t.category] || 0) + converted;
   });
 
   const totalExpenseSum = Object.values(categoryTotals).reduce((a, b) => a + b, 0);
@@ -68,7 +69,7 @@ export default function AnalyticsCharts({ transactions, currency, darkMode }) {
           label: (context) => {
             const val = context.raw;
             const pct = totalExpenseSum > 0 ? ((val / totalExpenseSum) * 100).toFixed(1) : 0;
-            return ` ${context.label}: ${formatCurrency(val, currency)} (${pct}%)`;
+            return ` ${context.label}: ${formatCurrency(val, currency, currency)} (${pct}%)`;
           }
         }
       }
@@ -76,13 +77,14 @@ export default function AnalyticsCharts({ transactions, currency, darkMode }) {
     cutout: '72%'
   };
 
-  // Compute Daily Trend Data (Sorted by Date)
+  // Compute Daily Trend Data (Sorted by Date) converted to active display currency
   const dateTotals = {};
   transactions.forEach(t => {
     const d = t.transactionDate || '2026-08-01';
     if (!dateTotals[d]) dateTotals[d] = { income: 0, expense: 0 };
-    if (t.type === 'INCOME') dateTotals[d].income += Number(t.amount || 0);
-    if (t.type === 'EXPENSE') dateTotals[d].expense += Number(t.amount || 0);
+    const converted = convertCurrency(t.amount, t.currency || 'USD', currency);
+    if (t.type === 'INCOME') dateTotals[d].income += converted;
+    if (t.type === 'EXPENSE') dateTotals[d].expense += converted;
   });
 
   const sortedDates = Object.keys(dateTotals).sort();
@@ -173,7 +175,7 @@ export default function AnalyticsCharts({ transactions, currency, darkMode }) {
             pointerEvents: 'none'
           }}>
             <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', display: 'block' }}>Total Outflow</span>
-            <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>{formatCurrency(totalExpenseSum, currency)}</span>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800 }}>{formatCurrency(totalExpenseSum, currency, currency)}</span>
           </div>
         </div>
 
@@ -192,7 +194,7 @@ export default function AnalyticsCharts({ transactions, currency, darkMode }) {
                   <span>{meta.icon} {meta.name}</span>
                 </div>
                 <div className="flex items-center gap-2">
-                  <span style={{ fontWeight: 600 }}>{formatCurrency(amt, currency)}</span>
+                  <span style={{ fontWeight: 600 }}>{formatCurrency(amt, currency, currency)}</span>
                   <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>({pct}%)</span>
                 </div>
               </div>

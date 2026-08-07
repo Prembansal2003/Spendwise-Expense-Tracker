@@ -11,27 +11,30 @@ export const CURRENCIES = [
 
 // Get currency object by code
 export const getCurrency = (code) =>
-  CURRENCIES.find(c => c.code === code) || CURRENCIES[0];
+  CURRENCIES.find(c => c.code === (code || '').toUpperCase()) || CURRENCIES[0];
 
 // Get currency symbol by code
 export const getCurrencySymbol = (code) => getCurrency(code).symbol;
 
 /**
- * Convert an amount entered in `fromCurrency` → USD for storage.
- * e.g. user enters ₹830 in INR view → stored as $10.00 USD
+ * Universal Currency Converter
+ * Converts an amount from `fromCurrencyCode` → `toCurrencyCode` using exchange rates relative to USD.
  */
-export const toUSD = (amount, fromCurrencyCode) => {
-  const currency = getCurrency(fromCurrencyCode);
-  return Number(amount || 0) / currency.rate;
+export const convertCurrency = (amount, fromCurrencyCode = 'USD', toCurrencyCode = 'USD') => {
+  const num = Number(amount || 0);
+  if (isNaN(num)) return 0;
+  const fromRate = getCurrency(fromCurrencyCode).rate;
+  const toRate = getCurrency(toCurrencyCode).rate;
+  if (fromRate === 0) return num;
+  return num * (toRate / fromRate);
 };
 
-/**
- * Convert a USD-base amount → display currency for rendering.
- * e.g. $10 USD → ₹832 in INR view
- */
-export const fromUSD = (usdAmount, toCurrencyCode) => {
-  const currency = getCurrency(toCurrencyCode);
-  return Number(usdAmount || 0) * currency.rate;
+export const toUSD = (amount, fromCurrencyCode = 'USD') => {
+  return convertCurrency(amount, fromCurrencyCode, 'USD');
+};
+
+export const fromUSD = (usdAmount, toCurrencyCode = 'USD') => {
+  return convertCurrency(usdAmount, 'USD', toCurrencyCode);
 };
 
 export const CATEGORY_META = {
@@ -49,26 +52,20 @@ export const CATEGORY_META = {
 };
 
 /**
- * Format an amount for display.
- * - `storedCurrency`: the currency the amount was originally entered/stored in (from transaction.currency)
- * - `displayCurrency`: the currency the user currently wants to see
- * If they differ, converts: amount × (displayRate / storedRate)
- * If storedCurrency is unknown, treats amount as USD base (backward compat).
+ * Format an amount for display in `displayCurrency`.
+ * If `storedCurrency` is passed, converts amount from `storedCurrency` → `displayCurrency`.
  */
 export const formatCurrency = (amount, displayCurrency = 'USD', storedCurrency = null) => {
-  const display = getCurrency(displayCurrency);
-  const stored  = storedCurrency ? getCurrency(storedCurrency) : null;
-
-  // Convert: multiply by display rate, divide by stored rate
-  const conversionFactor = stored ? (display.rate / stored.rate) : display.rate;
-  const displayAmount = Number(amount || 0) * conversionFactor;
+  const fromCurr = storedCurrency || displayCurrency;
+  const convertedAmount = convertCurrency(amount, fromCurr, displayCurrency);
+  const targetObj = getCurrency(displayCurrency);
 
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
-    currency: display.code,
-    minimumFractionDigits: displayCurrency === 'JPY' ? 0 : 2,
-    maximumFractionDigits: displayCurrency === 'JPY' ? 0 : 2
-  }).format(displayAmount);
+    currency: targetObj.code,
+    minimumFractionDigits: targetObj.code === 'JPY' ? 0 : 2,
+    maximumFractionDigits: targetObj.code === 'JPY' ? 0 : 2
+  }).format(convertedAmount);
 };
 
 export const formatDate = (dateString) => {
