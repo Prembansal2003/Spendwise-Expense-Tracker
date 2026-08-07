@@ -180,10 +180,10 @@ export default function App() {
     setIsAddModalOpen(true);
   };
 
-  const handleUpdateBudget = async (category, monthlyLimit) => {
+  const handleUpdateBudget = async (category, monthlyLimit, period = 'MONTHLY') => {
     if (!user) return;
-    await apiService.updateBudget(category, monthlyLimit, user.id, currency);
-    showToast(`🎯 Budget cap for ${category} updated`);
+    await apiService.updateBudget(category, monthlyLimit, user.id, currency, period);
+    showToast(`🎯 Budget cap for ${category} updated (${period.toLowerCase()})`);
     loadData();
   };
 
@@ -292,6 +292,10 @@ export default function App() {
             onDeleteTransaction={handleDeleteTransaction}
             onResetData={handleResetData}
           />
+        )}
+
+        {activeTab === 'analytics' && (
+          <AnalyticsCharts transactions={transactions} currency={currency} darkMode={darkMode} />
         )}
 
         {activeTab === 'budgets' && (

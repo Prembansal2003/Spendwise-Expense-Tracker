@@ -1,59 +1,108 @@
 import React, { useState } from 'react';
-import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert } from 'lucide-react';
+import { Target, AlertTriangle, CheckCircle, Edit3, Plus, ShieldAlert, Calendar } from 'lucide-react';
 import { CATEGORY_META, formatCurrency, convertCurrency, getCurrencySymbol } from '../utils/formatters';
 
 export default function BudgetTracker({
-  budgets,
+  budgets = [],
   currency,
   onUpdateBudget,
   transactions = []
 }) {
+  const [budgetPeriod, setBudgetPeriod] = useState('monthly'); // 'monthly' or 'yearly'
   const [editingCategory, setEditingCategory] = useState(null);
   const [newLimit, setNewLimit] = useState('');
+  const [editPeriod, setEditPeriod] = useState('MONTHLY');
+
+  // Filter transactions for current month vs current year
+  const currentDate = new Date();
+  const currentYearStr = String(currentDate.getFullYear());
+  const currentMonthStr = String(currentDate.getMonth() + 1).padStart(2, '0');
+  const currentMonthKey = `${currentYearStr}-${currentMonthStr}`;
 
   const handleEditClick = (b) => {
     setEditingCategory(b.category);
-    // Convert stored limit from its stored currency -> active view currency for editing
-    const displayVal = convertCurrency(b.monthlyLimit, b.currency || 'USD', currency);
+    setEditPeriod(b.period || 'MONTHLY');
+    // Calculate stored limit cap depending on budget period
+    const storedLimit = b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit;
+    const displayVal = convertCurrency(storedLimit, b.currency || 'USD', currency);
     setNewLimit(displayVal ? displayVal.toFixed(2) : '');
   };
 
   const handleSaveBudget = (cat) => {
     if (!newLimit || Number(newLimit) < 0) return;
-    onUpdateBudget(cat, Number(newLimit));
+
+    // Convert value entered in view currency -> USD base currency
+    const usdVal = convertCurrency(Number(newLimit), currency, 'USD');
+    const monthlyLimit = editPeriod === 'YEARLY' ? usdVal / 12 : usdVal;
+    
+    onUpdateBudget(cat, monthlyLimit, editPeriod);
     setEditingCategory(null);
   };
 
   return (
     <div className="flex flex-col gap-6" style={{ marginBottom: '1.5rem' }}>
       
-      {/* Category Budgets Overview */}
+      {/* Category Budgets Overview Header */}
       <div className="glass-card" style={{ padding: '1.5rem' }}>
-        <div className="flex items-center justify-between" style={{ marginBottom: '1.25rem' }}>
+        <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-4" style={{ marginBottom: '1.25rem' }}>
           <div>
-            <h2 style={{ fontSize: '1.2rem', fontWeight: 700 }}>
-              Monthly Category Budgets
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <Target size={20} className="text-primary" />
+              <span>{budgetPeriod === 'monthly' ? 'Monthly Category Budgets' : 'Yearly Category Budgets'}</span>
             </h2>
-            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)' }}>
-              Set monthly spending caps and receive real-time limit alerts
+            <p style={{ fontSize: '0.8125rem', color: 'var(--text-muted)', marginTop: '0.15rem' }}>
+              {budgetPeriod === 'monthly'
+                ? 'Set monthly spending caps and receive real-time monthly limit alerts'
+                : 'Set annual spending budgets to manage long-term category goals'}
             </p>
+          </div>
+
+          {/* Monthly vs Yearly Budget Selector */}
+          <div className="segmented-control" style={{ backgroundColor: 'var(--bg-secondary)', padding: '2px', borderRadius: 'var(--radius-md)', display: 'flex' }}>
+            <button
+              className={`btn btn-sm ${budgetPeriod === 'monthly' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ border: 'none', padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+              onClick={() => setBudgetPeriod('monthly')}
+            >
+              📅 Monthly Budgets
+            </button>
+            <button
+              className={`btn btn-sm ${budgetPeriod === 'yearly' ? 'btn-primary' : 'btn-secondary'}`}
+              style={{ border: 'none', padding: '0.35rem 0.85rem', fontSize: '0.8rem' }}
+              onClick={() => setBudgetPeriod('yearly')}
+            >
+              📆 Yearly Budgets
+            </button>
           </div>
         </div>
 
+        {/* Budget Cards Grid */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
           {budgets.map(b => {
             const meta = CATEGORY_META[b.category] || { name: b.category, icon: '📦', color: '#64748b' };
             const isEditing = editingCategory === b.category;
 
-            // Calculate actual spend for this category by converting each expense from its stored currency -> active view currency
+            // Compute actual spend according to selected period
             const actualSpendInViewCurrency = transactions
-              .filter(t => t.type === 'EXPENSE' && t.category === b.category)
+              .filter(t => {
+                if (t.type !== 'EXPENSE' || t.category !== b.category) return false;
+                const d = t.transactionDate || '2026-08-01';
+                if (budgetPeriod === 'monthly') {
+                  return d.startsWith(currentMonthKey);
+                } else {
+                  return d.startsWith(currentYearStr);
+                }
+              })
               .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
 
-            // Convert monthly limit cap from stored budget currency -> active view currency
-            const limitInViewCurrency = convertCurrency(b.monthlyLimit, b.currency || 'USD', currency);
+            // Compute budget cap according to selected period
+            const baseLimitInUSD = budgetPeriod === 'yearly'
+              ? (b.period === 'YEARLY' ? (b.yearlyLimit || b.monthlyLimit * 12) : b.monthlyLimit * 12)
+              : b.monthlyLimit;
 
-            // Compute exact used percentage and status in active view currency
+            const limitInViewCurrency = convertCurrency(baseLimitInUSD, b.currency || 'USD', currency);
+
+            // Used Percentage
             const usedPct = limitInViewCurrency > 0 ? (actualSpendInViewCurrency / limitInViewCurrency) * 100 : 0;
             const pct = Math.min(usedPct, 100);
 
@@ -84,40 +133,62 @@ export default function BudgetTracker({
                 <div className="flex items-center justify-between" style={{ marginBottom: '0.75rem' }}>
                   <div className="flex items-center gap-2">
                     <span style={{ fontSize: '1.2rem' }}>{meta.icon}</span>
-                    <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>{meta.name}</span>
+                    <div>
+                      <span style={{ fontWeight: 700, fontSize: '0.95rem', display: 'block' }}>{meta.name}</span>
+                      <span style={{ fontSize: '0.68rem', color: 'var(--text-muted)' }}>
+                        {budgetPeriod === 'monthly' ? 'Monthly Limit' : 'Annual Limit'}
+                      </span>
+                    </div>
                   </div>
                   <button
                     className="btn btn-secondary btn-icon"
                     style={{ width: '1.8rem', height: '1.8rem' }}
                     onClick={() => handleEditClick(b)}
-                    title="Change Budget Cap"
+                    title="Edit Budget Cap"
                   >
                     <Edit3 size={12} />
                   </button>
                 </div>
 
-                {/* Edit input inline */}
+                {/* Edit inline modal */}
                 {isEditing ? (
-                  <div className="flex items-center gap-2" style={{ marginBottom: '0.75rem' }}>
-                    <div style={{ position: 'relative', width: '100%' }}>
-                      <span style={{
-                        position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)',
-                        color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600
-                      }}>
-                        {getCurrencySymbol(currency)}
-                      </span>
-                      <input
-                        type="number"
-                        step="0.01"
-                        className="form-control"
-                        style={{ padding: '0.3rem 0.5rem 0.3rem 1.6rem', fontSize: '0.85rem' }}
-                        value={newLimit}
-                        onChange={(e) => setNewLimit(e.target.value)}
-                      />
+                  <div className="flex flex-col gap-2" style={{ marginBottom: '0.75rem' }}>
+                    <div className="flex gap-1.5">
+                      <select
+                        className="form-control form-control-sm"
+                        style={{ width: 'auto', fontSize: '0.78rem' }}
+                        value={editPeriod}
+                        onChange={(e) => setEditPeriod(e.target.value)}
+                      >
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                      </select>
+                      <div style={{ position: 'relative', flex: 1 }}>
+                        <span style={{
+                          position: 'absolute', left: '0.5rem', top: '50%', transform: 'translateY(-50%)',
+                          color: 'var(--text-muted)', fontSize: '0.85rem', fontWeight: 600
+                        }}>
+                          {getCurrencySymbol(currency)}
+                        </span>
+                        <input
+                          type="number"
+                          step="0.01"
+                          className="form-control form-control-sm"
+                          style={{ paddingLeft: '1.6rem', fontSize: '0.85rem' }}
+                          value={newLimit}
+                          onChange={(e) => setNewLimit(e.target.value)}
+                          placeholder="Cap Amount"
+                        />
+                      </div>
                     </div>
-                    <button className="btn btn-primary btn-sm" onClick={() => handleSaveBudget(b.category)}>
-                      Save
-                    </button>
+                    <div className="flex gap-2 justify-end">
+                      <button className="btn btn-secondary btn-xs" onClick={() => setEditingCategory(null)}>
+                        Cancel
+                      </button>
+                      <button className="btn btn-primary btn-xs" onClick={() => handleSaveBudget(b.category)}>
+                        Save Cap
+                      </button>
+                    </div>
                   </div>
                 ) : (
                   <div className="flex items-center justify-between" style={{ marginBottom: '0.5rem', fontSize: '0.85rem' }}>

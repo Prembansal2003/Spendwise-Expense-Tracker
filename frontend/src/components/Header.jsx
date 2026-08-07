@@ -171,6 +171,14 @@ export default function Header({
             <span>Transactions</span>
           </button>
           <button
+            className={`btn btn-sm ${activeTab === 'analytics' ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ border: 'none' }}
+            onClick={() => setActiveTab('analytics')}
+          >
+            <BarChart2 size={14} />
+            <span>Analytics</span>
+          </button>
+          <button
             className={`btn btn-sm ${activeTab === 'budgets' ? 'btn-primary' : 'btn-secondary'}`}
             style={{ border: 'none' }}
             onClick={() => setActiveTab('budgets')}

@@ -337,12 +337,13 @@ export const apiService = {
     return list;
   },
 
-  async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD') {
+  async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') => {
+    const yearlyLimit = period === 'YEARLY' ? Number(monthlyLimit) * 12 : Number(monthlyLimit) * 12;
     try {
       const res = await fetchApi(`${API_BASE_URL}/budgets?userId=${userId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ category, monthlyLimit: Number(monthlyLimit), currency })
+        body: JSON.stringify({ category, monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit })
       });
       if (res.ok) {
         const data = await res.json();
@@ -356,9 +357,9 @@ export const apiService = {
     let list = getLocalData(storageKey, INITIAL_BUDGETS);
     const existingIdx = list.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
-      list[existingIdx] = { ...list[existingIdx], monthlyLimit: Number(monthlyLimit), currency };
+      list[existingIdx] = { ...list[existingIdx], monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit };
     } else {
-      list.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit), currency });
+      list.push({ id: Date.now(), category, monthlyLimit: Number(monthlyLimit), currency, period, yearlyLimit });
     }
     setLocalData(storageKey, list);
     return list;
