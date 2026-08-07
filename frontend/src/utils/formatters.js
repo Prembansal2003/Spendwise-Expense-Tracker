@@ -93,8 +93,8 @@ export const CATEGORY_META = {
  * Format an amount for display in `displayCurrency`.
  * If `storedCurrency` is passed, converts amount from `storedCurrency` → `displayCurrency`.
  */
-export const formatCurrency = (amount, displayCurrency = 'USD', storedCurrency = null) => {
-  const fromCurr = storedCurrency || displayCurrency;
+export const formatCurrency = (amount, displayCurrency = 'USD', storedCurrency = 'USD') => {
+  const fromCurr = storedCurrency || 'USD';
   const convertedAmount = convertCurrency(amount, fromCurr, displayCurrency);
   const targetObj = getCurrency(displayCurrency);
 

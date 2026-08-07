@@ -13,6 +13,7 @@ import AuthGate from './components/AuthGate';
 
 import { INITIAL_TRANSACTIONS, INITIAL_BUDGETS } from './utils/sampleData';
 import { apiService } from './services/api';
+import { convertCurrency } from './utils/formatters';
 
 const DEFAULT_USER = {
   id: 101,
@@ -125,14 +126,19 @@ export default function App() {
   const handleSaveTransaction = async (data) => {
     if (!user) return;
 
-    // Store the raw amount in the currently selected currency — no lossy conversion
-    const dataWithCurrency = { ...data, currency };
+    // Convert entered amount in active view currency -> USD base storage currency
+    const usdAmount = convertCurrency(data.amount, currency, 'USD');
+    const dataInUSD = {
+      ...data,
+      amount: usdAmount,
+      currency: 'USD'
+    };
 
     if (editingTransaction) {
-      await apiService.updateTransaction(editingTransaction.id, dataWithCurrency, user.id);
+      await apiService.updateTransaction(editingTransaction.id, dataInUSD, user.id);
       showToast('✅ Transaction updated successfully');
     } else {
-      await apiService.createTransaction(dataWithCurrency, user.id);
+      await apiService.createTransaction(dataInUSD, user.id);
       showToast('🎉 New transaction recorded!');
     }
     setEditingTransaction(null);
