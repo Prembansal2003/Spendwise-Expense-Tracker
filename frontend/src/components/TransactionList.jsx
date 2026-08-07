@@ -103,18 +103,6 @@ export default function TransactionList({
             <option value="amount-desc">Amount: High to Low</option>
             <option value="amount-asc">Amount: Low to High</option>
           </select>
-
-          {onResetData && (
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={onResetData}
-              title="Reload default sample transactions for all 11 categories"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', border: '1px solid var(--primary-light)', color: 'var(--primary)' }}
-            >
-              <RotateCcw size={14} />
-              <span>Reload Sample Data</span>
-            </button>
-          )}
         </div>
       </div>
 
