@@ -17,6 +17,7 @@ public class SavingsGoalService {
 
     private final SavingsGoalRepository savingsGoalRepository;
     private final JdbcTemplate jdbcTemplate;
+    private final CurrencyService currencyService;
 
     public List<SavingsGoal> getGoalsByUserId(Long userId) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
@@ -78,7 +79,7 @@ public class SavingsGoalService {
     }
 
     @Transactional
-    public void syncGoalFromTransaction(Long userId, String txTitle, String txNotes, BigDecimal amount, String action) {
+    public void syncGoalFromTransaction(Long userId, String txTitle, String txNotes, BigDecimal amount, String txCurrency, String action) {
         if (amount == null || txTitle == null) return;
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         if (targetUserId == null) targetUserId = 1L;
@@ -110,11 +111,14 @@ public class SavingsGoalService {
         }
 
         if (goal != null) {
+            // Convert transaction amount from txCurrency to the goal's currency
+            BigDecimal convertedAmount = currencyService.convertCurrency(amount, txCurrency, goal.getCurrency());
+
             BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
             if ("CREATE".equalsIgnoreCase(action) || "ADD".equalsIgnoreCase(action)) {
-                goal.setSavedAmount(currentSaved.add(amount));
+                goal.setSavedAmount(currentSaved.add(convertedAmount));
             } else if ("DELETE".equalsIgnoreCase(action) || "DEDUCT".equalsIgnoreCase(action)) {
-                BigDecimal newSaved = currentSaved.subtract(amount);
+                BigDecimal newSaved = currentSaved.subtract(convertedAmount);
                 goal.setSavedAmount(newSaved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newSaved);
             }
             savingsGoalRepository.save(goal);
@@ -122,7 +126,7 @@ public class SavingsGoalService {
     }
 
     @Transactional
-    public void syncGoalFromTransactionUpdate(Long userId, String txTitle, String txNotes, BigDecimal oldAmount, BigDecimal newAmount) {
+    public void syncGoalFromTransactionUpdate(Long userId, String txTitle, String txNotes, BigDecimal oldAmount, String oldCurrency, BigDecimal newAmount, String newCurrency) {
         if (txTitle == null) return;
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         if (targetUserId == null) targetUserId = 1L;
@@ -154,8 +158,12 @@ public class SavingsGoalService {
         }
 
         if (goal != null) {
+            // Convert both old amount and new amount from their respective currencies to the goal's currency
+            BigDecimal oldConverted = currencyService.convertCurrency(oldAmount, oldCurrency, goal.getCurrency());
+            BigDecimal newConverted = currencyService.convertCurrency(newAmount, newCurrency, goal.getCurrency());
+
             BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
-            BigDecimal diff = (newAmount != null ? newAmount : BigDecimal.ZERO).subtract(oldAmount != null ? oldAmount : BigDecimal.ZERO);
+            BigDecimal diff = newConverted.subtract(oldConverted);
             BigDecimal newSaved = currentSaved.add(diff);
             goal.setSavedAmount(newSaved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newSaved);
             savingsGoalRepository.save(goal);

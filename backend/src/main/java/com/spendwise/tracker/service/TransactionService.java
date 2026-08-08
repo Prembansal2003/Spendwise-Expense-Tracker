@@ -78,7 +78,7 @@ public class TransactionService {
         transaction.setNotes(request.getNotes());
         Transaction saved = transactionRepository.save(transaction);
         if (isSavingsTransaction(saved.getTitle(), saved.getNotes())) {
-            savingsGoalService.syncGoalFromTransaction(saved.getUserId(), saved.getTitle(), saved.getNotes(), saved.getAmount(), "ADD");
+            savingsGoalService.syncGoalFromTransaction(saved.getUserId(), saved.getTitle(), saved.getNotes(), saved.getAmount(), saved.getCurrency(), "ADD");
         }
         return saved;
     }
@@ -90,6 +90,7 @@ public class TransactionService {
         BigDecimal oldAmount = transaction.getAmount();
         String oldTitle = transaction.getTitle();
         String oldNotes = transaction.getNotes();
+        String oldCurrency = transaction.getCurrency();
 
         if (request.getUserId() != null) transaction.setUserId(request.getUserId());
         transaction.setTitle(request.getTitle());
@@ -107,11 +108,11 @@ public class TransactionService {
         boolean isSavings = isSavingsTransaction(updated.getTitle(), updated.getNotes());
 
         if (wasSavings && isSavings) {
-            savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), updated.getNotes(), oldAmount, updated.getAmount());
+            savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), updated.getNotes(), oldAmount, oldCurrency, updated.getAmount(), updated.getCurrency());
         } else if (wasSavings && !isSavings) {
-            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), oldTitle, oldNotes, oldAmount, "DEDUCT");
+            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), oldTitle, oldNotes, oldAmount, oldCurrency, "DEDUCT");
         } else if (!wasSavings && isSavings) {
-            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), updated.getTitle(), updated.getNotes(), updated.getAmount(), "ADD");
+            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), updated.getTitle(), updated.getNotes(), updated.getAmount(), updated.getCurrency(), "ADD");
         }
 
         return updated;
@@ -121,7 +122,7 @@ public class TransactionService {
         Transaction tx = transactionRepository.findById(id).orElse(null);
         if (tx != null) {
             if (isSavingsTransaction(tx.getTitle(), tx.getNotes())) {
-                savingsGoalService.syncGoalFromTransaction(tx.getUserId(), tx.getTitle(), tx.getNotes(), tx.getAmount(), "DEDUCT");
+                savingsGoalService.syncGoalFromTransaction(tx.getUserId(), tx.getTitle(), tx.getNotes(), tx.getAmount(), tx.getCurrency(), "DEDUCT");
             }
             transactionRepository.deleteById(id);
         }
