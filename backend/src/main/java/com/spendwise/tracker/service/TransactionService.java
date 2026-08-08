@@ -82,6 +82,8 @@ public class TransactionService {
         Transaction transaction = transactionRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
 
+        BigDecimal oldAmount = transaction.getAmount();
+
         if (request.getUserId() != null) transaction.setUserId(request.getUserId());
         transaction.setTitle(request.getTitle());
         transaction.setAmount(request.getAmount());
@@ -91,7 +93,12 @@ public class TransactionService {
         transaction.setPaymentMethod(request.getPaymentMethod() != null ? request.getPaymentMethod() : "Credit Card");
         transaction.setCurrency(request.getCurrency() != null ? request.getCurrency() : "USD");
         transaction.setNotes(request.getNotes());
-        return transactionRepository.save(transaction);
+
+        Transaction updated = transactionRepository.save(transaction);
+        if (updated.getTitle() != null && (updated.getTitle().toLowerCase().contains("savings deposit") || updated.getTitle().toLowerCase().contains("savings goal deposit"))) {
+            savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), oldAmount, updated.getAmount());
+        }
+        return updated;
     }
 
     public void deleteTransaction(Long id) {

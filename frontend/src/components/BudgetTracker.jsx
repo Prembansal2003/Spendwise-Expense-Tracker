@@ -45,6 +45,12 @@ export default function BudgetTracker({
   const [editingGoalId, setEditingGoalId] = useState(null);
   const [editSavedAddAmount, setEditSavedAddAmount] = useState('');
 
+  // Target Goal Inline Edit State
+  const [editingTargetGoalId, setEditingTargetGoalId] = useState(null);
+  const [editGoalTitle, setEditGoalTitle] = useState('');
+  const [editGoalTargetVal, setEditGoalTargetVal] = useState('');
+  const [editGoalCurrency, setEditGoalCurrency] = useState('USD');
+
   useEffect(() => {
     async function loadCloudGoals() {
       try {
@@ -200,6 +206,44 @@ export default function BudgetTracker({
       }
       setSavingsGoals(prev => prev.filter(g => g.id !== goalId));
     }
+  };
+
+  const handleStartEditTargetGoal = (goal) => {
+    setEditingTargetGoalId(goal.id);
+    setEditGoalTitle(goal.title || '');
+    setEditGoalTargetVal(goal.targetAmount != null ? goal.targetAmount.toString() : '');
+    setEditGoalCurrency(goal.currency || currency || 'USD');
+  };
+
+  const handleSaveTargetGoalEdit = async (goalId) => {
+    if (!editGoalTargetVal || Number(editGoalTargetVal) <= 0) return;
+
+    const fedTargetVal = Number(editGoalTargetVal);
+    const targetInUSD = convertCurrency(fedTargetVal, editGoalCurrency, 'USD');
+
+    if (typeof goalId === 'number') {
+      try {
+        await api.updateSavingsGoal(goalId, {
+          title: editGoalTitle.trim(),
+          targetAmount: targetInUSD,
+          currency: editGoalCurrency
+        });
+      } catch (e) {}
+    }
+
+    setSavingsGoals(prev => prev.map(g => {
+      if (g.id === goalId) {
+        return {
+          ...g,
+          title: editGoalTitle.trim(),
+          targetAmount: targetInUSD,
+          currency: editGoalCurrency
+        };
+      }
+      return g;
+    }));
+
+    setEditingTargetGoalId(null);
   };
 
   // Compute stat card totals in active view currency
@@ -529,6 +573,7 @@ export default function BudgetTracker({
                       const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
                       const isCompleted = savedInView >= targetInView;
                       const isAddingDeposit = editingGoalId === goal.id;
+                      const isEditingTarget = editingTargetGoalId === goal.id;
 
                       return (
                         <div
@@ -547,6 +592,14 @@ export default function BudgetTracker({
                                 {pct.toFixed(0)}%
                               </span>
                               <button
+                                className="btn btn-secondary btn-icon"
+                                style={{ width: '1.5rem', height: '1.5rem', padding: 0 }}
+                                onClick={() => handleStartEditTargetGoal(goal)}
+                                title="Edit Goal Target & Currency"
+                              >
+                                <Edit3 size={11} />
+                              </button>
+                              <button
                                 className="btn btn-danger btn-icon"
                                 style={{ width: '1.5rem', height: '1.5rem', padding: 0 }}
                                 onClick={() => handleDeleteGoal(goal.id)}
@@ -557,9 +610,42 @@ export default function BudgetTracker({
                             </div>
                           </div>
 
-                          <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
-                            {formatCurrency(savedInView, currency, currency)} / {formatCurrency(targetInView, currency, currency)}
-                          </div>
+                          {isEditingTarget ? (
+                            <div className="flex flex-col gap-2" style={{ marginBottom: '0.75rem' }}>
+                              <input
+                                type="text"
+                                className="form-control form-control-sm"
+                                placeholder="Goal Title"
+                                value={editGoalTitle}
+                                onChange={(e) => setEditGoalTitle(e.target.value)}
+                              />
+                              <div className="flex gap-1.5">
+                                <select
+                                  className="form-control form-control-sm"
+                                  value={editGoalCurrency}
+                                  onChange={(e) => setEditGoalCurrency(e.target.value)}
+                                >
+                                  {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
+                                </select>
+                                <input
+                                  type="number"
+                                  step="0.01"
+                                  className="form-control form-control-sm"
+                                  placeholder={`Target in ${editGoalCurrency}`}
+                                  value={editGoalTargetVal}
+                                  onChange={(e) => setEditGoalTargetVal(e.target.value)}
+                                />
+                              </div>
+                              <div className="flex gap-2 justify-end">
+                                <button className="btn btn-secondary btn-xs" onClick={() => setEditingTargetGoalId(null)}>Cancel</button>
+                                <button className="btn btn-primary btn-xs" onClick={() => handleSaveTargetGoalEdit(goal.id)}>Save Target</button>
+                              </div>
+                            </div>
+                          ) : (
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, marginBottom: '0.35rem' }}>
+                              {formatCurrency(savedInView, currency, currency)} / {formatCurrency(targetInView, currency, currency)}
+                            </div>
+                          )}
 
                           {/* Progress Bar */}
                           <div className="progress-bar-bg" style={{ marginBottom: '0.75rem' }}>

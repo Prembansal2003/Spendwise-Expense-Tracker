@@ -81,12 +81,36 @@ public class SavingsGoalService {
         List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
         if (!matchingGoals.isEmpty()) {
             SavingsGoal goal = matchingGoals.get(0);
+            BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
             if ("CREATE".equalsIgnoreCase(action) || "ADD".equalsIgnoreCase(action)) {
-                goal.setSavedAmount(goal.getSavedAmount().add(amount));
+                goal.setSavedAmount(currentSaved.add(amount));
             } else if ("DELETE".equalsIgnoreCase(action) || "DEDUCT".equalsIgnoreCase(action)) {
-                BigDecimal newSaved = goal.getSavedAmount().subtract(amount);
+                BigDecimal newSaved = currentSaved.subtract(amount);
                 goal.setSavedAmount(newSaved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newSaved);
             }
+            savingsGoalRepository.save(goal);
+        }
+    }
+
+    @Transactional
+    public void syncGoalFromTransactionUpdate(Long userId, String txTitle, BigDecimal oldAmount, BigDecimal newAmount) {
+        if (txTitle == null) return;
+        Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
+        if (targetUserId == null) targetUserId = 1L;
+
+        String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
+                .replaceAll("(?i)^Savings Goal Deposit:", "")
+                .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+
+        if (searchTitle.isBlank()) return;
+
+        List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
+        if (!matchingGoals.isEmpty()) {
+            SavingsGoal goal = matchingGoals.get(0);
+            BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
+            BigDecimal diff = (newAmount != null ? newAmount : BigDecimal.ZERO).subtract(oldAmount != null ? oldAmount : BigDecimal.ZERO);
+            BigDecimal newSaved = currentSaved.add(diff);
+            goal.setSavedAmount(newSaved.compareTo(BigDecimal.ZERO) < 0 ? BigDecimal.ZERO : newSaved);
             savingsGoalRepository.save(goal);
         }
     }
