@@ -166,7 +166,7 @@ export default function App() {
         localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
       }
     } catch (e) {
-      console.warn('[SpendWise] Failed to load/seed savings goals in loadData:', e.message);
+      
     }
   };
 
@@ -185,7 +185,7 @@ export default function App() {
           setTransactions(prev => {
             // Hardening: if the backend randomly returns 0 items during polling but we had items, DO NOT wipe!
             if (txRes.data.length === 0 && prev.length > 0) {
-              console.warn('[SpendWise] Backend returned 0 items but we had data. Ignoring to prevent wipe!');
+              
               return prev; 
             }
             if (JSON.stringify(prev) !== JSON.stringify(txRes.data)) {
@@ -216,7 +216,7 @@ export default function App() {
           });
         }
       } catch (e) {
-        console.warn('[SpendWise Continuous Sync] Background sync skipped:', e.message);
+        
       }
     }, 8000); // 8-second continuous polling interval
 
@@ -430,7 +430,7 @@ export default function App() {
         localStorage.setItem('spendwise_user', JSON.stringify(synced));
       }
     } catch (e) {
-      console.warn('[SpendWise] Avatar cloud sync failed:', e.message);
+      
     }
   };
 
