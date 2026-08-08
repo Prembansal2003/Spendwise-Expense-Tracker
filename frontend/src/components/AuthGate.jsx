@@ -103,8 +103,13 @@ export default function AuthGate({ onLoginSuccess }) {
   };
 
   const handleQuickDemoLogin = () => {
+    let virtualId = localStorage.getItem('spendwise_virtual_user_id');
+    if (!virtualId) {
+      virtualId = String(Math.floor(Math.random() * 900000000) + 100000000);
+      localStorage.setItem('spendwise_virtual_user_id', virtualId);
+    }
     const demoUser = {
-      id: 101,
+      id: Number(virtualId),
       name: 'Prem Agrawal',
       email: 'agrawalprem00@gmail.com',
       role: 'PRO_MEMBER',
