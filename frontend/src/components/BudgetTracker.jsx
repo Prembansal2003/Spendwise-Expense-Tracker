@@ -181,6 +181,34 @@ export default function BudgetTracker({
     }
   };
 
+  const handleBudgetCurrencyChange = (newCurrency) => {
+    const oldCurrency = editCurrency;
+    if (oldCurrency === newCurrency) return;
+
+    let updatedLimit = newLimit;
+    if (newLimit && !isNaN(Number(newLimit))) {
+      const converted = convertCurrency(Number(newLimit), oldCurrency, newCurrency);
+      updatedLimit = parseFloat(converted.toFixed(2)).toString();
+    }
+
+    setEditCurrency(newCurrency);
+    setNewLimit(updatedLimit);
+  };
+
+  const handleGoalCurrencyChange = (newCurrency) => {
+    const oldCurrency = editGoalCurrency;
+    if (oldCurrency === newCurrency) return;
+
+    let updatedTarget = editGoalTargetVal;
+    if (editGoalTargetVal && !isNaN(Number(editGoalTargetVal))) {
+      const converted = convertCurrency(Number(editGoalTargetVal), oldCurrency, newCurrency);
+      updatedTarget = parseFloat(converted.toFixed(2)).toString();
+    }
+
+    setEditGoalCurrency(newCurrency);
+    setEditGoalTargetVal(updatedTarget);
+  };
+
   const handleStartEditTargetGoal = (goal) => {
     setEditingTargetGoalId(goal.id);
     setEditGoalTitle(goal.title || '');
@@ -403,7 +431,7 @@ export default function BudgetTracker({
                         <option value="MONTHLY">Monthly</option>
                         <option value="YEARLY">Yearly</option>
                       </select>
-                      <select className="form-control form-control-sm" value={editCurrency} onChange={(e) => setEditCurrency(e.target.value)}>
+                      <select className="form-control form-control-sm" value={editCurrency} onChange={(e) => handleBudgetCurrencyChange(e.target.value)}>
                         {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
                       </select>
                       <input type="number" className="form-control form-control-sm" value={newLimit} onChange={(e) => setNewLimit(e.target.value)} />
@@ -543,7 +571,7 @@ export default function BudgetTracker({
                                 <select
                                   className="form-control form-control-sm"
                                   value={editGoalCurrency}
-                                  onChange={(e) => setEditGoalCurrency(e.target.value)}
+                                  onChange={(e) => handleGoalCurrencyChange(e.target.value)}
                                 >
                                   {CURRENCIES.map(c => <option key={c.code} value={c.code}>{c.code}</option>)}
                                 </select>

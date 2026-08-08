@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { X, Check } from 'lucide-react';
-import { CATEGORY_META, getCurrencySymbol, CURRENCIES } from '../utils/formatters';
+import { CATEGORY_META, getCurrencySymbol, CURRENCIES, convertCurrency } from '../utils/formatters';
 
 export default function TransactionModal({
   isOpen,
@@ -47,6 +47,23 @@ export default function TransactionModal({
   }, [editingTransaction, isOpen, currency]);
 
   if (!isOpen) return null;
+
+  const handleCurrencyChange = (newCurrency) => {
+    const oldCurrency = formData.currency;
+    if (oldCurrency === newCurrency) return;
+
+    let updatedAmount = formData.amount;
+    if (formData.amount && !isNaN(Number(formData.amount))) {
+      const converted = convertCurrency(Number(formData.amount), oldCurrency, newCurrency);
+      updatedAmount = parseFloat(converted.toFixed(2));
+    }
+
+    setFormData({
+      ...formData,
+      currency: newCurrency,
+      amount: updatedAmount
+    });
+  };
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -129,7 +146,7 @@ export default function TransactionModal({
                   className="form-control"
                   style={{ width: '7rem', flexShrink: 0, fontWeight: 700 }}
                   value={formData.currency}
-                  onChange={(e) => setFormData({ ...formData, currency: e.target.value })}
+                  onChange={(e) => handleCurrencyChange(e.target.value)}
                 >
                   {CURRENCIES.map(c => (
                     <option key={c.code} value={c.code}>{c.code} ({c.symbol})</option>
