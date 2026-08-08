@@ -55,29 +55,28 @@ public class AuthService {
 
     public AuthResponse getProfile(Long userId) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
-        
         boolean isVirtualDemo = (targetUserId != null && (targetUserId.equals(1L) || (targetUserId >= 100000000L && targetUserId <= 999999999L)));
-        if (isVirtualDemo) {
-            AuthResponse response = new AuthResponse();
-            response.setId(targetUserId);
-            response.setName("Prem Agrawal");
-            response.setEmail("agrawalprem" + targetUserId + "@gmail.com");
-            response.setRole("PRO_MEMBER");
-            response.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
-            response.setCreatedAt(java.time.LocalDateTime.now().toString());
-            response.setToken("demo-token");
-            return response;
-        }
 
         User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setName("Prem Agrawal");
-                    newUser.setEmail("agrawalprem" + targetUserId + "@gmail.com");
-                    newUser.setPassword(com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123"));
-                    newUser.setRole("PRO_MEMBER");
-                    newUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
-                    return userRepository.save(newUser);
+                    String name = "Prem Agrawal";
+                    String email = "agrawalprem" + targetUserId + "@gmail.com";
+                    String password = com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123");
+                    String role = "PRO_MEMBER";
+                    String avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+                    
+                    if (isVirtualDemo) {
+                        userRepository.insertUserWithId(targetUserId, name, email, password, role, avatarUrl);
+                        return userRepository.findById(targetUserId).orElseThrow();
+                    } else {
+                        User newUser = new User();
+                        newUser.setName(name);
+                        newUser.setEmail(email);
+                        newUser.setPassword(password);
+                        newUser.setRole(role);
+                        newUser.setAvatarUrl(avatarUrl);
+                        return userRepository.save(newUser);
+                    }
                 });
         return buildAuthResponse(user);
     }
@@ -85,27 +84,27 @@ public class AuthService {
     public AuthResponse updateProfile(Long userId, AuthRequest request) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         boolean isVirtualDemo = (targetUserId != null && (targetUserId.equals(1L) || (targetUserId >= 100000000L && targetUserId <= 999999999L)));
-        if (isVirtualDemo) {
-            AuthResponse response = new AuthResponse();
-            response.setId(targetUserId);
-            response.setName("Prem Agrawal");
-            response.setEmail("agrawalprem" + targetUserId + "@gmail.com");
-            response.setRole("PRO_MEMBER");
-            response.setAvatarUrl(request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank() ? request.getAvatarUrl() : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
-            response.setCreatedAt(java.time.LocalDateTime.now().toString());
-            response.setToken("demo-token");
-            return response;
-        }
 
         User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
-                    User newUser = new User();
-                    newUser.setName("Prem Agrawal");
-                    newUser.setEmail("agrawalprem" + targetUserId + "@gmail.com");
-                    newUser.setPassword(com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123"));
-                    newUser.setRole("PRO_MEMBER");
-                    newUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
-                    return userRepository.save(newUser);
+                    String name = "Prem Agrawal";
+                    String email = "agrawalprem" + targetUserId + "@gmail.com";
+                    String password = com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123");
+                    String role = "PRO_MEMBER";
+                    String avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+                    
+                    if (isVirtualDemo) {
+                        userRepository.insertUserWithId(targetUserId, name, email, password, role, avatarUrl);
+                        return userRepository.findById(targetUserId).orElseThrow();
+                    } else {
+                        User newUser = new User();
+                        newUser.setName(name);
+                        newUser.setEmail(email);
+                        newUser.setPassword(password);
+                        newUser.setRole(role);
+                        newUser.setAvatarUrl(avatarUrl);
+                        return userRepository.save(newUser);
+                    }
                 });
 
         if (request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank()) {
