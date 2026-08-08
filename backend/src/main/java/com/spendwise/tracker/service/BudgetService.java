@@ -21,6 +21,24 @@ public class BudgetService {
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
 
+    private BigDecimal getDefaultLimitForCategory(Category category, Long userId) {
+        boolean isDemo = (userId != null && (userId.equals(1L) || userId.equals(101L) || (userId >= 100000000L && userId <= 999999999L)));
+        if (!isDemo) {
+            return new BigDecimal("500.00");
+        }
+        switch (category) {
+            case FOOD: return new BigDecimal("600.00");
+            case HOUSING: return new BigDecimal("1800.00");
+            case TRANSPORT: return new BigDecimal("300.00");
+            case ENTERTAINMENT: return new BigDecimal("250.00");
+            case UTILITIES: return new BigDecimal("350.00");
+            case SHOPPING: return new BigDecimal("400.00");
+            case HEALTH: return new BigDecimal("250.00");
+            case OTHER: return new BigDecimal("200.00");
+            default: return new BigDecimal("500.00");
+        }
+    }
+
     public List<BudgetProgressDto> getBudgetProgressForCurrentMonth(Long userId) {
         Long rawUserId = (userId != null) ? userId : 1L;
         // Normalize 101L to 1L for demo user account consistency
@@ -36,9 +54,9 @@ public class BudgetService {
         // 2. Seed clean default budgets if user has no records yet
         if (rawBudgets.isEmpty()) {
             List<Budget> newBudgets = new ArrayList<>();
-            BigDecimal defaultCap = targetUserId.equals(1L) ? new BigDecimal("600.00") : new BigDecimal("500.00");
             for (Category cat : Category.values()) {
                 if (cat == Category.SALARY || cat == Category.FREELANCE || cat == Category.INVESTMENT) continue;
+                BigDecimal defaultCap = getDefaultLimitForCategory(cat, targetUserId);
                 newBudgets.add(new Budget(null, targetUserId, cat, defaultCap, BigDecimal.ZERO, "USD", month, year));
             }
             rawBudgets = budgetRepository.saveAll(newBudgets);
