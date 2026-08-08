@@ -142,6 +142,7 @@ public class BudgetService {
             budget.setCurrency(currency != null ? currency : "USD");
             budget.setMonth(month);
             budget.setYear(year);
+        }
         return budgetRepository.save(budget);
     }
 
