@@ -4,8 +4,12 @@ import com.spendwise.tracker.dto.AuthRequest;
 import com.spendwise.tracker.dto.AuthResponse;
 import com.spendwise.tracker.model.User;
 import com.spendwise.tracker.repository.UserRepository;
+import com.spendwise.tracker.repository.TransactionRepository;
+import com.spendwise.tracker.repository.BudgetRepository;
+import com.spendwise.tracker.repository.SavingsGoalRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.time.format.DateTimeFormatter;
 import java.util.UUID;
@@ -15,6 +19,9 @@ import java.util.UUID;
 public class AuthService {
 
     private final UserRepository userRepository;
+    private final TransactionRepository transactionRepository;
+    private final BudgetRepository budgetRepository;
+    private final SavingsGoalRepository savingsGoalRepository;
 
     public AuthResponse login(AuthRequest request) {
         User user = userRepository.findByEmail(request.getEmail())
@@ -114,6 +121,18 @@ public class AuthService {
 
         User saved = userRepository.save(user);
         return buildAuthResponse(saved);
+    }
+
+    @Transactional
+    public void clearDemoData(Long userId) {
+        if (userId != null && userId >= 100000000L && userId <= 999999999L) {
+            transactionRepository.deleteByUserId(userId);
+            budgetRepository.deleteByUserId(userId);
+            savingsGoalRepository.deleteByUserId(userId);
+            if (userRepository.existsById(userId)) {
+                userRepository.deleteById(userId);
+            }
+        }
     }
 
     private AuthResponse buildAuthResponse(User user) {

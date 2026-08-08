@@ -321,7 +321,11 @@ export const apiService = {
     }
 
     try {
-      await fetchApi(`${API_BASE_URL}/transactions/reset?userId=${userId}`, { method: 'DELETE' });
+      if (isVirtualDemoUser(userId)) {
+        await fetchApi(`${API_BASE_URL}/auth/demo/${userId}`, { method: 'DELETE' });
+      } else {
+        await fetchApi(`${API_BASE_URL}/transactions/reset?userId=${userId}`, { method: 'DELETE' });
+      }
     } catch (e) {
       console.warn('[SpendWise API] Backend reset skipped:', e.message);
     }

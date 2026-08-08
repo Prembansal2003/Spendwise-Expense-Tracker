@@ -34,4 +34,10 @@ public class AuthController {
     public ResponseEntity<AuthResponse> updateProfile(@PathVariable Long id, @RequestBody AuthRequest request) {
         return ResponseEntity.ok(authService.updateProfile(id, request));
     }
+
+    @DeleteMapping("/demo/{id}")
+    public ResponseEntity<?> clearDemoData(@PathVariable Long id) {
+        authService.clearDemoData(id);
+        return ResponseEntity.ok().build();
+    }
 }
