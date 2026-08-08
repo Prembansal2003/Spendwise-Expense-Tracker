@@ -34,7 +34,10 @@ public class DataInitializer implements CommandLineRunner {
             jdbcTemplate.execute("ALTER TABLE transactions ALTER COLUMN currency TYPE VARCHAR(20)");
             jdbcTemplate.execute("ALTER TABLE users ADD COLUMN IF NOT EXISTS avatar_url TEXT");
             jdbcTemplate.execute("ALTER TABLE users ALTER COLUMN avatar_url TYPE TEXT");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS user_id BIGINT DEFAULT 1");
             jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS currency VARCHAR(20) DEFAULT 'USD'");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS month INT DEFAULT 8");
+            jdbcTemplate.execute("ALTER TABLE budgets ADD COLUMN IF NOT EXISTS year INT DEFAULT 2026");
             jdbcTemplate.execute("ALTER TABLE budgets ALTER COLUMN currency TYPE VARCHAR(20)");
         } catch (Exception e) {
             System.err.println("Schema alter check: " + e.getMessage());
