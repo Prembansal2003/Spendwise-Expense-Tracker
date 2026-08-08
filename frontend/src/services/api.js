@@ -6,6 +6,10 @@ const DEFAULT_SAVINGS_GOALS = [
   { id: 3, title: '🛡️ Emergency Fund', savedAmount: 0, targetAmount: 5000, currency: 'USD' }
 ];
 
+const isVirtualDemoUser = (userId) => {
+  const num = Number(userId);
+  return !isNaN(num) && num >= 100000000 && num <= 999999999;
+};
 
 const BACKEND_CLOUD_URL = 'https://spendwise-backend-api-rje3.onrender.com/api/v1';
 
@@ -145,16 +149,17 @@ export const apiService = {
   // ========== TRANSACTIONS ==========
   async getTransactions(filters = {}, userId = 101) {
     const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const isDemo = isDemoUser || isVirtualDemoUser(userId);
     const storageKey = `spendwise_transactions_${userId}`;
-    const defaultData = isDemoUser ? INITIAL_TRANSACTIONS : [];
+    const defaultData = isDemo ? INITIAL_TRANSACTIONS : [];
     let localList = getLocalData(storageKey, defaultData);
-    if (!isDemoUser && !localStorage.getItem(storageKey)) {
+    if (!isDemo && !localStorage.getItem(storageKey)) {
       localList = [];
       setLocalData(storageKey, []);
     }
 
     let isBackend = false;
-    let combinedList = isDemoUser ? [...localList] : (Array.isArray(localList) ? [...localList] : []);
+    let combinedList = isDemo ? [...localList] : (Array.isArray(localList) ? [...localList] : []);
 
     if (!isDemoUser) {
       try {
@@ -177,7 +182,7 @@ export const apiService = {
         console.warn('[SpendWise API] getTransactions backend fetch skipped:', err.message);
       }
     } else {
-      isBackend = true; // Local emulator mode is always considered active/connected
+      isBackend = true;
     }
 
     if (filters.type) combinedList = combinedList.filter(t => t.type === filters.type);
@@ -325,8 +330,9 @@ export const apiService = {
   // ========== BUDGETS ==========
   async getBudgets(userId = 101) {
     const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const isDemo = isDemoUser || isVirtualDemoUser(userId);
     const storageKey = `spendwise_budgets_${userId}`;
-    const defaultData = isDemoUser ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
+    const defaultData = isDemo ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
 
     const deduplicateBudgets = (rawList) => {
       if (!Array.isArray(rawList)) return [];
@@ -359,6 +365,7 @@ export const apiService = {
 
   async updateBudget(category, monthlyLimit, userId = 101, currency = 'USD', period = 'MONTHLY') {
     const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const isDemo = isDemoUser || isVirtualDemoUser(userId);
     const yearlyLimit = period === 'YEARLY' ? Number(monthlyLimit) * 12 : Number(monthlyLimit) * 12;
 
     if (!isDemoUser) {
@@ -378,7 +385,7 @@ export const apiService = {
     }
 
     const storageKey = `spendwise_budgets_${userId}`;
-    const defaultData = isDemoUser ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
+    const defaultData = isDemo ? INITIAL_BUDGETS : CLEAN_DEFAULT_BUDGETS;
     let list = getLocalData(storageKey, defaultData);
     const existingIdx = list.findIndex(b => b.category === category);
     if (existingIdx >= 0) {
@@ -393,6 +400,7 @@ export const apiService = {
   // ========== SAVINGS GOALS DEDICATED DATABASE TABLE API ==========
   async getSavingsGoals(userId = 101) {
     const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
+    const isDemo = isDemoUser || isVirtualDemoUser(userId);
     const storageKey = `spendwise_savings_goals_${userId}`;
 
     if (!isDemoUser) {
@@ -405,7 +413,7 @@ export const apiService = {
       } catch (err) {
         console.warn('[SpendWise API] getSavingsGoals backend fetch skipped:', err.message);
       }
-      return null;
+      if (!isDemo) return null;
     }
 
     return getLocalData(storageKey, DEFAULT_SAVINGS_GOALS);

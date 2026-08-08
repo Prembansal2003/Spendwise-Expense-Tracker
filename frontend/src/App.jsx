@@ -30,6 +30,23 @@ const DEFAULT_SAVINGS_GOALS = [
   { id: 3, title: '🛡️ Emergency Fund', savedAmount: 0, targetAmount: 5000, currency: 'USD' }
 ];
 
+const getVirtualUserId = () => {
+  let virtualId = localStorage.getItem('spendwise_virtual_user_id');
+  if (!virtualId) {
+    virtualId = String(Math.floor(Math.random() * 900000000) + 100000000);
+    localStorage.setItem('spendwise_virtual_user_id', virtualId);
+  }
+  return Number(virtualId);
+};
+
+const getDemoUser = () => {
+  const vId = getVirtualUserId();
+  return {
+    ...DEFAULT_USER,
+    id: vId
+  };
+};
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
@@ -44,17 +61,18 @@ export default function App() {
       const saved = localStorage.getItem('spendwise_user');
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (parsed.email === 'alex.morgan@spendwise.io' || parsed.email === 'bansalprem900@gmail.com') {
-          const updated = { ...DEFAULT_USER, ...parsed, name: 'Prem Agrawal', email: 'agrawalprem00@gmail.com' };
-          localStorage.setItem('spendwise_user', JSON.stringify(updated));
-          return updated;
+        if (parsed.id === 101 || parsed.id === '101' || parsed.id === 1 || parsed.id === '1' || parsed.email === 'alex.morgan@spendwise.io' || parsed.email === 'bansalprem900@gmail.com') {
+          const demoUser = getDemoUser();
+          localStorage.setItem('spendwise_user', JSON.stringify(demoUser));
+          return demoUser;
         }
         return parsed;
       }
-      localStorage.setItem('spendwise_user', JSON.stringify(DEFAULT_USER));
-      return DEFAULT_USER;
+      const demoUser = getDemoUser();
+      localStorage.setItem('spendwise_user', JSON.stringify(demoUser));
+      return demoUser;
     } catch (e) {
-      return DEFAULT_USER;
+      return getDemoUser();
     }
   });
 
@@ -96,22 +114,46 @@ export default function App() {
   // Load Transactions, Budgets & Savings Goals scoped by User ID
   const loadData = async () => {
     if (!user) return;
-    const txRes = await apiService.getTransactions({}, user.id);
-    setTransactions(txRes.data || []);
+    const isVirtualUser = user.id !== 101 && user.id !== 1 && String(user.id).length >= 8;
+
+    let txRes = await apiService.getTransactions({}, user.id);
+    let txData = txRes.data || [];
+
+    // Auto-seed default transactions if virtual user has no database transactions yet
+    if (isVirtualUser && txRes.isBackend && txData.length === 0) {
+      for (const tx of INITIAL_TRANSACTIONS) {
+        const txPayload = { ...tx, id: null };
+        await apiService.createTransaction(txPayload, user.id);
+      }
+      txRes = await apiService.getTransactions({}, user.id);
+      txData = txRes.data || [];
+    }
+
+    setTransactions(txData);
     setIsBackend(txRes.isBackend);
 
     const bRes = await apiService.getBudgets(user.id);
     setBudgets(bRes || []);
 
     try {
-      const cloudGoals = await apiService.getSavingsGoals(user.id);
-      if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
+      let cloudGoals = await apiService.getSavingsGoals(user.id);
+
+      // Auto-seed default savings goals if virtual user has no database goals yet
+      if (isVirtualUser && txRes.isBackend && (!cloudGoals || cloudGoals.length === 0)) {
+        for (const goal of DEFAULT_SAVINGS_GOALS) {
+          const goalPayload = { title: goal.title, targetAmount: goal.targetAmount, savedAmount: goal.savedAmount, currency: goal.currency };
+          await apiService.createSavingsGoal(user.id, goalPayload);
+        }
+        cloudGoals = await apiService.getSavingsGoals(user.id);
+      }
+
+      if (cloudGoals && Array.isArray(cloudGoals)) {
         setSavingsGoals(cloudGoals);
         const storageKey = `spendwise_savings_goals_${user.id}`;
         localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
       }
     } catch (e) {
-      console.warn('[SpendWise] Failed to load savings goals in loadData:', e.message);
+      console.warn('[SpendWise] Failed to load/seed savings goals in loadData:', e.message);
     }
   };
 
@@ -175,16 +217,35 @@ export default function App() {
   };
 
   const handleLogout = () => {
-    if (user?.id === 101 || user?.id === '101' || user?.id === 1 || user?.id === '1') {
-      localStorage.removeItem('spendwise_transactions_101');
-      localStorage.removeItem('spendwise_budgets_101');
-      localStorage.removeItem('spendwise_savings_goals_101');
-      localStorage.removeItem('spendwise_deleted_goals_101');
-      localStorage.removeItem('spendwise_transactions_1');
-      localStorage.removeItem('spendwise_budgets_1');
-      localStorage.removeItem('spendwise_savings_goals_1');
-      localStorage.removeItem('spendwise_deleted_goals_1');
+    const virtualId = localStorage.getItem('spendwise_virtual_user_id');
+    if (virtualId) {
+      const vId = Number(virtualId);
+      // Clean up the virtual user's data from PostgreSQL database to keep it clean!
+      apiService.resetSampleData(vId);
+      try {
+        apiService.getSavingsGoals(vId).then(goals => {
+          if (Array.isArray(goals)) {
+            goals.forEach(g => apiService.deleteSavingsGoal(g.id));
+          }
+        });
+      } catch (e) {}
+
+      localStorage.removeItem(`spendwise_transactions_${vId}`);
+      localStorage.removeItem(`spendwise_budgets_${vId}`);
+      localStorage.removeItem(`spendwise_savings_goals_${vId}`);
+      localStorage.removeItem(`spendwise_deleted_goals_${vId}`);
+      localStorage.removeItem('spendwise_virtual_user_id');
     }
+
+    localStorage.removeItem('spendwise_transactions_101');
+    localStorage.removeItem('spendwise_budgets_101');
+    localStorage.removeItem('spendwise_savings_goals_101');
+    localStorage.removeItem('spendwise_deleted_goals_101');
+    localStorage.removeItem('spendwise_transactions_1');
+    localStorage.removeItem('spendwise_budgets_1');
+    localStorage.removeItem('spendwise_savings_goals_1');
+    localStorage.removeItem('spendwise_deleted_goals_1');
+
     setUser(null);
     localStorage.removeItem('spendwise_user');
     setTransactions([]);
