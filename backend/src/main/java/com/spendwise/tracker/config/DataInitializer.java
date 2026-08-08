@@ -2,6 +2,7 @@ package com.spendwise.tracker.config;
 
 import com.spendwise.tracker.model.*;
 import com.spendwise.tracker.repository.BudgetRepository;
+import com.spendwise.tracker.repository.SavingsGoalRepository;
 import com.spendwise.tracker.repository.TransactionRepository;
 import com.spendwise.tracker.repository.UserRepository;
 import com.spendwise.tracker.util.PasswordEncoderUtil;
@@ -22,6 +23,7 @@ public class DataInitializer implements CommandLineRunner {
     private final UserRepository userRepository;
     private final BudgetRepository budgetRepository;
     private final TransactionRepository transactionRepository;
+    private final SavingsGoalRepository savingsGoalRepository;
 
     @Override
     public void run(String... args) throws Exception {
@@ -83,6 +85,32 @@ public class DataInitializer implements CommandLineRunner {
                     new Transaction(null, 1L, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "USD", "Wellness clinic checkup", null),
                     new Transaction(null, 1L, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "USD", "Software development learning course", null)
             ));
+        }
+
+        // 4. Seed Initial Savings Goals if table is empty
+        if (savingsGoalRepository.count() == 0) {
+            SavingsGoal g1 = new SavingsGoal();
+            g1.setUserId(1L);
+            g1.setTitle("🏖️ Summer Vacation");
+            g1.setTargetAmount(new BigDecimal("2000.00"));
+            g1.setSavedAmount(BigDecimal.ZERO);
+            g1.setCurrency("USD");
+
+            SavingsGoal g2 = new SavingsGoal();
+            g2.setUserId(1L);
+            g2.setTitle("💻 New Work Laptop");
+            g2.setTargetAmount(new BigDecimal("2400.00"));
+            g2.setSavedAmount(BigDecimal.ZERO);
+            g2.setCurrency("USD");
+
+            SavingsGoal g3 = new SavingsGoal();
+            g3.setUserId(1L);
+            g3.setTitle("🛡️ Emergency Fund");
+            g3.setTargetAmount(new BigDecimal("5000.00"));
+            g3.setSavedAmount(BigDecimal.ZERO);
+            g3.setCurrency("USD");
+
+            savingsGoalRepository.saveAll(List.of(g1, g2, g3));
         }
     }
 }
