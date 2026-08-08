@@ -132,8 +132,21 @@ export default function App() {
     setTransactions(txData);
     setIsBackend(txRes.isBackend);
 
-    const bRes = await apiService.getBudgets(user.id);
-    setBudgets(bRes || []);
+    let bRes = await apiService.getBudgets(user.id);
+    let budgetData = bRes || [];
+
+    // Auto-seed default budgets into database if virtual user has not seeded budgets yet
+    const budgetSeededKey = `spendwise_budgets_seeded_${user.id}`;
+    if (isVirtualUser && txRes.isBackend && !localStorage.getItem(budgetSeededKey)) {
+      for (const b of INITIAL_BUDGETS) {
+        await apiService.updateBudget(b.category, b.monthlyLimit, user.id, 'USD', 'MONTHLY');
+      }
+      localStorage.setItem(budgetSeededKey, 'true');
+      bRes = await apiService.getBudgets(user.id);
+      budgetData = bRes || [];
+    }
+
+    setBudgets(budgetData);
 
     try {
       let cloudGoals = await apiService.getSavingsGoals(user.id);
@@ -234,6 +247,7 @@ export default function App() {
       localStorage.removeItem(`spendwise_budgets_${vId}`);
       localStorage.removeItem(`spendwise_savings_goals_${vId}`);
       localStorage.removeItem(`spendwise_deleted_goals_${vId}`);
+      localStorage.removeItem(`spendwise_budgets_seeded_${vId}`);
       localStorage.removeItem('spendwise_virtual_user_id');
     }
 
