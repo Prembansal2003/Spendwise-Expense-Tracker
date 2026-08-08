@@ -161,17 +161,7 @@ export const apiService = {
         const backendData = await res.json();
         isBackend = true;
         if (Array.isArray(backendData)) {
-          if (backendData.length > 0) {
-            const map = new Map();
-            if (isDemoUser) {
-              localList.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
-            }
-            backendData.forEach(item => { if (item && item.id != null) map.set(String(item.id), item); });
-            combinedList = Array.from(map.values());
-          } else if (!isDemoUser) {
-            // Fresh new registered account: start empty
-            combinedList = [];
-          }
+          combinedList = backendData;
           setLocalData(storageKey, combinedList);
         }
       }
