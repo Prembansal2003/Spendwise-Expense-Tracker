@@ -175,6 +175,16 @@ export default function App() {
   };
 
   const handleLogout = () => {
+    if (user?.id === 101 || user?.id === '101' || user?.id === 1 || user?.id === '1') {
+      localStorage.removeItem('spendwise_transactions_101');
+      localStorage.removeItem('spendwise_budgets_101');
+      localStorage.removeItem('spendwise_savings_goals_101');
+      localStorage.removeItem('spendwise_deleted_goals_101');
+      localStorage.removeItem('spendwise_transactions_1');
+      localStorage.removeItem('spendwise_budgets_1');
+      localStorage.removeItem('spendwise_savings_goals_1');
+      localStorage.removeItem('spendwise_deleted_goals_1');
+    }
     setUser(null);
     localStorage.removeItem('spendwise_user');
     setTransactions([]);
