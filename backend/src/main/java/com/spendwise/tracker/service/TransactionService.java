@@ -28,6 +28,15 @@ public class TransactionService {
         // Fetch by userId first if provided, else fetch all
         if (userId != null) {
             transactions = transactionRepository.findByUserIdOrderByTransactionDateDescCreatedAtDesc(userId);
+            if (transactions.isEmpty()) {
+                boolean isVirtualDemo = (userId >= 100000000L && userId <= 999999999L);
+                if (userId.equals(101L) || userId.equals(1L) || isVirtualDemo) {
+                    transactions = seedDefaultTransactions(userId);
+                    transactions = transactions.stream()
+                        .sorted(Comparator.comparing(Transaction::getTransactionDate).reversed())
+                        .collect(Collectors.toList());
+                }
+            }
         } else {
             transactions = transactionRepository.findAllByOrderByTransactionDateDescCreatedAtDesc();
         }
@@ -128,6 +137,23 @@ public class TransactionService {
         }
     }
 
+    private List<Transaction> seedDefaultTransactions(Long userId) {
+        List<Transaction> demoTxList = List.of(
+            new Transaction(null, userId, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.now().minusDays(6), "Bank Transfer", "USD", "Monthly tech payroll credit", null),
+            new Transaction(null, userId, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.now().minusDays(5), "UPI", "USD", "iOS app milestone completion", null),
+            new Transaction(null, userId, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.now().minusDays(4), "Bank Transfer", "USD", "Quarterly index fund yield", null),
+            new Transaction(null, userId, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.now().minusDays(5), "Bank Transfer", "USD", "Monthly housing rent payment", null),
+            new Transaction(null, userId, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.now().minusDays(4), "Credit Card", "USD", "Whole Foods market shopping", null),
+            new Transaction(null, userId, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.now().minusDays(3), "Debit Card", "USD", "Monthly home utility bills", null),
+            new Transaction(null, userId, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.now().minusDays(3), "Credit Card", "USD", "Shell station fuel refill", null),
+            new Transaction(null, userId, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.now().minusDays(2), "Credit Card", "USD", "Weekend concert & restaurant dining", null),
+            new Transaction(null, userId, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.now().minusDays(2), "Credit Card", "USD", "Workstation upgrade", null),
+            new Transaction(null, userId, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "USD", "Wellness clinic health checkup", null),
+            new Transaction(null, userId, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "USD", "Software development learning course", null)
+        );
+        return transactionRepository.saveAll(demoTxList);
+    }
+
     @org.springframework.transaction.annotation.Transactional
     public void deleteAllTransactionsByUserId(Long userId) {
         Long targetUserId = (userId != null) ? userId : 101L;
@@ -135,20 +161,7 @@ public class TransactionService {
         transactionRepository.deleteByUserId(queryId);
         boolean isVirtualDemo = (targetUserId >= 100000000L && targetUserId <= 999999999L);
         if (targetUserId.equals(101L) || targetUserId.equals(1L) || isVirtualDemo) {
-            List<Transaction> demoTxList = List.of(
-                new Transaction(null, queryId, "Senior Software Engineer Salary", new BigDecimal("5500.00"), TransactionType.INCOME, Category.SALARY, LocalDate.parse("2026-08-01"), "Bank Transfer", "USD", "Monthly tech payroll credit", null),
-                new Transaction(null, queryId, "Freelance Mobile App Contract", new BigDecimal("1200.00"), TransactionType.INCOME, Category.FREELANCE, LocalDate.parse("2026-08-02"), "UPI", "USD", "iOS app milestone completion", null),
-                new Transaction(null, queryId, "Stock Dividend & ETF Yield", new BigDecimal("350.00"), TransactionType.INCOME, Category.INVESTMENT, LocalDate.parse("2026-08-03"), "Bank Transfer", "USD", "Quarterly index fund yield", null),
-                new Transaction(null, queryId, "Luxury Apartment Rent", new BigDecimal("1600.00"), TransactionType.EXPENSE, Category.HOUSING, LocalDate.parse("2026-08-01"), "Bank Transfer", "USD", "Monthly housing rent payment", null),
-                new Transaction(null, queryId, "Organic Groceries & Fresh Produce", new BigDecimal("215.50"), TransactionType.EXPENSE, Category.FOOD, LocalDate.parse("2026-08-02"), "Credit Card", "USD", "Whole Foods market shopping", null),
-                new Transaction(null, queryId, "High-Speed Fiber & Electricity Bill", new BigDecimal("185.00"), TransactionType.EXPENSE, Category.UTILITIES, LocalDate.parse("2026-08-03"), "Debit Card", "USD", "Monthly home utility bills", null),
-                new Transaction(null, queryId, "Car Gasoline Refill & Highway Tolls", new BigDecimal("85.00"), TransactionType.EXPENSE, Category.TRANSPORT, LocalDate.parse("2026-08-04"), "Credit Card", "USD", "Shell station fuel refill", null),
-                new Transaction(null, queryId, "Concert Tickets & Fine Dining", new BigDecimal("145.00"), TransactionType.EXPENSE, Category.ENTERTAINMENT, LocalDate.parse("2026-08-04"), "Credit Card", "USD", "Weekend concert & restaurant dining", null),
-                new Transaction(null, queryId, "4K UltraHD Monitor & Tech Gear", new BigDecimal("320.00"), TransactionType.EXPENSE, Category.SHOPPING, LocalDate.parse("2026-08-05"), "Credit Card", "USD", "Workstation upgrade", null),
-                new Transaction(null, queryId, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.parse("2026-08-06"), "Credit Card", "USD", "Wellness clinic health checkup", null),
-                new Transaction(null, queryId, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.parse("2026-08-06"), "UPI", "USD", "Software development learning course", null)
-            );
-            transactionRepository.saveAll(demoTxList);
+            seedDefaultTransactions(queryId);
         }
     }
 
