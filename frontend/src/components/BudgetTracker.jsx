@@ -132,7 +132,7 @@ export default function BudgetTracker({
       createdGoal = await api.createSavingsGoal(userId, {
         title: newGoalTitle.trim(),
         targetAmount: targetInUSD,
-        savedAmount: savedInUSD,
+        savedAmount: 0,
         currency: 'USD'
       });
     } catch (err) {
@@ -142,7 +142,7 @@ export default function BudgetTracker({
     const newGoal = createdGoal || {
       id: Date.now(),
       title: newGoalTitle.trim(),
-      savedAmount: savedInUSD,
+      savedAmount: 0,
       targetAmount: targetInUSD,
       currency: 'USD'
     };
@@ -593,7 +593,7 @@ export default function BudgetTracker({
                         })
                         .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', 'USD'), 0);
 
-                      const totalSavedUSD = (goal.savedAmount || 0) + depositSumUSD;
+                      const totalSavedUSD = Math.max(goal.savedAmount || 0, depositSumUSD);
 
                       const savedInView = convertCurrency(totalSavedUSD, goal.currency || 'USD', currency);
                       const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
