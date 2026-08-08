@@ -183,6 +183,11 @@ export default function App() {
         const txRes = await apiService.getTransactions({}, user.id);
         if (txRes && Array.isArray(txRes.data)) {
           setTransactions(prev => {
+            // Hardening: if the backend randomly returns 0 items during polling but we had items, DO NOT wipe!
+            if (txRes.data.length === 0 && prev.length > 0) {
+              console.warn('[SpendWise] Backend returned 0 items but we had data. Ignoring to prevent wipe!');
+              return prev; 
+            }
             if (JSON.stringify(prev) !== JSON.stringify(txRes.data)) {
               return txRes.data;
             }

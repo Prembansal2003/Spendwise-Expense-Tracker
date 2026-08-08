@@ -142,7 +142,35 @@ public class BudgetService {
             budget.setCurrency(currency != null ? currency : "USD");
             budget.setMonth(month);
             budget.setYear(year);
-        }
         return budgetRepository.save(budget);
+    }
+
+    public void syncBudgetsForUser(Long userId) {
+        Long targetUserId = (userId != null && userId.equals(101L)) ? 1L : userId;
+        LocalDate now = LocalDate.now();
+        int month = now.getMonthValue();
+        int year = now.getYear();
+        
+        List<Budget> budgets = budgetRepository.findByUserIdAndMonthAndYear(targetUserId, month, year);
+        if (budgets.isEmpty()) {
+            getBudgetProgressForCurrentMonth(targetUserId);
+            budgets = budgetRepository.findByUserIdAndMonthAndYear(targetUserId, month, year);
+        }
+        
+        LocalDate startOfMonth = now.withDayOfMonth(1);
+        LocalDate endOfMonth = now.withDayOfMonth(now.lengthOfMonth());
+        List<Object[]> categoryExpenses = transactionRepository.getCategoryExpensesByUserIdAndDateRange(targetUserId, startOfMonth, endOfMonth);
+
+        Map<Category, BigDecimal> spendMap = categoryExpenses.stream().collect(Collectors.toMap(
+                row -> (Category) row[0],
+                row -> (BigDecimal) row[1],
+                BigDecimal::add
+        ));
+
+        for (Budget b : budgets) {
+            BigDecimal actualSpend = spendMap.getOrDefault(b.getCategory(), BigDecimal.ZERO);
+            b.setCurrentSpend(actualSpend);
+        }
+        budgetRepository.saveAll(budgets);
     }
 }

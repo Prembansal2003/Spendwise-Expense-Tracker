@@ -21,6 +21,7 @@ public class TransactionService {
 
     private final TransactionRepository transactionRepository;
     private final SavingsGoalService savingsGoalService;
+    private final BudgetService budgetService;
 
     public List<Transaction> getAllTransactions(TransactionType type, Category category, String search, LocalDate startDate, LocalDate endDate, Long userId) {
         List<Transaction> transactions;
@@ -151,7 +152,11 @@ public class TransactionService {
             new Transaction(null, userId, "Annual Comprehensive Health Checkup", new BigDecimal("150.00"), TransactionType.EXPENSE, Category.HEALTH, LocalDate.now().minusDays(1), "Credit Card", "USD", "Wellness clinic health checkup", null),
             new Transaction(null, userId, "Professional Tech Books & Courses", new BigDecimal("75.00"), TransactionType.EXPENSE, Category.OTHER, LocalDate.now(), "UPI", "USD", "Software development learning course", null)
         );
-        return transactionRepository.saveAll(demoTxList);
+        List<Transaction> savedList = transactionRepository.saveAll(demoTxList);
+        try {
+            budgetService.syncBudgetsForUser(userId);
+        } catch (Exception e) {}
+        return savedList;
     }
 
     @org.springframework.transaction.annotation.Transactional
