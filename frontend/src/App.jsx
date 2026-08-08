@@ -190,6 +190,19 @@ export default function App() {
     } catch (e) {}
   };
 
+  // Direct Create Transaction (guaranteed non-edit path)
+  const handleCreateTransactionDirect = async (data) => {
+    if (!user) return;
+    const dataToSave = {
+      ...data,
+      amount: Number(data.amount),
+      currency: data.currency || currency || 'USD'
+    };
+    await apiService.createTransaction(dataToSave, user.id);
+    showToast('🎉 New transaction recorded!');
+    await loadData();
+  };
+
   // Add / Edit Transaction
   const handleSaveTransaction = async (data) => {
     if (!user) return;
@@ -363,7 +376,7 @@ export default function App() {
             currency={currency}
             onUpdateBudget={handleUpdateBudget}
             transactions={transactions}
-            onCreateTransaction={handleSaveTransaction}
+            onCreateTransaction={handleCreateTransactionDirect}
           />
         )}
       </main>

@@ -45,6 +45,16 @@ export default function BudgetTracker({
   const [editingGoalId, setEditingGoalId] = useState(null);
   const [editSavedAddAmount, setEditSavedAddAmount] = useState('');
 
+  // Persisted Deleted Goal IDs to prevent auto-reconstruction from reappearing
+  const [deletedGoalIds, setDeletedGoalIds] = useState(() => {
+    try {
+      const saved = localStorage.getItem(`spendwise_deleted_goals_${userId}`);
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   // Target Goal Inline Edit State
   const [editingTargetGoalId, setEditingTargetGoalId] = useState(null);
   const [editGoalTitle, setEditGoalTitle] = useState('');
@@ -196,15 +206,23 @@ export default function BudgetTracker({
     setEditSavedAddAmount('');
   };
 
-  // Delete Savings Goal
-  const handleDeleteGoal = async (goalId) => {
-    if (window.confirm('Delete this savings goal?')) {
+  // Delete Savings Goal permanently
+  const handleDeleteGoal = async (goalId, goalTitle = '') => {
+    if (window.confirm(`Delete active savings goal "${goalTitle || 'this goal'}"?`)) {
       if (typeof goalId === 'number') {
         try {
           await api.deleteSavingsGoal(goalId);
         } catch (e) {}
       }
+      const cleanTitleKey = (goalTitle || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
       setSavingsGoals(prev => prev.filter(g => g.id !== goalId));
+      setDeletedGoalIds(prev => {
+        const updated = [...prev, goalId, String(goalId), cleanTitleKey].filter(Boolean);
+        try {
+          localStorage.setItem(`spendwise_deleted_goals_${userId}`, JSON.stringify(updated));
+        } catch (e) {}
+        return updated;
+      });
     }
   };
 
@@ -306,6 +324,15 @@ export default function BudgetTracker({
         });
       }
     }
+  });
+
+  // Filter out goals explicitly deleted by user
+  const visibleSavingsGoals = mergedSavingsGoals.filter(g => {
+    const cleanT = (g.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
+    const isDeleted = deletedGoalIds.includes(g.id) ||
+                      deletedGoalIds.includes(String(g.id)) ||
+                      deletedGoalIds.includes(cleanT);
+    return !isDeleted;
   });
 
   const totalRemainingInViewCurrency = totalBudgetedInViewCurrency - totalSpentInViewCurrency;
@@ -524,7 +551,7 @@ export default function BudgetTracker({
         )}
 
         {/* Savings Goals Grid */}
-        {mergedSavingsGoals.length === 0 ? (
+        {visibleSavingsGoals.length === 0 ? (
           <div
             style={{
               padding: '2rem',
@@ -540,7 +567,7 @@ export default function BudgetTracker({
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            {mergedSavingsGoals.map(goal => {
+            {visibleSavingsGoals.map(goal => {
               // Robust multi-criteria matching: Match Goal ID in notes, clean title, or key title words
               const cleanGoalTitle = (goal.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
               const goalWords = cleanGoalTitle.split(/\s+/).filter(w => w.length >= 3);
