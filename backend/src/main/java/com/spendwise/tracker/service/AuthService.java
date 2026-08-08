@@ -137,6 +137,11 @@ public class AuthService {
         String token = "sw_token_" + UUID.randomUUID().toString();
         String createdStr = user.getCreatedAt() != null ?
                 user.getCreatedAt().format(DateTimeFormatter.ofPattern("MMM yyyy")) : "Aug 2026";
+                
+        String avatarUrl = user.getAvatarUrl();
+        if (avatarUrl != null && avatarUrl.contains("images.unsplash.com")) {
+            avatarUrl = "/default-avatar.png";
+        }
 
         return AuthResponse.builder()
                 .token(token)
@@ -144,7 +149,7 @@ public class AuthService {
                 .name(user.getName())
                 .email(user.getEmail())
                 .role(user.getRole())
-                .avatarUrl(user.getAvatarUrl())
+                .avatarUrl(avatarUrl)
                 .createdAt(createdStr)
                 .build();
     }

@@ -61,6 +61,13 @@ export default function App() {
       const saved = localStorage.getItem('spendwise_user');
       if (saved) {
         const parsed = JSON.parse(saved);
+        
+        // Force migration of old Unsplash stock avatars to the new uploaded default avatar
+        if (parsed.avatarUrl && parsed.avatarUrl.includes('unsplash.com')) {
+          parsed.avatarUrl = '/default-avatar.png';
+          localStorage.setItem('spendwise_user', JSON.stringify(parsed));
+        }
+
         if (parsed.id === 101 || parsed.id === '101' || parsed.id === 1 || parsed.id === '1' || parsed.email === 'alex.morgan@spendwise.io' || parsed.email === 'bansalprem900@gmail.com') {
           const demoUser = getDemoUser();
           localStorage.setItem('spendwise_user', JSON.stringify(demoUser));
@@ -393,7 +400,14 @@ export default function App() {
   useEffect(() => {
     if (user?.id) {
       const avatarKey = `spendwise_avatar_${user.id}`;
-      const savedLocalAvatar = localStorage.getItem(avatarKey);
+      let savedLocalAvatar = localStorage.getItem(avatarKey);
+      
+      // Force migration of old Unsplash stock avatars
+      if (savedLocalAvatar && savedLocalAvatar.includes('unsplash.com')) {
+        savedLocalAvatar = '/default-avatar.png';
+        localStorage.setItem(avatarKey, savedLocalAvatar);
+      }
+
       if (savedLocalAvatar && user.avatarUrl !== savedLocalAvatar) {
         setUser(prev => ({ ...prev, avatarUrl: savedLocalAvatar }));
       }
