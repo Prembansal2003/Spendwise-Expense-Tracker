@@ -434,6 +434,22 @@ export const apiService = {
       console.warn('[SpendWise API] deleteSavingsGoal backend sync skipped:', err.message);
     }
     return false;
+  },
+
+  async updateSavingsGoal(goalId, goalData = {}) {
+    try {
+      const res = await fetchApi(`${API_BASE_URL}/savings-goals/${goalId}`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(goalData)
+      });
+      if (res.ok) {
+        return await res.json();
+      }
+    } catch (err) {
+      console.warn('[SpendWise API] updateSavingsGoal backend sync skipped:', err.message);
+    }
+    return null;
   }
 };
 

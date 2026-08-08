@@ -60,6 +60,11 @@ public class TransactionService {
         return transactionRepository.findById(id);
     }
 
+    private boolean isSavingsTransaction(String title, String notes) {
+        return (title != null && (title.toLowerCase().contains("savings deposit") || title.toLowerCase().contains("savings goal deposit")))
+                || (notes != null && notes.contains("[GoalID:"));
+    }
+
     public Transaction createTransaction(TransactionRequest request) {
         Transaction transaction = new Transaction();
         transaction.setUserId(request.getUserId() != null ? request.getUserId() : 1L);
@@ -72,7 +77,7 @@ public class TransactionService {
         transaction.setCurrency(request.getCurrency() != null ? request.getCurrency() : "USD");
         transaction.setNotes(request.getNotes());
         Transaction saved = transactionRepository.save(transaction);
-        if (saved.getTitle() != null && (saved.getTitle().toLowerCase().contains("savings deposit") || saved.getTitle().toLowerCase().contains("savings goal deposit"))) {
+        if (isSavingsTransaction(saved.getTitle(), saved.getNotes())) {
             savingsGoalService.syncGoalFromTransaction(saved.getUserId(), saved.getTitle(), saved.getNotes(), saved.getAmount(), "ADD");
         }
         return saved;
@@ -83,6 +88,8 @@ public class TransactionService {
                 .orElseThrow(() -> new RuntimeException("Transaction not found with id: " + id));
 
         BigDecimal oldAmount = transaction.getAmount();
+        String oldTitle = transaction.getTitle();
+        String oldNotes = transaction.getNotes();
 
         if (request.getUserId() != null) transaction.setUserId(request.getUserId());
         transaction.setTitle(request.getTitle());
@@ -95,16 +102,25 @@ public class TransactionService {
         transaction.setNotes(request.getNotes());
 
         Transaction updated = transactionRepository.save(transaction);
-        if (updated.getTitle() != null && (updated.getTitle().toLowerCase().contains("savings deposit") || updated.getTitle().toLowerCase().contains("savings goal deposit"))) {
+
+        boolean wasSavings = isSavingsTransaction(oldTitle, oldNotes);
+        boolean isSavings = isSavingsTransaction(updated.getTitle(), updated.getNotes());
+
+        if (wasSavings && isSavings) {
             savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), updated.getNotes(), oldAmount, updated.getAmount());
+        } else if (wasSavings && !isSavings) {
+            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), oldTitle, oldNotes, oldAmount, "DEDUCT");
+        } else if (!wasSavings && isSavings) {
+            savingsGoalService.syncGoalFromTransaction(updated.getUserId(), updated.getTitle(), updated.getNotes(), updated.getAmount(), "ADD");
         }
+
         return updated;
     }
 
     public void deleteTransaction(Long id) {
         Transaction tx = transactionRepository.findById(id).orElse(null);
         if (tx != null) {
-            if (tx.getTitle() != null && (tx.getTitle().toLowerCase().contains("savings deposit") || tx.getTitle().toLowerCase().contains("savings goal deposit"))) {
+            if (isSavingsTransaction(tx.getTitle(), tx.getNotes())) {
                 savingsGoalService.syncGoalFromTransaction(tx.getUserId(), tx.getTitle(), tx.getNotes(), tx.getAmount(), "DEDUCT");
             }
             transactionRepository.deleteById(id);

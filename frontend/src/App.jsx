@@ -24,6 +24,12 @@ const DEFAULT_USER = {
   createdAt: 'Aug 2026'
 };
 
+const DEFAULT_SAVINGS_GOALS = [
+  { id: 1, title: '🏖️ Summer Vacation', savedAmount: 0, targetAmount: 2000, currency: 'USD' },
+  { id: 2, title: '💻 New Work Laptop', savedAmount: 0, targetAmount: 2400, currency: 'USD' },
+  { id: 3, title: '🛡️ Emergency Fund', savedAmount: 0, targetAmount: 5000, currency: 'USD' }
+];
+
 export default function App() {
   const [activeTab, setActiveTab] = useState('dashboard');
   const [darkMode, setDarkMode] = useState(() => {
@@ -56,6 +62,18 @@ export default function App() {
   const [budgets, setBudgets] = useState([]);
   const [isBackend, setIsBackend] = useState(false);
 
+  const [savingsGoals, setSavingsGoals] = useState(() => {
+    const isDemoUser = (user?.id === 101 || user?.id === '101' || user?.id === 1 || user?.id === '1');
+    const storageKey = `spendwise_savings_goals_${user?.id || 101}`;
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) return JSON.parse(saved);
+      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
+    } catch (e) {
+      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
+    }
+  });
+
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
   const [isAuthModalOpen, setIsAuthModalOpen] = useState(false);
@@ -75,7 +93,7 @@ export default function App() {
     fetchLiveExchangeRates();
   }, [darkMode]);
 
-  // Load Transactions & Budgets scoped by User ID
+  // Load Transactions, Budgets & Savings Goals scoped by User ID
   const loadData = async () => {
     if (!user) return;
     const txRes = await apiService.getTransactions({}, user.id);
@@ -84,6 +102,17 @@ export default function App() {
 
     const bRes = await apiService.getBudgets(user.id);
     setBudgets(bRes || []);
+
+    try {
+      const cloudGoals = await apiService.getSavingsGoals(user.id);
+      if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
+        setSavingsGoals(cloudGoals);
+        const storageKey = `spendwise_savings_goals_${user.id}`;
+        localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
+      }
+    } catch (e) {
+      console.warn('[SpendWise] Failed to load savings goals in loadData:', e.message);
+    }
   };
 
   useEffect(() => {
@@ -112,6 +141,16 @@ export default function App() {
           setBudgets(prev => {
             if (JSON.stringify(prev) !== JSON.stringify(bRes)) {
               return bRes;
+            }
+            return prev;
+          });
+        }
+
+        const gRes = await apiService.getSavingsGoals(user.id);
+        if (gRes && Array.isArray(gRes)) {
+          setSavingsGoals(prev => {
+            if (JSON.stringify(prev) !== JSON.stringify(gRes)) {
+              return gRes;
             }
             return prev;
           });
@@ -170,7 +209,7 @@ export default function App() {
 
     if (matchedIdx === -1) return;
 
-    const matchedGoal = goals[matchedIdx];
+    const matchedGoal = { ...goals[matchedIdx] };
 
     if (action === 'DELETE') {
       const amountInUSD = convertCurrency(transaction.amount, transaction.currency || 'USD', 'USD');
@@ -185,6 +224,7 @@ export default function App() {
     }
 
     goals[matchedIdx] = matchedGoal;
+    setSavingsGoals([...goals]);
     try {
       localStorage.setItem(storageKey, JSON.stringify(goals));
     } catch (e) {}
@@ -377,6 +417,9 @@ export default function App() {
             onUpdateBudget={handleUpdateBudget}
             transactions={transactions}
             onCreateTransaction={handleCreateTransactionDirect}
+            savingsGoals={savingsGoals}
+            setSavingsGoals={setSavingsGoals}
+            onRefreshData={loadData}
           />
         )}
       </main>

@@ -15,7 +15,10 @@ export default function BudgetTracker({
   currency,
   onUpdateBudget,
   transactions = [],
-  onCreateTransaction
+  onCreateTransaction,
+  savingsGoals = [],
+  setSavingsGoals = () => {},
+  onRefreshData = () => {}
 }) {
   const [budgetPeriod, setBudgetPeriod] = useState('monthly'); // 'monthly' or 'yearly'
   const [editingCategory, setEditingCategory] = useState(null);
@@ -23,19 +26,7 @@ export default function BudgetTracker({
   const [editPeriod, setEditPeriod] = useState('MONTHLY');
   const [editCurrency, setEditCurrency] = useState('USD');
 
-  const isDemoUser = (userId === 101 || userId === '101' || userId === 1 || userId === '1');
   const storageKey = `spendwise_savings_goals_${userId}`;
-
-  // Interactive Savings Goals State & User-Scoped Persistence
-  const [savingsGoals, setSavingsGoals] = useState(() => {
-    try {
-      const saved = localStorage.getItem(storageKey);
-      if (saved) return JSON.parse(saved);
-      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
-    } catch (e) {
-      return isDemoUser ? DEFAULT_SAVINGS_GOALS : [];
-    }
-  });
 
   const [showAddGoalModal, setShowAddGoalModal] = useState(false);
   const [newGoalTitle, setNewGoalTitle] = useState('');
@@ -60,31 +51,6 @@ export default function BudgetTracker({
   const [editGoalTitle, setEditGoalTitle] = useState('');
   const [editGoalTargetVal, setEditGoalTargetVal] = useState('');
   const [editGoalCurrency, setEditGoalCurrency] = useState('USD');
-
-  useEffect(() => {
-    async function loadCloudGoals() {
-      try {
-        const cloudGoals = await api.getSavingsGoals(userId);
-        if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
-          setSavingsGoals(cloudGoals);
-          localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
-          return;
-        }
-      } catch (e) {}
-
-      try {
-        const saved = localStorage.getItem(storageKey);
-        if (saved) {
-          setSavingsGoals(JSON.parse(saved));
-        } else {
-          setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
-        }
-      } catch (e) {
-        setSavingsGoals(isDemoUser ? DEFAULT_SAVINGS_GOALS : []);
-      }
-    }
-    loadCloudGoals();
-  }, [userId, storageKey, isDemoUser]);
 
   useEffect(() => {
     try {
@@ -166,6 +132,7 @@ export default function BudgetTracker({
     setNewGoalTarget('');
     setNewGoalSaved('');
     setShowAddGoalModal(false);
+    onRefreshData();
   };
 
   // Add Deposit to Goal & Deduct Amount from Available Balance
@@ -189,14 +156,7 @@ export default function BudgetTracker({
       });
     }
 
-    // 2. Reload goals from cloud DB to reflect the backend-updated saved_amount (single source of truth)
-    try {
-      const cloudGoals = await api.getSavingsGoals(userId);
-      if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
-        setSavingsGoals(cloudGoals);
-        localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
-      }
-    } catch (e) {}
+    onRefreshData();
   };
 
 
@@ -217,6 +177,7 @@ export default function BudgetTracker({
         } catch (e) {}
         return updated;
       });
+      onRefreshData();
     }
   };
 
@@ -256,6 +217,7 @@ export default function BudgetTracker({
     }));
 
     setEditingTargetGoalId(null);
+    onRefreshData();
   };
 
   // Compute stat card totals in active view currency
