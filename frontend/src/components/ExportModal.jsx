@@ -61,7 +61,7 @@ export default function ExportModal({
       t.category,
       t.transactionDate,
       `"${t.paymentMethod || ''}"`,
-      `"${(t.notes || '').replace(/"/g, '""')}"`
+      `"${(t.notes || '').replace(/\[GoalID:\d+\]\[Target:[\d.]+\]\s*/g, '').replace(/"/g, '""')}"`
     ]);
 
     const csvContent = 'data:text/csv;charset=utf-8,' + [headers.join(','), ...rows.map(e => e.join(','))].join('\n');

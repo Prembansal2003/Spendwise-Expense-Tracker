@@ -20,8 +20,19 @@ export default function TransactionModal({
     notes: ''
   });
 
+  const [hiddenGoalTags, setHiddenGoalTags] = useState('');
+
   useEffect(() => {
     if (editingTransaction) {
+      let notes = editingTransaction.notes || '';
+      let tags = '';
+      const tagMatch = notes.match(/(\[GoalID:\d+\]\[Target:[\d.]+\]\s*)/);
+      if (tagMatch) {
+        tags = tagMatch[1];
+        notes = notes.replace(tags, '');
+      }
+      setHiddenGoalTags(tags);
+
       setFormData({
         title: editingTransaction.title || '',
         amount: editingTransaction.amount != null ? editingTransaction.amount : '',
@@ -30,9 +41,10 @@ export default function TransactionModal({
         category: editingTransaction.category || 'FOOD',
         transactionDate: editingTransaction.transactionDate || new Date().toISOString().split('T')[0],
         paymentMethod: editingTransaction.paymentMethod || 'Credit Card',
-        notes: editingTransaction.notes || ''
+        notes: notes
       });
     } else {
+      setHiddenGoalTags('');
       setFormData({
         title: '',
         amount: '',
@@ -71,7 +83,8 @@ export default function TransactionModal({
 
     onSave({
       ...formData,
-      amount: Number(formData.amount)
+      amount: Number(formData.amount),
+      notes: hiddenGoalTags + formData.notes
     });
     onClose();
   };

@@ -140,6 +140,12 @@ export default function BudgetTracker({
     if (!editSavedAddAmount || Number(editSavedAddAmount) <= 0) return;
     const fedDepositVal = Number(editSavedAddAmount);
 
+    const remainingAmount = Number(goal.targetAmount) - Number(goal.savedAmount || 0);
+    if (fedDepositVal > remainingAmount) {
+      alert(`You cannot deposit more than the remaining target amount of ${currency}${remainingAmount.toFixed(2)}.`);
+      return;
+    }
+
     setEditingGoalId(null);
     setEditSavedAddAmount('');
 

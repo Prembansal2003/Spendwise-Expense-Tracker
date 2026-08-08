@@ -239,7 +239,7 @@ export default function TransactionList({
                       )}
                       {item.notes && (
                         <span style={{ fontStyle: 'italic', maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          "{item.notes}"
+                          "{item.notes.replace(/\[GoalID:\d+\]\[Target:[\d.]+\]\s*/g, '')}"
                         </span>
                       )}
                     </div>
