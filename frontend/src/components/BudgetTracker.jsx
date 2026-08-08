@@ -172,24 +172,11 @@ export default function BudgetTracker({
   const handleAddDeposit = async (goal) => {
     if (!editSavedAddAmount || Number(editSavedAddAmount) <= 0) return;
     const fedDepositVal = Number(editSavedAddAmount);
-    const depositInUSD = convertCurrency(fedDepositVal, currency, 'USD');
 
-    // 1. Sync deposit to PostgreSQL cloud DB table savings_goals!
-    if (goal.id && (typeof goal.id === 'number' || !String(goal.id).startsWith('auto_'))) {
-      try {
-        await api.depositToSavingsGoal(goal.id, depositInUSD);
-      } catch (e) {}
-    }
+    setEditingGoalId(null);
+    setEditSavedAddAmount('');
 
-    // 2. Update local state
-    setSavingsGoals(prev => prev.map(g => {
-      if (g.id === goal.id) {
-        return { ...g, savedAmount: (g.savedAmount || 0) + depositInUSD };
-      }
-      return g;
-    }));
-
-    // 3. Automatically create an Outflow Expense Transaction to deduct from main cash balance!
+    // 1. Create a transaction — backend's syncGoalFromTransaction will update saved_amount in DB
     if (onCreateTransaction) {
       await onCreateTransaction({
         title: `Savings Deposit: ${goal.title}`,
@@ -202,9 +189,16 @@ export default function BudgetTracker({
       });
     }
 
-    setEditingGoalId(null);
-    setEditSavedAddAmount('');
+    // 2. Reload goals from cloud DB to reflect the backend-updated saved_amount (single source of truth)
+    try {
+      const cloudGoals = await api.getSavingsGoals(userId);
+      if (cloudGoals && Array.isArray(cloudGoals) && cloudGoals.length > 0) {
+        setSavingsGoals(cloudGoals);
+        localStorage.setItem(storageKey, JSON.stringify(cloudGoals));
+      }
+    } catch (e) {}
   };
+
 
   // Delete Savings Goal permanently
   const handleDeleteGoal = async (goalId, goalTitle = '') => {
@@ -285,46 +279,8 @@ export default function BudgetTracker({
     })
     .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', currency), 0);
 
-  // Auto-reconstruct Active Savings Goals from existing deposit transactions if missing from state
+  // Use cloud DB goals directly as the single source of truth (no frontend transaction re-summing)
   const mergedSavingsGoals = [...savingsGoals];
-
-  transactions.forEach(t => {
-    if (t.type !== 'EXPENSE' || !t.title) return;
-    const titleLower = t.title.toLowerCase();
-    let goalName = '';
-
-    if (titleLower.startsWith('savings deposit:')) {
-      goalName = t.title.replace(/^savings deposit:/i, '').trim();
-    } else if (titleLower.startsWith('savings goal deposit:')) {
-      goalName = t.title.replace(/^savings goal deposit:/i, '').trim();
-    }
-
-    if (goalName) {
-      const cleanGoalName = goalName.toLowerCase().replace(/[^\w\s]/gi, '').trim();
-      const exists = mergedSavingsGoals.some(g => {
-        const cleanGTitle = (g.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
-        return cleanGTitle === cleanGoalName || (cleanGTitle && cleanGoalName.includes(cleanGoalName)) || (cleanGTitle && cleanGTitle.includes(cleanGoalName));
-      });
-
-      if (!exists && cleanGoalName) {
-        let targetAmount = 5000.00;
-        if (t.notes) {
-          const targetMatch = t.notes.match(/\[Target:([\d\.]+)\]/i);
-          if (targetMatch && targetMatch[1]) {
-            targetAmount = Number(targetMatch[1]);
-          }
-        }
-
-        mergedSavingsGoals.push({
-          id: `auto_${cleanGoalName.replace(/\s+/g, '_')}`,
-          title: goalName.charAt(0).toUpperCase() + goalName.slice(1),
-          savedAmount: 0,
-          targetAmount: targetAmount,
-          currency: 'USD'
-        });
-      }
-    }
-  });
 
   // Filter out goals explicitly deleted by user
   const visibleSavingsGoals = mergedSavingsGoals.filter(g => {
@@ -336,6 +292,7 @@ export default function BudgetTracker({
   });
 
   const totalRemainingInViewCurrency = totalBudgetedInViewCurrency - totalSpentInViewCurrency;
+
 
   return (
     <div className="flex flex-col gap-6" style={{ marginBottom: '1.5rem' }}>
@@ -568,35 +525,9 @@ export default function BudgetTracker({
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             {visibleSavingsGoals.map(goal => {
-              // Robust multi-criteria matching: Match Goal ID in notes, clean title, or key title words
-              const cleanGoalTitle = (goal.title || '').toLowerCase().replace(/[^\w\s]/gi, '').trim();
-              const goalWords = cleanGoalTitle.split(/\s+/).filter(w => w.length >= 3);
-
-              const depositSumUSD = transactions
-                .filter(t => {
-                  if (t.type !== 'EXPENSE') return false;
-                  const tTitle = (t.title || '').toLowerCase();
-                  const tNotes = (t.notes || '').toLowerCase();
-
-                  // 1. Direct Goal ID tag match in notes
-                  if (tNotes.includes(`[goalid:${goal.id}]`)) return true;
-
-                          // 2. Clean full title match in transaction title or notes
-                          if (cleanGoalTitle && (tTitle.includes(cleanGoalTitle) || tNotes.includes(cleanGoalTitle))) return true;
-
-                          // 3. Significant title keywords match (e.g. "vacation", "laptop", "emergency")
-                          if (goalWords.length > 0) {
-                            return goalWords.some(w => tTitle.includes(w) || tNotes.includes(w));
-                          }
-
-                          return false;
-                        })
-                        .reduce((sum, t) => sum + convertCurrency(t.amount, t.currency || 'USD', 'USD'), 0);
-
-                      const totalSavedUSD = Math.max(goal.savedAmount || 0, depositSumUSD);
-
-                      const savedInView = convertCurrency(totalSavedUSD, goal.currency || 'USD', currency);
-                      const targetInView = convertCurrency(goal.targetAmount, goal.currency || 'USD', currency);
+              // Use DB saved amount as single source of truth — no transaction re-summing
+              const savedInView = convertCurrency(goal.savedAmount || 0, goal.currency || 'USD', currency);
+              const targetInView = convertCurrency(goal.targetAmount || 0, goal.currency || 'USD', currency);
                       const pct = targetInView > 0 ? Math.min(((savedInView / targetInView) * 100), 100) : 0;
                       const isCompleted = savedInView >= targetInView;
                       const isAddingDeposit = editingGoalId === goal.id;
