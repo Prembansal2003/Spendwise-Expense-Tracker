@@ -4,6 +4,7 @@ import com.spendwise.tracker.dto.SavingsGoalRequest;
 import com.spendwise.tracker.model.SavingsGoal;
 import com.spendwise.tracker.repository.SavingsGoalRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -15,6 +16,7 @@ import java.util.List;
 public class SavingsGoalService {
 
     private final SavingsGoalRepository savingsGoalRepository;
+    private final JdbcTemplate jdbcTemplate;
 
     public List<SavingsGoal> getGoalsByUserId(Long userId) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
@@ -63,7 +65,16 @@ public class SavingsGoalService {
 
     @Transactional
     public void deleteGoal(Long id) {
-        savingsGoalRepository.deleteById(id);
+        SavingsGoal goal = savingsGoalRepository.findById(id).orElse(null);
+        if (goal != null) {
+            try {
+                jdbcTemplate.update("DELETE FROM transactions WHERE (notes LIKE ? OR LOWER(title) LIKE LOWER(?))",
+                        "%[GoalID:" + id + "]%", "%" + goal.getTitle() + "%");
+            } catch (Exception e) {
+                System.err.println("Failed to cascade delete matching deposit transactions: " + e.getMessage());
+            }
+            savingsGoalRepository.deleteById(id);
+        }
     }
 
     @Transactional
@@ -72,15 +83,33 @@ public class SavingsGoalService {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         if (targetUserId == null) targetUserId = 1L;
 
-        String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
-                .replaceAll("(?i)^Savings Goal Deposit:", "")
-                .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+        SavingsGoal goal = null;
 
-        if (searchTitle.isBlank()) return;
+        if (txNotes != null && txNotes.contains("[GoalID:")) {
+            try {
+                int start = txNotes.indexOf("[GoalID:") + 8;
+                int end = txNotes.indexOf("]", start);
+                if (end > start) {
+                    Long goalId = Long.parseLong(txNotes.substring(start, end));
+                    goal = savingsGoalRepository.findById(goalId).orElse(null);
+                }
+            } catch (Exception ignored) {}
+        }
 
-        List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
-        if (!matchingGoals.isEmpty()) {
-            SavingsGoal goal = matchingGoals.get(0);
+        if (goal == null) {
+            String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
+                    .replaceAll("(?i)^Savings Goal Deposit:", "")
+                    .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+
+            if (!searchTitle.isBlank()) {
+                List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
+                if (!matchingGoals.isEmpty()) {
+                    goal = matchingGoals.get(0);
+                }
+            }
+        }
+
+        if (goal != null) {
             BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
             if ("CREATE".equalsIgnoreCase(action) || "ADD".equalsIgnoreCase(action)) {
                 goal.setSavedAmount(currentSaved.add(amount));
@@ -93,20 +122,38 @@ public class SavingsGoalService {
     }
 
     @Transactional
-    public void syncGoalFromTransactionUpdate(Long userId, String txTitle, BigDecimal oldAmount, BigDecimal newAmount) {
+    public void syncGoalFromTransactionUpdate(Long userId, String txTitle, String txNotes, BigDecimal oldAmount, BigDecimal newAmount) {
         if (txTitle == null) return;
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         if (targetUserId == null) targetUserId = 1L;
 
-        String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
-                .replaceAll("(?i)^Savings Goal Deposit:", "")
-                .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+        SavingsGoal goal = null;
 
-        if (searchTitle.isBlank()) return;
+        if (txNotes != null && txNotes.contains("[GoalID:")) {
+            try {
+                int start = txNotes.indexOf("[GoalID:") + 8;
+                int end = txNotes.indexOf("]", start);
+                if (end > start) {
+                    Long goalId = Long.parseLong(txNotes.substring(start, end));
+                    goal = savingsGoalRepository.findById(goalId).orElse(null);
+                }
+            } catch (Exception ignored) {}
+        }
 
-        List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
-        if (!matchingGoals.isEmpty()) {
-            SavingsGoal goal = matchingGoals.get(0);
+        if (goal == null) {
+            String searchTitle = txTitle.replaceAll("(?i)^Savings Deposit:", "")
+                    .replaceAll("(?i)^Savings Goal Deposit:", "")
+                    .replaceAll("[^a-zA-Z0-9\\s]", "").trim();
+
+            if (!searchTitle.isBlank()) {
+                List<SavingsGoal> matchingGoals = savingsGoalRepository.findByUserIdAndTitleMatching(targetUserId, searchTitle);
+                if (!matchingGoals.isEmpty()) {
+                    goal = matchingGoals.get(0);
+                }
+            }
+        }
+
+        if (goal != null) {
             BigDecimal currentSaved = goal.getSavedAmount() != null ? goal.getSavedAmount() : BigDecimal.ZERO;
             BigDecimal diff = (newAmount != null ? newAmount : BigDecimal.ZERO).subtract(oldAmount != null ? oldAmount : BigDecimal.ZERO);
             BigDecimal newSaved = currentSaved.add(diff);

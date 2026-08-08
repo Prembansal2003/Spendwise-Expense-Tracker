@@ -96,7 +96,7 @@ public class TransactionService {
 
         Transaction updated = transactionRepository.save(transaction);
         if (updated.getTitle() != null && (updated.getTitle().toLowerCase().contains("savings deposit") || updated.getTitle().toLowerCase().contains("savings goal deposit"))) {
-            savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), oldAmount, updated.getAmount());
+            savingsGoalService.syncGoalFromTransactionUpdate(updated.getUserId(), updated.getTitle(), updated.getNotes(), oldAmount, updated.getAmount());
         }
         return updated;
     }
