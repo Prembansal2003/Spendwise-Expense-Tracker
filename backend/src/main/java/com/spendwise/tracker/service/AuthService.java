@@ -56,7 +56,7 @@ public class AuthService {
     public AuthResponse getProfile(Long userId) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
         
-        boolean isVirtualDemo = (targetUserId != null && targetUserId >= 100000000L && targetUserId <= 999999999L);
+        boolean isVirtualDemo = (targetUserId != null && (targetUserId.equals(1L) || (targetUserId >= 100000000L && targetUserId <= 999999999L)));
         if (isVirtualDemo) {
             AuthResponse response = new AuthResponse();
             response.setId(targetUserId);
@@ -84,8 +84,7 @@ public class AuthService {
 
     public AuthResponse updateProfile(Long userId, AuthRequest request) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
-        
-        boolean isVirtualDemo = (targetUserId != null && targetUserId >= 100000000L && targetUserId <= 999999999L);
+        boolean isVirtualDemo = (targetUserId != null && (targetUserId.equals(1L) || (targetUserId >= 100000000L && targetUserId <= 999999999L)));
         if (isVirtualDemo) {
             AuthResponse response = new AuthResponse();
             response.setId(targetUserId);
