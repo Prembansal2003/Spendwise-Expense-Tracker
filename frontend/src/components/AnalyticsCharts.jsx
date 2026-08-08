@@ -40,9 +40,9 @@ export default function AnalyticsCharts({ transactions = [], currency, darkMode 
   const [selectedYear, setSelectedYear] = useState('2026');
   const [selectedMonth, setSelectedMonth] = useState('ALL'); // 'ALL' or '01'..'12'
 
-  // Comprehensive list of years (2020 through 2030 + any transaction years)
+  // Comprehensive list of years (1999 through 2050 + any transaction years)
   const currentYrNum = new Date().getFullYear(); // 2026
-  const baseYears = Array.from({ length: 11 }, (_, i) => String(2020 + i)); // 2020 to 2030
+  const baseYears = Array.from({ length: 52 }, (_, i) => String(1999 + i)); // 1999 to 2050
   const txYears = transactions.map(t => (t.transactionDate || '2026-08-01').substring(0, 4));
   const availableYears = Array.from(new Set([...baseYears, ...txYears])).sort().reverse();
 

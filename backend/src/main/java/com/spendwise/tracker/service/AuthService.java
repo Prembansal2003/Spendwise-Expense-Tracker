@@ -47,7 +47,7 @@ public class AuthService {
         user.setEmail(request.getEmail());
         user.setPassword(com.spendwise.tracker.util.PasswordEncoderUtil.encode(request.getPassword() != null ? request.getPassword() : "password123"));
         user.setRole("PRO_MEMBER");
-        user.setAvatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl() : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
+        user.setAvatarUrl(request.getAvatarUrl() != null ? request.getAvatarUrl() : "/default-avatar.png");
 
         User saved = userRepository.save(user);
         return buildAuthResponse(saved);
@@ -63,7 +63,7 @@ public class AuthService {
                     String email = "agrawalprem" + targetUserId + "@gmail.com";
                     String password = com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123");
                     String role = "PRO_MEMBER";
-                    String avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+                    String avatarUrl = "/default-avatar.png";
                     
                     if (isVirtualDemo) {
                         userRepository.insertUserWithId(targetUserId, name, email, password, role, avatarUrl);
@@ -91,7 +91,7 @@ public class AuthService {
                     String email = "agrawalprem" + targetUserId + "@gmail.com";
                     String password = com.spendwise.tracker.util.PasswordEncoderUtil.encode("password123");
                     String role = "PRO_MEMBER";
-                    String avatarUrl = "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80";
+                    String avatarUrl = "/default-avatar.png";
                     
                     if (isVirtualDemo) {
                         userRepository.insertUserWithId(targetUserId, name, email, password, role, avatarUrl);

@@ -45,7 +45,7 @@ export default function AuthGate({ onLoginSuccess }) {
             name: backendUser.name,
             email: backendUser.email,
             role: backendUser.role || 'PRO_MEMBER',
-            avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+            avatarUrl: backendUser.avatarUrl || '/default-avatar.png',
             token: backendUser.token
           });
           return;
@@ -77,7 +77,7 @@ export default function AuthGate({ onLoginSuccess }) {
             name: backendUser.name,
             email: backendUser.email,
             role: backendUser.role || 'PRO_MEMBER',
-            avatarUrl: backendUser.avatarUrl || 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+            avatarUrl: backendUser.avatarUrl || '/default-avatar.png',
             token: backendUser.token
           });
           return;
@@ -113,7 +113,7 @@ export default function AuthGate({ onLoginSuccess }) {
       name: 'Prem Agrawal',
       email: 'agrawalprem00@gmail.com',
       role: 'PRO_MEMBER',
-      avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+      avatarUrl: '/default-avatar.png',
       createdAt: 'Aug 2026'
     };
     onLoginSuccess(demoUser);

@@ -20,7 +20,7 @@ const DEFAULT_USER = {
   name: 'Prem Agrawal',
   email: 'agrawalprem00@gmail.com',
   role: 'PRO_MEMBER',
-  avatarUrl: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80',
+  avatarUrl: '/default-avatar.png',
   createdAt: 'Aug 2026'
 };
 
