@@ -48,6 +48,20 @@ public class AuthService {
 
     public AuthResponse getProfile(Long userId) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
+        
+        boolean isVirtualDemo = (targetUserId != null && targetUserId >= 100000000L && targetUserId <= 999999999L);
+        if (isVirtualDemo) {
+            AuthResponse response = new AuthResponse();
+            response.setId(targetUserId);
+            response.setName("Prem Agrawal");
+            response.setEmail("agrawalprem" + targetUserId + "@gmail.com");
+            response.setRole("PRO_MEMBER");
+            response.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
+            response.setCreatedAt(java.time.LocalDateTime.now().toString());
+            response.setToken("demo-token");
+            return response;
+        }
+
         User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
@@ -63,6 +77,20 @@ public class AuthService {
 
     public AuthResponse updateProfile(Long userId, AuthRequest request) {
         Long targetUserId = (userId != null && (userId.equals(101L) || userId.equals(1L))) ? 1L : userId;
+        
+        boolean isVirtualDemo = (targetUserId != null && targetUserId >= 100000000L && targetUserId <= 999999999L);
+        if (isVirtualDemo) {
+            AuthResponse response = new AuthResponse();
+            response.setId(targetUserId);
+            response.setName("Prem Agrawal");
+            response.setEmail("agrawalprem" + targetUserId + "@gmail.com");
+            response.setRole("PRO_MEMBER");
+            response.setAvatarUrl(request.getAvatarUrl() != null && !request.getAvatarUrl().isBlank() ? request.getAvatarUrl() : "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
+            response.setCreatedAt(java.time.LocalDateTime.now().toString());
+            response.setToken("demo-token");
+            return response;
+        }
+
         User user = userRepository.findById(targetUserId)
                 .orElseGet(() -> {
                     User newUser = new User();
