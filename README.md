@@ -105,6 +105,16 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
 - **8-Second Background Polling**: Syncs data continuously across connected devices.
 - **Persistent Sessions**: User remains signed in on refresh until explicitly clicking **Log Out**.
 
+### 10. 🔒 Enhanced Privacy & Data Security
+- **Global Console Suppression**: Complete suppression of developer console outputs (`console.log`, `console.error`) in the frontend to prevent sensitive API payloads or state data from leaking into the browser's inspect tool.
+- **Strict Virtual Demo Isolation**: Demo profiles and their associated data are explicitly persisted to the PostgreSQL database for accuracy, but are strictly and permanently wiped from the database the moment the user clicks **Log Out**.
+- **Hidden Metadata Tracking**: Background synchronization identifiers (like `[GoalID]`) are securely hidden from all UI components and CSV exports for a cleaner user experience.
+
+### 11. 🚀 Additional Improvements
+- **Expanded Analytics Range**: Interactive cashflow breakdown and analytics filtering now supports an extended year range from **1999 to 2050**.
+- **Strict Savings Goal Caps**: Deposits into Active Savings Goals are strictly limited to prevent exceeding the goal's target amount.
+- **Smart Cache Purging**: The frontend actively intercepts and purges legacy cached avatars (like stock Unsplash photos) from `localStorage`, seamlessly upgrading to the new default portrait picture.
+
 ---
 
 ## 🏗️ Architecture & Technology Stack
