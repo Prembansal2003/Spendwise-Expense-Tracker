@@ -102,7 +102,7 @@ export default function BudgetTracker({
         currency: 'USD'
       });
     } catch (err) {
-      
+      console.warn('[BudgetTracker] Cloud DB goal creation skipped:', err.message);
     }
 
     const newGoal = createdGoal || {

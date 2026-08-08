@@ -20,19 +20,19 @@ if (!_baseUrl.endsWith('/api/v1')) {
 }
 const API_BASE_URL = _baseUrl;
 
-
+console.log('[SpendWise API] Base URL:', API_BASE_URL);
 
 // Auto wake-up ping: fires immediately on app load to warm Render free-tier container
 const _wakeUp = () => {
   fetch(`${API_BASE_URL}/transactions?userId=101`, { method: 'GET', signal: AbortSignal.timeout(90000) })
-    .then(() => )
-    .catch(() => ...'));
+    .then(() => console.log('[SpendWise API] ✅ Backend is awake and ready'))
+    .catch(() => console.log('[SpendWise API] ⏳ Backend waking up (Render cold start)...'));
 };
 _wakeUp();
 
 const fetchApi = async (url, options = {}) => {
-  
-  if (options.body) 
+  console.log(`[SpendWise API] ${options.method || 'GET'} ${url}`);
+  if (options.body) console.log('[SpendWise API] Payload:', options.body);
 
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), 90000); // 90s for Render cold start
@@ -40,11 +40,11 @@ const fetchApi = async (url, options = {}) => {
   try {
     const res = await fetch(url, { ...options, signal: controller.signal });
     clearTimeout(timeoutId);
-    
+    console.log(`[SpendWise API] Response: ${res.status} ${res.statusText}`);
     return res;
   } catch (err) {
     clearTimeout(timeoutId);
-    
+    console.error(`[SpendWise API] FETCH FAILED:`, err.message);
     throw err;
   }
 };
@@ -62,7 +62,7 @@ const setLocalData = (key, value) => {
   try {
     localStorage.setItem(key, JSON.stringify(value));
   } catch (e) {
-    
+    console.error('LocalStorage write error', e);
   }
 };
 
@@ -76,17 +76,17 @@ export const apiService = {
         body: JSON.stringify({ name, email, password })
       });
       const text = await res.text();
-      
+      console.log('[SpendWise API] Register raw response:', text);
       try {
         const data = JSON.parse(text);
         if (res.ok) return data;
         return { error: data.message || data.error || 'Registration failed' };
       } catch (parseErr) {
-        
+        console.error('[SpendWise API] JSON parse error:', parseErr);
         return { error: 'Server returned invalid response' };
       }
     } catch (err) {
-      
+      console.error('[SpendWise API] Register network error:', err);
       return null;
     }
   },
@@ -99,17 +99,17 @@ export const apiService = {
         body: JSON.stringify({ email, password })
       });
       const text = await res.text();
-      
+      console.log('[SpendWise API] Login raw response:', text);
       try {
         const data = JSON.parse(text);
         if (res.ok) return data;
         return { error: data.message || data.error || 'Login failed' };
       } catch (parseErr) {
-        
+        console.error('[SpendWise API] JSON parse error:', parseErr);
         return { error: 'Server returned invalid response' };
       }
     } catch (err) {
-      
+      console.error('[SpendWise API] Login network error:', err);
       return null;
     }
   },
@@ -123,7 +123,7 @@ export const apiService = {
         return data;
       }
     } catch (err) {
-      
+      console.warn('[SpendWise API] getUserProfile failed:', err.message);
     }
     return null;
   },
@@ -141,7 +141,7 @@ export const apiService = {
         return data;
       }
     } catch (err) {
-      
+      console.warn('[SpendWise API] updateUserProfile failed:', err.message);
     }
     return null;
   },
@@ -179,7 +179,7 @@ export const apiService = {
           }
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] getTransactions backend fetch skipped:', err.message);
       }
     } else {
       isBackend = true;
@@ -231,7 +231,7 @@ export const apiService = {
           return data;
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] createTransaction backend sync skipped:', err.message);
       }
     }
 
@@ -279,7 +279,7 @@ export const apiService = {
           return backendResult;
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] updateTransaction backend sync skipped:', err.message);
       }
     }
 
@@ -299,7 +299,7 @@ export const apiService = {
           method: 'DELETE'
         });
       } catch (err) {
-        
+        console.warn('[SpendWise API] deleteTransaction backend sync skipped:', err.message);
       }
     }
 
@@ -327,7 +327,7 @@ export const apiService = {
         await fetchApi(`${API_BASE_URL}/transactions/reset?userId=${userId}`, { method: 'DELETE' });
       }
     } catch (e) {
-      
+      console.warn('[SpendWise API] Backend reset skipped:', e.message);
     }
   },
 
@@ -359,7 +359,7 @@ export const apiService = {
           }
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] getBudgets failed, using localStorage fallback');
       }
     }
 
@@ -384,7 +384,7 @@ export const apiService = {
           return data;
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] updateBudget failed, updating localStorage');
       }
     }
 
@@ -415,7 +415,7 @@ export const apiService = {
           return data;
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] getSavingsGoals backend fetch skipped:', err.message);
       }
       if (!isDemo) return null;
     }
@@ -446,7 +446,7 @@ export const apiService = {
           return await res.json();
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] createSavingsGoal backend sync skipped:', err.message);
       }
     } else {
       let list = getLocalData(storageKey, DEFAULT_SAVINGS_GOALS);
@@ -474,7 +474,7 @@ export const apiService = {
           return await res.json();
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] depositToSavingsGoal backend sync skipped:', err.message);
       }
     } else {
       let list = getLocalData(storageKey, DEFAULT_SAVINGS_GOALS);
@@ -499,7 +499,7 @@ export const apiService = {
         await fetchApi(`${API_BASE_URL}/savings-goals/${goalId}`, { method: 'DELETE' });
         return true;
       } catch (err) {
-        
+        console.warn('[SpendWise API] deleteSavingsGoal backend sync skipped:', err.message);
       }
       return false;
     } else {
@@ -527,7 +527,7 @@ export const apiService = {
           return await res.json();
         }
       } catch (err) {
-        
+        console.warn('[SpendWise API] updateSavingsGoal backend sync skipped:', err.message);
       }
     } else {
       let list = getLocalData(storageKey, DEFAULT_SAVINGS_GOALS);
