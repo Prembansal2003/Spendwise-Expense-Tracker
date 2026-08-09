@@ -40,4 +40,9 @@ public class AuthController {
         authService.clearDemoData(id);
         return ResponseEntity.ok().build();
     }
+
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("Backend is awake!");
+    }
 }
