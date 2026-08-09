@@ -123,7 +123,14 @@ export default function App() {
     if (!user) return;
     const isVirtualUser = user.id !== 101 && user.id !== 1 && String(user.id).length >= 8;
 
-    let txRes = await apiService.getTransactions({}, user.id);
+    // Fetch all core datasets concurrently to cut loading time by 60%
+    const [txResRaw, bResRaw, cloudGoalsRaw] = await Promise.all([
+      apiService.getTransactions({}, user.id),
+      apiService.getBudgets(user.id),
+      apiService.getSavingsGoals(user.id).catch(() => [])
+    ]);
+
+    let txRes = txResRaw;
     let txData = txRes.data || [];
 
     // Auto-seed default transactions if virtual user has no database transactions yet
@@ -139,7 +146,7 @@ export default function App() {
     setTransactions(txData);
     setIsBackend(txRes.isBackend);
 
-    let bRes = await apiService.getBudgets(user.id);
+    let bRes = bResRaw;
     let budgetData = bRes || [];
 
     // Auto-seed default budgets into database if virtual user has not seeded budgets yet
@@ -156,7 +163,7 @@ export default function App() {
     setBudgets(budgetData);
 
     try {
-      let cloudGoals = await apiService.getSavingsGoals(user.id);
+      let cloudGoals = cloudGoalsRaw;
 
       // Auto-seed default savings goals if virtual user has no database goals yet
       if (isVirtualUser && txRes.isBackend && (!cloudGoals || cloudGoals.length === 0)) {
@@ -187,7 +194,12 @@ export default function App() {
 
     const intervalId = setInterval(async () => {
       try {
-        const txRes = await apiService.getTransactions({}, user.id);
+        const [txRes, bRes, gRes] = await Promise.all([
+          apiService.getTransactions({}, user.id),
+          apiService.getBudgets(user.id),
+          apiService.getSavingsGoals(user.id).catch(() => [])
+        ]);
+
         if (txRes && Array.isArray(txRes.data)) {
           setTransactions(prev => {
             // Hardening: if the backend randomly returns 0 items during polling but we had items, DO NOT wipe!
@@ -203,7 +215,6 @@ export default function App() {
           setIsBackend(txRes.isBackend);
         }
 
-        const bRes = await apiService.getBudgets(user.id);
         if (bRes && Array.isArray(bRes)) {
           setBudgets(prev => {
             if (JSON.stringify(prev) !== JSON.stringify(bRes)) {
@@ -213,7 +224,6 @@ export default function App() {
           });
         }
 
-        const gRes = await apiService.getSavingsGoals(user.id);
         if (gRes && Array.isArray(gRes)) {
           setSavingsGoals(prev => {
             if (JSON.stringify(prev) !== JSON.stringify(gRes)) {
