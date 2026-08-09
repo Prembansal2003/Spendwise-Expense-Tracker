@@ -50,7 +50,7 @@ public class DataInitializer implements CommandLineRunner {
             demoUser.setEmail("agrawalprem00@gmail.com");
             demoUser.setPassword(PasswordEncoderUtil.encode("password123"));
             demoUser.setRole("PRO_MEMBER");
-            demoUser.setAvatarUrl("https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80");
+            demoUser.setAvatarUrl("/default-avatar.png");
             userRepository.save(demoUser);
         }
 

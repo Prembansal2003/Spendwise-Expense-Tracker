@@ -2,7 +2,7 @@
 
 -- Users Table
 INSERT INTO users (id, name, email, password, role, avatar_url, created_at) VALUES
-(1, 'Alex Morgan', 'alex.morgan@spendwise.io', 'password123', 'PRO_MEMBER', 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=250&q=80', CURRENT_TIMESTAMP);
+(1, 'Alex Morgan', 'alex.morgan@spendwise.io', 'password123', 'PRO_MEMBER', '/default-avatar.png', CURRENT_TIMESTAMP);
 
 -- Categories & Initial Budgets
 INSERT INTO budgets (id, category, monthly_limit, current_spend, month, year) VALUES 
