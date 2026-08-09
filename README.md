@@ -115,6 +115,11 @@ Filter transaction records by custom start/end date ranges (`From Date` – `To 
 - **Strict Savings Goal Caps**: Deposits into Active Savings Goals are strictly limited to prevent exceeding the goal's target amount.
 - **Smart Cache Purging**: The frontend actively intercepts and purges legacy cached avatars (like stock Unsplash photos) from `localStorage`, seamlessly upgrading to the new default portrait picture.
 
+### 12. ⏳ Automated Lifecycle Management & Uptime
+- **Uptime Monitoring API (`/ping`)**: Includes a dedicated, ultra-lightweight `/api/v1/auth/ping` endpoint designed to be hooked into free uptime services (like cron-job.org) to prevent Render's free-tier containers from cold-starting.
+- **Automated Ghost-Session Sweeper**: An automated background Cron Job (`@Scheduled`) sweeps the database every 60 minutes. It identifies any "Virtual Demo Accounts" (IDs >= 100M) that have been inactive for over 2 hours and permanently purges their orphaned transactions, budgets, and goals to maintain pristine database hygiene.
+- **Dual-Mode Demo Architecture**: The system utilizes a dual-ghost architecture where `ID: 101` acts as the permanent global demo profile (for instant 0-millisecond dashboard loading), while 9-digit Virtual IDs act as private, disposable guest sessions that are swept automatically.
+
 ---
 
 ## 🏗️ Architecture & Technology Stack
